@@ -16,8 +16,9 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-grid-overlay">
-      <section className="relative py-16 cp-hero-warp overflow-hidden">
+      <section className="relative py-16 cp-hero-warp overflow-hidden cp-grid-soft">
         <Aurora />
+        <div className="cp-vignette" />
         <div className="cp-container">
           <div className="text-center max-w-4xl mx-auto" data-testid="home-hero-head">
             <div className="inline-flex items-center gap-2 mb-4">
@@ -31,6 +32,15 @@ export default async function Home() {
                 <Link href="/play" className="px-5 py-2.5 border border-white/20 text-white rounded-lg font-bold hover:bg-white/5">Try a Game</Link>
                 <Link href="/explore" className="hidden md:inline-flex px-5 py-2.5 border border-white/20 text-white rounded-lg font-bold hover:bg-white/5">Explore the Squad</Link>
               </div>
+            </div>
+
+            {/* Social proof */}
+            <div className="mt-6 flex items-center justify-center gap-3 text-sm text-white/80">
+              <span className="cp-pill">Trusted by players and creators</span>
+              <span className="cp-chip">Indie Studios</span>
+              <span className="cp-chip">Game Jams</span>
+              <span className="cp-chip hidden sm:inline-flex">Toy Makers</span>
+              <span className="cp-chip hidden md:inline-flex">Arcade Nights</span>
             </div>
           </div>
 
