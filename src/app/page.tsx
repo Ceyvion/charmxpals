@@ -21,11 +21,12 @@ export default async function Home() {
             <div className="inline-flex items-center gap-2 mb-4">
               <span className="cp-chip">Season One • Free Access</span>
             </div>
-            <h1 className="font-display font-extrabold leading-tight text-6xl md:text-8xl" data-testid="home-hero-title">Fun Games<br />CharmPals Arcade</h1>
-            <p className="mt-3 cp-muted text-lg md:text-xl">Claim a pal, explore the squad, then jump into mini-games.</p>
+            <h1 className="font-display font-extrabold leading-tight text-6xl md:text-8xl" data-testid="home-hero-title">Scan a Charm.<br />Meet Your Pal.</h1>
+            <p className="mt-3 cp-muted text-lg md:text-xl">Unlock a 3D pal from your physical charm and jump into quick arcade games. No app—play in seconds.</p>
             <div className="mt-6 flex items-center justify-center gap-3">
-              <Link href="/claim" className="px-6 py-3 bg-white text-gray-900 rounded-lg font-bold">Claim Now</Link>
-              <Link href="/explore" className="px-6 py-3 border border-white/20 text-white rounded-lg font-bold hover:bg-white/5">Explore All</Link>
+              <Link href="/claim" className="px-6 py-3 bg-white text-gray-900 rounded-lg font-bold">Claim Your Pal</Link>
+              <Link href="/play" className="px-6 py-3 border border-white/20 text-white rounded-lg font-bold hover:bg-white/5">Try a Game</Link>
+              <Link href="/explore" className="px-6 py-3 border border-white/20 text-white rounded-lg font-bold hover:bg-white/5 hidden md:inline-flex">Explore the Squad</Link>
             </div>
           </div>
 

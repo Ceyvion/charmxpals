@@ -8,8 +8,8 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const teko = Teko({ subsets: ['latin'], weight: ['500', '700'], variable: '--font-teko' });
 
 export const metadata: Metadata = {
-  title: 'CharmPals - Physical-Digital Collectibles',
-  description: 'Collect, play, and share with CharmPals - the ultimate physical-digital collectible platform',
+  title: 'CharmPals — Scan a Charm. Meet Your Pal.',
+  description: 'Unlock a 3D pal from your physical charm and jump into quick arcade games. No app—play in seconds.',
   icons: { icon: '/favicon.ico' },
 };
 
