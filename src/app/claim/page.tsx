@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { hmacSHA256Hex } from '@/lib/webcrypto';
 import CharacterReveal from '@/components/CharacterReveal';
+import dynamic from 'next/dynamic';
 
 type ApiResult<T> = ({ success: true } & T) | { success: false; error: string };
 
@@ -18,6 +19,9 @@ export default function ClaimPage() {
   const [verifyStatus, setVerifyStatus] = useState<null | { ok: boolean; message: string }>(null);
   const [stage, setStage] = useState<'idle' | 'verifying' | 'starting' | 'signing' | 'completing' | 'success' | 'error'>('idle');
   const [revealOpen, setRevealOpen] = useState(false);
+  const [scanOpen, setScanOpen] = useState(false);
+
+  const QrScanner = useMemo(() => dynamic(() => import('@/components/QrScanner'), { ssr: false }), []);
 
   const codeNormalized = useMemo(() => code.trim(), [code]);
 
@@ -146,6 +150,14 @@ export default function ClaimPage() {
                 />
                 <button
                   type="button"
+                  onClick={() => setScanOpen(true)}
+                  disabled={loading}
+                  className="px-4 py-3 rounded-xl border border-white/10 bg-white/10 text-white font-semibold hover:bg-white/20"
+                >
+                  Scan
+                </button>
+                <button
+                  type="button"
                   onClick={verifyCode}
                   disabled={loading || !codeNormalized}
                   className="px-4 py-3 rounded-xl border border-white/10 bg-white/10 text-white font-semibold hover:bg-white/20 disabled:opacity-50"
@@ -208,6 +220,15 @@ export default function ClaimPage() {
               <CharacterReveal characterId={claimedId} open={revealOpen} onClose={() => setRevealOpen(false)} />
             </div>
           )}
+          <QrScanner
+            open={scanOpen}
+            onClose={() => setScanOpen(false)}
+            onResult={(val: string) => {
+              const t = String(val || '').trim().toUpperCase();
+              if (t) setCode(t);
+              setScanOpen(false);
+            }}
+          />
         </div>
 
         <div className="text-center mt-6">
