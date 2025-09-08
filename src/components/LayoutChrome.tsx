@@ -2,14 +2,34 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import AppNav from "@/components/AppNav";
 
 export default function LayoutChrome({ children }: { children: React.ReactNode }) {
   // Keep a consistent frame across routes to feel connected
   usePathname();
+  const [appearance, setAppearance] = useState<'light' | 'dark'>(() => 'dark');
+
+  useEffect(() => {
+    const stored = typeof window !== 'undefined' ? localStorage.getItem('cp:appearance') : null;
+    let initial: 'light' | 'dark' = 'dark';
+    if (stored === 'light' || stored === 'dark') initial = stored;
+    else if (typeof window !== 'undefined' && window.matchMedia) {
+      initial = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    }
+    setAppearance(initial);
+    if (typeof document !== 'undefined') document.documentElement.setAttribute('data-appearance', initial);
+  }, []);
+
+  const toggleAppearance = () => {
+    const next = appearance === 'light' ? 'dark' : 'light';
+    setAppearance(next);
+    if (typeof document !== 'undefined') document.documentElement.setAttribute('data-appearance', next);
+    if (typeof window !== 'undefined') localStorage.setItem('cp:appearance', next);
+  };
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="bg-gray-900/60 backdrop-blur supports-[backdrop-filter]:bg-gray-900/50 border-b border-white/10 text-white">
+      <header className="cp-header bg-gray-900/60 backdrop-blur supports-[backdrop-filter]:bg-gray-900/50 border-b border-white/10 text-white">
         <div className="cp-container">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
@@ -19,7 +39,10 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
               <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-gradient-to-r from-amber-500 to-red-500 text-white font-bold">beta</span>
             </div>
             <AppNav />
-            <div className="flex items-center">
+            <div className="flex items-center gap-2">
+              <button onClick={toggleAppearance} aria-label="Toggle theme" className="px-3 py-2 rounded-lg border border-white/10 bg-white/10 text-white text-sm font-bold hover:bg-white/20 transition">
+                {appearance === 'light' ? '☀️' : '🌙'}
+              </button>
               <a href="/login" className="px-4 py-2 rounded-lg bg-white text-gray-900 text-sm font-bold hover:bg-gray-100 transition">Sign in</a>
             </div>
           </div>
@@ -28,7 +51,7 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
 
       <main className="flex-grow">{children}</main>
 
-      <footer className="bg-gray-950 text-white py-12">
+      <footer className="cp-footer bg-gray-950 text-white py-12">
         <div className="cp-container">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
