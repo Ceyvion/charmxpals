@@ -5,6 +5,8 @@ import { notFound } from 'next/navigation';
 import Cosmetics from './Cosmetics';
 import CharacterShowcaseCard from '@/components/CharacterShowcaseCard';
 import { getModelUrl } from '@/data/characterModels';
+import RevealOnView from '@/components/RevealOnView';
+import CharacterStats from '@/components/CharacterStats';
 
 const CharacterViewer3D = dynamic(() => import('@/components/CharacterViewer3D'), { ssr: false });
 
@@ -30,49 +32,37 @@ export default async function CharacterPage({ params }: { params: { id: string }
 
         <div className="grid lg:grid-cols-5 gap-8 items-start">
           <div className="lg:col-span-3">
-            <div className="cp-panel p-4 mb-6 bg-white/5 border border-white/10 rounded-2xl">
+            <RevealOnView className="cp-panel p-4 mb-6 bg-white/5 border border-white/10 rounded-2xl">
+              <div className="cp-kicker">Character</div>
               <CharacterViewer3D modelUrl={getModelUrl(character)} height={380} />
-            </div>
-            <CharacterShowcaseCard
-              name={character.name}
-              rarity={character.rarity}
-              image={character.artRefs?.thumbnail || null}
-              rating={Number((character.rarity + 2.7).toFixed(1))}
-            />
+            </RevealOnView>
+            <RevealOnView>
+              <CharacterShowcaseCard
+                name={character.name}
+                rarity={character.rarity}
+                image={character.artRefs?.thumbnail || null}
+                rating={Number((character.rarity + 2.7).toFixed(1))}
+              />
+            </RevealOnView>
             {character.description && (
-              <p className="mt-6 text-white/80 text-lg max-w-prose">{character.description}</p>
+              <p className="mt-6 text-white/80 text-lg max-w-prose cp-swiss-body">{character.description}</p>
             )}
           </div>
           <div className="lg:col-span-2">
-            <div className="cp-panel p-6 mb-6">
-              <h2 className="text-xl font-bold text-white font-display mb-4">Stats</h2>
-              {stats && (
-                <div className="space-y-3">
-                  {Object.entries(stats).map(([key, value]) => {
-                    const v = Math.max(0, Math.min(100, Number(value)));
-                    return (
-                      <div key={key}>
-                        <div className="flex items-center justify-between text-xs text-white/70 mb-1">
-                          <span className="capitalize">{key}</span>
-                          <span className="font-semibold text-white">{v}</span>
-                        </div>
-                        <div className="cp-bar"><div className="cp-bar-fill" style={{ width: `${v}%` }} /></div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+            <RevealOnView className="cp-panel p-6 mb-6">
+              <h2 className="cp-kicker mb-2">Stats</h2>
+              {stats && <CharacterStats stats={stats} />}
 
               <div className="mt-6 flex gap-3">
                 <Link href="/play/runner" className="px-5 py-3 bg-white text-gray-900 rounded-lg font-medium hover:bg-gray-100 transition-colors">Play Mini-Game</Link>
                 <Link href="/claim" className="px-5 py-3 bg-transparent border border-white/20 text-white rounded-lg font-medium hover:bg-white/5 transition-colors">Claim Another</Link>
               </div>
-            </div>
+            </RevealOnView>
 
-            <div className="cp-panel p-6">
-              <h2 className="text-xl font-bold text-white font-display mb-3">Cosmetics</h2>
+            <RevealOnView className="cp-panel p-6">
+              <h2 className="cp-kicker mb-2">Outfits</h2>
               <Cosmetics characterId={character.id} />
-            </div>
+            </RevealOnView>
           </div>
         </div>
       </div>

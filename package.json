@@ -30,6 +30,7 @@
     "react-dom": "^18",
     "three": "^0.165.0",
     "jsqr": "^1.4.0",
+    "animejs": "^3.2.1",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
