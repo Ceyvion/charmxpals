@@ -3,7 +3,6 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import CharacterCard from '@/components/CharacterCard';
-import CharacterCarousel from '@/components/CharacterCarousel';
 import RevealOnView from '@/components/RevealOnView';
 
 type Character = {
@@ -41,105 +40,105 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
   }, [characters, filter, query, sortBy]);
 
   const groups = useMemo(() => {
-    const by = (min: number, max: number | null) => characters.filter((c) => (c.rarity >= min) && (max == null || c.rarity < max));
+    const by = (min: number, max: number | null) => filtered.filter((c) => (c.rarity >= min) && (max == null || c.rarity < max));
     return {
       legendary: by(5, null),
       epic: by(4, 5),
       rare: by(3, 4),
     };
-  }, [characters]);
-
-  const featured = useMemo(() => {
-    return [...characters].sort((a, b) => b.rarity - a.rarity)[0] || null;
-  }, [characters]);
+  }, [filtered]);
 
   return (
     <div>
-      {/* Header panel */}
-      <div className="cp-panel p-4 md:p-6">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-          <div>
-            <div className="cp-kicker mb-2">Explore</div>
-            <h1 className="text-3xl md:text-5xl font-extrabold font-display leading-tight">Meet the CharmPals</h1>
-            <p className="mt-2 cp-muted text-base md:text-lg max-w-prose">Browse by rarity, search by name, or jump straight into a featured pal.</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
+      {/* Title */}
+      <div className="mb-4">
+        <div className="cp-kicker mb-1">Explore</div>
+        <h1 className="text-3xl md:text-5xl font-extrabold font-display leading-tight">Meet the CharmPals</h1>
+        <p className="mt-2 cp-muted max-w-prose">Browse by rarity, search by name, or view them all in a tidy grid.</p>
+      </div>
+
+      {/* Sticky controls */}
+      <div className="sticky top-16 z-10">
+        <div className="cp-panel p-3 flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap gap-2">
             <button onClick={() => setFilter('all')} className={`cp-chip ${filter==='all' ? 'ring-2 ring-white/30' : ''}`}>All</button>
             <button onClick={() => setFilter('legendary')} className={`cp-chip ${filter==='legendary' ? 'ring-2 ring-white/30' : ''}`}>Legendary</button>
             <button onClick={() => setFilter('epic')} className={`cp-chip ${filter==='epic' ? 'ring-2 ring-white/30' : ''}`}>Epic</button>
             <button onClick={() => setFilter('rare')} className={`cp-chip ${filter==='rare' ? 'ring-2 ring-white/30' : ''}`}>Rare</button>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by name…"
+              className="px-3 py-2 rounded-lg border border-white/10 bg-white/10 text-white placeholder-white/70 min-w-[200px]"
+            />
             <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)} className="px-3 py-2 rounded-lg border border-white/10 bg-white/10 text-white">
               <option value="rarity">Sort: Rarity</option>
               <option value="name">Sort: Name</option>
             </select>
+            <Link href="/claim" className="px-4 py-2 bg-white text-gray-900 rounded-lg font-semibold">Scan & Claim</Link>
           </div>
-        </div>
-        <div className="mt-4 flex gap-2">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by name…"
-            className="flex-1 px-4 py-3 rounded-lg border border-white/10 bg-white/10 text-white placeholder-white/70"
-          />
-          <Link href="/claim" className="px-4 py-3 bg-white text-gray-900 rounded-lg font-semibold">Scan & Claim</Link>
         </div>
       </div>
 
-      {/* Featured */}
-      {featured && (
-        <RevealOnView className="mt-8 cp-panel p-6">
-          <div className="flex flex-col md:flex-row gap-6 items-start">
-            <div className="flex-1">
-              <div className="cp-kicker mb-2">Featured</div>
-              <div className="max-w-md">
-                <CharacterCard c={featured} owned={ownedSet.has(featured.id)} />
-              </div>
-            </div>
-            <div className="flex-1 md:max-w-lg">
-              <div className="cp-kicker mb-2">Legendary Picks</div>
-              <CharacterCarousel items={groups.legendary.slice(0, 8) as any} />
-            </div>
-          </div>
-        </RevealOnView>
-      )}
-
-      {/* Rarity sections (carousels) */}
-      <div className="mt-6 space-y-8">
-        {groups.epic.length > 0 && (
+      {/* Grouped by rarity if All selected; otherwise show a single group */}
+      <div className="mt-6 space-y-10">
+        {(filter === 'all' || filter === 'legendary') && groups.legendary.length > 0 && (
           <RevealOnView>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-4">
+              <div className="cp-kicker">Legendary</div>
+              <span className="cp-pill">{groups.legendary.length}</span>
+            </div>
+            <div className="cp-explore-grid">
+              {groups.legendary.map((c) => (
+                <div key={c.id} className="cp-card">
+                  <CharacterCard c={c} owned={ownedSet.has(c.id)} />
+                </div>
+              ))}
+            </div>
+          </RevealOnView>
+        )}
+
+        {(filter === 'all' || filter === 'epic') && groups.epic.length > 0 && (
+          <RevealOnView>
+            <div className="flex items-center justify-between mb-4">
               <div className="cp-kicker">Epic</div>
               <span className="cp-pill">{groups.epic.length}</span>
             </div>
-            <CharacterCarousel items={groups.epic.slice(0, 12) as any} />
+            <div className="cp-explore-grid">
+              {groups.epic.map((c) => (
+                <div key={c.id} className="cp-card">
+                  <CharacterCard c={c} owned={ownedSet.has(c.id)} />
+                </div>
+              ))}
+            </div>
           </RevealOnView>
         )}
-        {groups.rare.length > 0 && (
+
+        {(filter === 'all' || filter === 'rare') && groups.rare.length > 0 && (
           <RevealOnView>
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-4">
               <div className="cp-kicker">Rare</div>
               <span className="cp-pill">{groups.rare.length}</span>
             </div>
-            <CharacterCarousel items={groups.rare.slice(0, 12) as any} />
+            <div className="cp-explore-grid">
+              {groups.rare.map((c) => (
+                <div key={c.id} className="cp-card">
+                  <CharacterCard c={c} owned={ownedSet.has(c.id)} />
+                </div>
+              ))}
+            </div>
           </RevealOnView>
         )}
-      </div>
 
-      {/* All grid (filtered) */}
-      <RevealOnView className="mt-10">
-        <div className="flex items-center justify-between mb-4">
-          <div className="cp-kicker">All Pals</div>
-          <span className="cp-pill">{filtered.length}</span>
-        </div>
-        <div className="cp-explore-grid">
-          {filtered.map((c) => (
-            <div key={c.id} className="cp-card">
-              <CharacterCard c={c} owned={ownedSet.has(c.id)} />
-            </div>
-          ))}
-        </div>
-      </RevealOnView>
+        {/* If a filter is active and yields empty, show empty state */}
+        {filtered.length === 0 && (
+          <div className="cp-panel p-8 text-center">
+            <p className="cp-muted">No matches. Try a different filter or clear your search.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
-
