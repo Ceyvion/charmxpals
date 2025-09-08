@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from 'react';
-import anime from 'animejs/lib/anime.es.js';
+import anime from 'animejs';
 
 export default function CharacterStats({ stats }: { stats: Record<string, number> }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -39,4 +39,3 @@ export default function CharacterStats({ stats }: { stats: Record<string, number
     </div>
   );
 }
-

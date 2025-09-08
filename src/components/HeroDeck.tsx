@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import anime from 'animejs/lib/anime.es.js';
+import anime from 'animejs';
 import { useRouter } from "next/navigation";
 
 type Item = {

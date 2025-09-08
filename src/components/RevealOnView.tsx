@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from 'react';
-import anime from 'animejs/lib/anime.es.js';
+import anime from 'animejs';
 
 type Props = {
   children: React.ReactNode;
@@ -48,4 +48,3 @@ export default function RevealOnView({ children, as = 'div', className, delay = 
     </Tag>
   );
 }
-
