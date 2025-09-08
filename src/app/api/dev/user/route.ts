@@ -40,3 +40,5 @@ export async function GET(request: NextRequest) {
     return Response.json({ success: false, error: 'Failed to create or load dev user' }, { status: 500 });
   }
 }
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;

@@ -34,4 +34,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'Login failed' }, { status: 500 });
   }
 }
-
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;

@@ -40,4 +40,5 @@ export async function POST(request: NextRequest) {
     return Response.json({ success: false, error: 'Failed to verify code' }, { status: 500 });
   }
 }
-
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
