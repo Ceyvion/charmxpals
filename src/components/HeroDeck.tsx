@@ -57,6 +57,7 @@ export default function HeroDeck({ items }: { items: Item[] }) {
             <div className="cap relative">
               <div className="absolute inset-0" style={{ backgroundImage: 'var(--cp-gradient)', opacity: overlayOpacity(i) }} />
               <div className="absolute inset-0 bg-grid-overlay opacity-20" />
+              <div className="sheen" />
               <div className="absolute top-3 left-3 cp-chip text-xs">{c.rarity && c.rarity >= 5 ? 'Legendary' : c.rarity && c.rarity >=4 ? 'Epic' : 'Rare'}</div>
               <div className="absolute top-3 right-3 cp-chip text-xs">{((c.rarity ?? 3) + 2.7).toFixed(1)}</div>
               {c.owned && <div className="absolute bottom-3 left-3 cp-chip text-xs">Owned</div>}
