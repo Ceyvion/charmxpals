@@ -1,0 +1,171 @@
+{
+  "version": "2025-08-18",
+  "vision": "Build a state-of-the-art physical–digital collectibles platform with secure claim, social loops, and engaging mini-games.",
+  "now": [
+    {
+      "id": "A1",
+      "title": "Secure claim flow v1 (server-first)",
+      "detail": "Persist challenge nonces with TTL, verify HMAC using per-unit salt, hash codes at rest, and atomically bind ownership.",
+      "status": "done",
+      "area": "backend"
+    },
+    {
+      "id": "A1.1",
+      "title": "Claim UI integration",
+      "detail": "Wire claim page to start/complete APIs with client HMAC signing and success state.",
+      "status": "done",
+      "area": "frontend"
+    },
+    {
+      "id": "A1.7",
+      "title": "Verify endpoint + UI",
+      "detail": "Add /api/claim/verify and enhance claim page with verify-only flow and design polish.",
+      "status": "done",
+      "area": "fullstack"
+    },
+    {
+      "id": "A1.2",
+      "title": "Dev user endpoint",
+      "detail": "Temporary GET /api/dev/user to create/fetch a demo user until auth lands.",
+      "status": "done",
+      "area": "infra"
+    },
+    {
+      "id": "A1.3",
+      "title": "Character page SSR",
+      "detail": "Server component for /character/[id] loading from Prisma with not-found UI.",
+      "status": "done",
+      "area": "frontend"
+    },
+    {
+      "id": "A0",
+      "title": "No-DB preview mode",
+      "detail": "In-memory repository fallback for claim + character routes to run without Postgres.",
+      "status": "done",
+      "area": "infra"
+    },
+    {
+      "id": "A3.1",
+      "title": "DX: Docker + env example",
+      "detail": "Add docker-compose Postgres, .env.example, npm DB scripts, README quickstart.",
+      "status": "done",
+      "area": "infra"
+    },
+    {
+      "id": "A1.4",
+      "title": "Basic rate limiting",
+      "detail": "In-memory limiter for claim and dev-user endpoints, 429 on abuse.",
+      "status": "done",
+      "area": "security"
+    },
+    {
+      "id": "A1.5",
+      "title": "Explore page listing",
+      "detail": "List characters from repo and link to SSR character pages.",
+      "status": "done",
+      "area": "frontend"
+    },
+    {
+      "id": "A1.6",
+      "title": "Brand refresh v1",
+      "detail": "Youthful hero, font swap to Space Grotesk, gradient accents, nav tweaks.",
+      "status": "done",
+      "area": "frontend"
+    },
+    {
+      "id": "A1.8",
+      "title": "Explore: carousel redesign",
+      "detail": "Dark glass app frame, grid backdrop, tilted card carousel wired to character data.",
+      "status": "done",
+      "area": "frontend"
+    },
+    {
+      "id": "A1.9",
+      "title": "UX cohesion + Inventory v1",
+      "detail": "Unify header/footer across pages, set dev user cookie, add /me (My Pals) inventory, and surface ownership badges in listings.",
+      "status": "done",
+      "area": "frontend"
+    },
+    {
+      "id": "A1.10",
+      "title": "3D viewer on character & inventory",
+      "detail": "Embed client-only 3D model viewer on /character/[id] and /me entries using existing component and default model mapping.",
+      "status": "done",
+      "area": "frontend"
+    },
+    {
+      "id": "A1.11",
+      "title": "Dev login + profile",
+      "detail": "Add /login dev credentials (admin/admin), set cp_user cookie, and create /u/[handle] profile page.",
+      "status": "done",
+      "area": "infra"
+    }
+    {
+      "id": "A2",
+      "title": "Auth: passwordless email (magic link)",
+      "detail": "Integrate Auth.js (NextAuth) email provider; store users; session in RSC.",
+      "status": "todo",
+      "area": "auth"
+    },
+    {
+      "id": "A3",
+      "title": "Database migrations baseline",
+      "detail": "Run prisma migrate, seed minimal sample units, and document env setup.",
+      "status": "todo",
+      "area": "infra"
+    }
+  ],
+  "next": [
+    {
+      "id": "B1",
+      "title": "Server Actions for claim + ownership",
+      "detail": "Move claim finalize to a Server Action and show optimistic UI.",
+      "status": "todo",
+      "area": "fullstack"
+    },
+    {
+      "id": "B2",
+      "title": "Invite flow v1",
+      "detail": "Create invites table APIs + UI; grant cosmetics to inviter/recipient.",
+      "status": "todo",
+      "area": "product"
+    },
+    {
+      "id": "B3",
+      "title": "Anti-abuse guards",
+      "detail": "Add per-IP and per-user rate limits on claim routes; basic anomaly logging.",
+      "status": "todo",
+      "area": "security"
+    }
+  ],
+  "later": [
+    {
+      "id": "C1",
+      "title": "Mini-game polish + score submit",
+      "detail": "Runner loop, collision, score persistence, and leaderboards.",
+      "status": "todo",
+      "area": "gameplay"
+    },
+    {
+      "id": "C2",
+      "title": "Share cards (OG images)",
+      "detail": "Dynamic OG image endpoint per character and result.",
+      "status": "todo",
+      "area": "growth"
+    },
+    {
+      "id": "C3",
+      "title": "CI: typecheck, lint, build",
+      "detail": "GitHub Actions workflow for PRs to run tsc, eslint, next build.",
+      "status": "todo",
+      "area": "dx"
+    },
+    {
+      "id": "C4",
+      "title": "Tests: Vitest/Jest baseline",
+      "detail": "Unit tests for src/lib crypto + API claim flow via memory repo.",
+      "status": "done",
+      "area": "quality"
+    }
+  ]
+}
