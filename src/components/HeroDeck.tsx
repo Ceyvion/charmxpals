@@ -84,6 +84,10 @@ function FlyOverlay({ state, onClose }: { state: FlyState; onClose: () => void }
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    // Lock scroll during animation
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     // Set initial position and size
     Object.assign(el.style, {
       position: 'fixed',
@@ -91,20 +95,23 @@ function FlyOverlay({ state, onClose }: { state: FlyState; onClose: () => void }
       top: `${from.top}px`,
       width: `${from.width}px`,
       height: `${from.height}px`,
-      transform: 'translate(0px, 0px) scale(1)',
+      transform: 'translate3d(0px, 0px, 0px) scale(1)',
       transformOrigin: 'center center',
       zIndex: '60',
       willChange: 'transform',
     });
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
+    const vv = (window as any).visualViewport as VisualViewport | undefined;
+    const vw = vv?.width ?? window.innerWidth;
+    const vh = vv?.height ?? window.innerHeight;
     const endW = Math.min(420, Math.max(280, Math.round(vw * 0.8)));
     const scale = endW / from.width;
-    const endH = from.height * scale;
-    const endLeft = (vw - endW) / 2;
-    const endTop = (vh - endH) / 2;
-    const dx = endLeft - from.left;
-    const dy = endTop - from.top;
+    // Compute delta to center the element in the viewport by translating from its current center
+    const centerX = (vw / 2) + (vv?.offsetLeft ?? 0);
+    const centerY = (vh / 2) + (vv?.offsetTop ?? 0);
+    const fromCenterX = from.left + from.width / 2;
+    const fromCenterY = from.top + from.height / 2;
+    const dx = centerX - fromCenterX;
+    const dy = centerY - fromCenterY;
 
     // Dim backdrop
     const dim = document.createElement('div');
@@ -138,7 +145,10 @@ function FlyOverlay({ state, onClose }: { state: FlyState; onClose: () => void }
         rotateY: '0deg',
         duration: 320,
         easing: 'easeInCubic',
-        complete: onClose,
+        complete: () => {
+          onClose();
+          document.body.style.overflow = prevOverflow;
+        },
       });
       window.removeEventListener('keydown', onKey);
     }
@@ -146,6 +156,7 @@ function FlyOverlay({ state, onClose }: { state: FlyState; onClose: () => void }
     return () => {
       try { dim.remove(); } catch {}
       window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
     };
   }, [from, onClose]);
 

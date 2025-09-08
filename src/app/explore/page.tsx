@@ -16,22 +16,29 @@ export default async function ExplorePage() {
   return (
     <div className="min-h-screen py-12">
       <div className="cp-container">
-        <div className="text-center max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 mb-4">
-            <span className="cp-chip">Season One • Free Access</span>
+        <div className="cp-panel p-8">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+            <div>
+              <div className="cp-kicker mb-2">Explore</div>
+              <h1 className="text-4xl md:text-5xl font-extrabold font-display leading-tight">Meet the CharmPals</h1>
+              <p className="mt-2 cp-muted text-base md:text-lg max-w-prose">Explore our carefully crafted squad. Collect IRL, flex online, and jump into mini‑games.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="cp-chip">All</span>
+              <span className="cp-chip">Legendary</span>
+              <span className="cp-chip">Epic</span>
+              <span className="cp-chip">Rare</span>
+              <Link href="/claim" className="px-4 py-2 bg-white text-gray-900 rounded-lg font-semibold">Scan & Claim</Link>
+            </div>
           </div>
-          <h1 className="text-4xl md:text-6xl font-extrabold font-display leading-tight">
-            Meet the CharmPals
-          </h1>
-          <p className="mt-3 cp-muted text-base md:text-lg">
-            Explore our carefully crafted squad. Collect IRL, flex online, and jump into mini‑games.
-          </p>
         </div>
 
         {characters.length > 0 ? (
-          <div className="mt-10 cp-explore-grid">
+          <div className="mt-8 cp-explore-grid">
             {characters.map((c) => (
-              <CharacterCard key={c.id} c={c} owned={ownedIds.has(c.id)} />
+              <div key={c.id} className="cp-card">
+                <CharacterCard c={c} owned={ownedIds.has(c.id)} />
+              </div>
             ))}
           </div>
         ) : (
