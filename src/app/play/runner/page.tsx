@@ -3,11 +3,11 @@
 import Link from 'next/link';
 import Runner from '@/components/Runner';
 import TopRuns from '@/components/TopRuns';
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { TinyAudioOnce } from '@/lib/audio';
 
-export default function RunnerGame() {
+function RunnerGameInner() {
   const [stats, setStats] = useState<Record<string, number> | null>(null);
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [lastScore, setLastScore] = useState<{ score: number; coins: number } | null>(null);
@@ -62,3 +62,14 @@ export default function RunnerGame() {
     </div>
   );
 }
+
+export default function RunnerGame() {
+  return (
+    <Suspense fallback={<div className="min-h-screen grid place-items-center text-white/80">Loading…</div>}>
+      <RunnerGameInner />
+    </Suspense>
+  );
+}
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
