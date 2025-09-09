@@ -143,7 +143,7 @@
       "id": "C1",
       "title": "Mini-game polish + score submit",
       "detail": "Runner loop, collision, score persistence, and leaderboards.",
-      "status": "todo",
+      "status": "done",
       "area": "gameplay"
     },
     {

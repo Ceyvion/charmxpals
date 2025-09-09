@@ -4,7 +4,13 @@ import { useEffect, useRef, useState } from 'react';
 
 type GameState = 'menu' | 'playing' | 'paused' | 'over';
 
-export default function Runner() {
+type RunnerProps = {
+  stats?: Record<string, number> | null;
+  audio?: { enabled: boolean; playJump?: () => void; playCoin?: () => void } | null;
+  onGameOver?: (finalScore: number, coins: number) => void;
+};
+
+export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -14,7 +20,7 @@ export default function Runner() {
 
   const world = useRef({
     t: 0,
-    speed: 240, // px/s base
+    speed: 240, // px/s base (will be adjusted by stats)
     gravity: 1800,
     ground: 0,
     lastSpawn: 0,
@@ -22,6 +28,7 @@ export default function Runner() {
     obstacles: [] as Array<{ x:number;y:number;w:number;h:number; kind:'ground'|'flying' }>,
     coins: [] as Array<{ x:number;y:number;r:number }>,
     player: { x: 0, y: 0, w: 38, h: 44, vy: 0, onGround: true, sliding:false, slideUntil:0, doubleLeft:1, invulnUntil:0 },
+    tuning: { baseSpeed: 260, slideMs: 420, invulnMs: 800 },
   });
 
   // Resize canvas to container and devicePixelRatio
@@ -49,7 +56,15 @@ export default function Runner() {
 
   const reset = () => {
     const w = world.current;
-    w.t = 0; w.speed = 260; w.lastSpawn = 0; w.lastCoinSpawn = 0;
+    // derive tuning from stats (defaults center around 50)
+    const spd = Math.max(0, Math.min(100, Number((stats as any)?.speed ?? (stats as any)?.Speed ?? (stats as any)?.SPEED ?? (stats as any)?.['Speed'] ?? 50)));
+    const intl = Math.max(0, Math.min(100, Number((stats as any)?.intelligence ?? (stats as any)?.Intelligence ?? (stats as any)?.INTELLIGENCE ?? (stats as any)?.['Intelligence'] ?? 50)));
+    const def = Math.max(0, Math.min(100, Number((stats as any)?.defense ?? (stats as any)?.Defense ?? (stats as any)?.DEFENSE ?? (stats as any)?.['Defense'] ?? 50)));
+    w.tuning.baseSpeed = Math.round(220 + spd * 0.8); // 220..300
+    w.tuning.invulnMs = Math.round(700 + intl * 6);   // 700..1300
+    w.tuning.slideMs = Math.round(350 + def * 4);     // 350..750
+
+    w.t = 0; w.speed = w.tuning.baseSpeed; w.lastSpawn = 0; w.lastCoinSpawn = 0;
     w.obstacles = []; w.coins = [];
     w.player.y = 0; w.player.vy = 0; w.player.onGround = true; w.player.sliding = false; w.player.doubleLeft = 1; w.player.invulnUntil = 0;
     setScore(0); setCoins(0);
@@ -58,14 +73,14 @@ export default function Runner() {
   const jump = () => {
     if (state !== 'playing') return;
     const p = world.current.player;
-    if (p.onGround) { p.vy = -580; p.onGround = false; }
+    if (p.onGround) { p.vy = -580; p.onGround = false; audio?.enabled && audio?.playJump?.(); }
     else if (p.doubleLeft > 0) { p.vy = -520; p.doubleLeft -= 1; }
   };
   const slide = () => {
     if (state !== 'playing') return;
     const p = world.current.player;
     if (!p.sliding && p.onGround) {
-      p.sliding = true; p.slideUntil = world.current.t + 420; // ms
+      p.sliding = true; p.slideUntil = world.current.t + world.current.tuning.slideMs; // ms (defense)
     }
   };
 
@@ -148,12 +163,12 @@ export default function Runner() {
         for (const o of w.obstacles) {
           if (nowMs < w.player.invulnUntil) continue;
           const hit = !(px+pw < o.x || px > o.x+o.w || py+ph < o.y || py > o.y+o.h);
-          if (hit) { setState('over'); w.player.invulnUntil = nowMs + 800; }
+          if (hit) { setState('over'); w.player.invulnUntil = nowMs + w.tuning.invulnMs; onGameOver?.(score, coins); }
         }
         // coin collect
         w.coins = w.coins.filter(co => {
           const hit = !(px+pw < co.x-co.r || px > co.x+co.r || py+ph < co.y-co.r || py > co.y+co.r);
-          if (hit) setCoins((c)=>c+1);
+          if (hit) { setCoins((c)=>c+1); audio?.enabled && audio?.playCoin?.(); }
           return !hit;
         });
 
@@ -207,6 +222,12 @@ export default function Runner() {
       // HUD
       ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.font = '700 16px Inter, system-ui, sans-serif'; ctx.fillText(`Score ${score}`, 12, 22);
       ctx.fillText(`Coins ${coins}`, 12, 42);
+      // show stat hooks when available
+      if (stats) {
+        ctx.font = '500 12px Inter, system-ui, sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.fillText(`Base ${world.current.tuning.baseSpeed}px/s • Slide ${world.current.tuning.slideMs}ms • Invuln ${world.current.tuning.invulnMs}ms`, 12, 62);
+      }
       if (state !== 'playing') {
         ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(0,0,W,H);
         ctx.fillStyle = 'white'; ctx.textAlign = 'center';
@@ -231,4 +252,3 @@ export default function Runner() {
     </div>
   );
 }
-
