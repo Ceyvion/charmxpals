@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { hmacSHA256Hex } from '@/lib/webcrypto';
 import CharacterReveal from '@/components/CharacterReveal';
@@ -20,10 +20,19 @@ export default function ClaimPage() {
   const [stage, setStage] = useState<'idle' | 'verifying' | 'starting' | 'signing' | 'completing' | 'success' | 'error'>('idle');
   const [revealOpen, setRevealOpen] = useState(false);
   const [scanOpen, setScanOpen] = useState(false);
+  const [preview, setPreview] = useState<null | { id: string; name: string; rarity: number; artRefs: Record<string, string>; stats: Record<string, number> }>(null);
 
   const QrScanner = useMemo(() => dynamic(() => import('@/components/QrScanner'), { ssr: false }), []);
 
   const codeNormalized = useMemo(() => code.trim(), [code]);
+
+  // Restore last code for convenience (dev quality-of-life)
+  useEffect(() => {
+    try { const last = localStorage.getItem('cp:last_claim_code'); if (last) setCode(last); } catch {}
+  }, []);
+  useEffect(() => {
+    try { if (code) localStorage.setItem('cp:last_claim_code', code); } catch {}
+  }, [code]);
 
   async function verifyCode() {
     setError(null);
@@ -38,8 +47,20 @@ export default function ClaimPage() {
       if (!json.success) throw new Error(json.error || 'Verification failed');
       const ok = json.status === 'available';
       setVerifyStatus({ ok, message: ok ? 'Valid and available to claim' : `Code status: ${json.status}` });
+      // Fetch a lightweight preview if available
+      if (ok && json.characterId) {
+        try {
+          const cRes = await fetch(`/api/character/${json.characterId}`);
+          const cJson = (await cRes.json()) as ApiResult<{ character: { id: string; name: string; rarity: number; artRefs: Record<string,string>; stats: Record<string, number> } }>;
+          if (cJson.success) setPreview(cJson.character);
+          else setPreview(null);
+        } catch { setPreview(null); }
+      } else {
+        setPreview(null);
+      }
     } catch (e: any) {
       setVerifyStatus({ ok: false, message: e?.message || 'Verification error' });
+      setPreview(null);
     }
   }
 
@@ -113,10 +134,21 @@ export default function ClaimPage() {
     <div className="min-h-screen relative py-16 px-4">
       <div className="absolute inset-0 -z-10 opacity-60 pointer-events-none bg-hero-radial" />
       <div className="max-w-xl w-full mx-auto">
-        <div className="cp-panel supports-[backdrop-filter]:bg-white/10 rounded-2xl shadow-sm">
-          <div className="border-b border-white/10 p-6 text-center">
+        <div className="cp-panel supports-[backdrop-filter]:bg-white/10 rounded-2xl shadow-sm overflow-hidden">
+          <div className="relative border-b border-white/10 p-6 text-center">
             <h1 className="text-3xl font-extrabold tracking-tight font-display text-white">Claim Your Character</h1>
             <p className="text-gray-300 mt-2">Enter the code from your physical charm to unlock the digital twin.</p>
+            {/* Progress bar */}
+            {stage !== 'idle' && (
+              <div className="absolute left-0 right-0 bottom-0 h-1 bg-white/10">
+                {(() => {
+                  const order = ['verifying','starting','signing','completing','success'] as const;
+                  const idx = Math.max(0, order.indexOf(stage as any));
+                  const pct = Math.min(100, ((idx + (stage==='success'?1:0)) / order.length) * 100);
+                  return <div className="h-full bg-white/80 transition-all" style={{ width: `${pct}%` }} />;
+                })()}
+              </div>
+            )}
           </div>
 
           <form className="p-6 space-y-5" onSubmit={handleSubmit}>
@@ -145,6 +177,11 @@ export default function ClaimPage() {
                   value={code}
                   onChange={(e) => setCode(e.target.value.toUpperCase())}
                   disabled={loading}
+                  autoFocus
+                  autoCapitalize="characters"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  enterKeyHint={verifyOnly ? 'done' : 'go'}
                   className="flex-1 px-4 py-3 rounded-xl border border-white/10 bg-white/10 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/30"
                   placeholder="e.g., CHARM-XPAL-001"
                 />
@@ -154,7 +191,7 @@ export default function ClaimPage() {
                   disabled={loading}
                   className="px-4 py-3 rounded-xl border border-white/10 bg-white/10 text-white font-semibold hover:bg-white/20"
                 >
-                  Scan
+                  Scan QR
                 </button>
                 <button
                   type="button"
@@ -163,6 +200,14 @@ export default function ClaimPage() {
                   className="px-4 py-3 rounded-xl border border-white/10 bg-white/10 text-white font-semibold hover:bg-white/20 disabled:opacity-50"
                 >
                   Verify
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => { try { const t = await navigator.clipboard.readText(); if (t) setCode(String(t).trim().toUpperCase()); } catch {} }}
+                  disabled={loading}
+                  className="px-4 py-3 rounded-xl border border-white/10 bg-white/10 text-white font-semibold hover:bg-white/20 disabled:opacity-50"
+                >
+                  Paste
                 </button>
               </div>
               <div className="mt-2 flex flex-wrap gap-2">
@@ -180,8 +225,21 @@ export default function ClaimPage() {
             </div>
 
             {verifyStatus && (
-              <div className={`text-sm px-3 py-2 rounded-md border ${verifyStatus.ok ? 'text-green-700 bg-green-50 border-green-200' : 'text-amber-700 bg-amber-50 border-amber-200'}`}>
+              <div className={`text-sm px-3 py-2 rounded-md border ${verifyStatus.ok ? 'text-green-300 bg-green-900/20 border-green-700/40' : 'text-amber-300 bg-amber-900/20 border-amber-700/40'}`}>
                 {verifyStatus.message}
+              </div>
+            )}
+
+            {preview && (
+              <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                <div className="text-sm text-white/70 mb-2">You’re about to claim</div>
+                <div className="flex items-center gap-4">
+                  <div className="h-16 w-16 rounded-lg bg-white/10 border border-white/10 overflow-hidden bg-center bg-cover" style={{ backgroundImage: preview.artRefs?.thumbnail ? `url(${preview.artRefs.thumbnail})` : undefined }} />
+                  <div className="flex-1">
+                    <div className="text-white font-semibold">{preview.name}</div>
+                    <div className="text-white/70 text-sm">Rarity {preview.rarity} • {Object.keys(preview.stats||{}).length} stats</div>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -201,6 +259,7 @@ export default function ClaimPage() {
                 disabled={loading || !codeNormalized}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-gray-900 font-bold hover:bg-gray-100 disabled:opacity-60"
               >
+                {loading && <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-gray-900/30 border-t-gray-900" />}
                 {loading ? 'Working…' : verifyOnly ? 'Verify Code' : 'Claim Character'}
               </button>
             </div>
