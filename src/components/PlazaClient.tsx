@@ -155,7 +155,7 @@ export default function PlazaClient({ height = 420 }: PlazaClientProps) {
       const ox = W / 2, oy = H / 2;
 
       // draw players
-      for (const [, p] of players) {
+      players.forEach((p) => {
         const px = ox + p.pos.x * scale;
         const py = oy + p.pos.y * scale;
         ctx.fillStyle = p.id === youId ? '#FF8EC9' : '#7FE6FF';
@@ -166,7 +166,7 @@ export default function PlazaClient({ height = 420 }: PlazaClientProps) {
         // label
         ctx.fillStyle = '#301243'; ctx.font = '10px system-ui'; ctx.textAlign = 'center';
         ctx.fillText(p.displayName || p.id.slice(0, 4), px, py - 12);
-      }
+      });
       ctx.restore();
       raf = requestAnimationFrame(render);
     };
