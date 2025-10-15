@@ -42,13 +42,17 @@ export default function CharacterShowcaseCard({ name, rarity, image, rating }: P
 
   return (
     <div className="cp-parallax">
-      <div ref={ref} className="relative rounded-2xl border border-white/10 bg-white/5 overflow-hidden shadow-2xl cp-parallax-card" style={{ transform: tCard }}>
+      <div
+        ref={ref}
+        className="relative rounded-2xl border border-white/10 bg-white/5 overflow-hidden cp-parallax-card"
+        style={{ transform: tCard, boxShadow: '0 28px 70px rgba(198,165,255,0.26), 0 14px 34px rgba(255,159,213,0.22)' }}
+      >
         <div className="relative h-[380px] md:h-[460px] overflow-hidden">
           {hasImage ? (
             <>
               <img src={image!} alt={name} className="absolute inset-0 w-full h-full object-cover cp-media-mask cp-parallax-img" style={{ transform: tImg }} />
               <div className="absolute inset-0 cp-inner-shadow pointer-events-none" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/0 to-black/20" />
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(48,18,67,0.24), rgba(48,18,67,0.05))' }} />
             </>
           ) : (
             <>
@@ -58,13 +62,13 @@ export default function CharacterShowcaseCard({ name, rarity, image, rating }: P
           )}
 
           {/* Glow shine on hover */}
-          <div className="pointer-events-none absolute -inset-[20%] opacity-0 hover:opacity-40 transition-opacity" style={{ background: 'radial-gradient(600px 300px at 50% 0%, rgba(255,255,255,0.25), rgba(255,255,255,0))' }} />
+          <div className="pointer-events-none absolute -inset-[20%] opacity-0 hover:opacity-45 transition-opacity" style={{ background: 'radial-gradient(600px 300px at 50% 0%, rgba(255,159,213,0.38), rgba(127,234,255,0))' }} />
 
           {/* Badges */}
           <div className="absolute top-4 left-4 cp-chip text-xs font-bold">{meta.label}</div>
           <div className="absolute top-4 right-4 cp-chip text-xs font-bold">{score}</div>
           <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
-            <div className="text-white font-display text-3xl md:text-4xl font-extrabold drop-shadow-[0_3px_8px_rgba(0,0,0,0.6)]">{name}</div>
+            <div className="text-white font-display text-3xl md:text-4xl font-extrabold drop-shadow-[0_6px_18px_rgba(255,159,213,0.55)]">{name}</div>
           </div>
         </div>
       </div>

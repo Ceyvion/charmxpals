@@ -117,7 +117,7 @@ function FlyOverlay({ state, onClose }: { state: FlyState; onClose: () => void }
     // Dim backdrop
     const dim = document.createElement('div');
     Object.assign(dim.style, {
-      position: 'fixed', inset: '0', background: 'rgba(0,0,0,0.6)', opacity: '0', zIndex: '50',
+      position: 'fixed', inset: '0', background: 'rgba(48,18,67,0.22)', opacity: '0', zIndex: '50', backdropFilter: 'blur(14px)',
     } as CSSStyleDeclaration);
     document.body.appendChild(dim);
     anime({ targets: dim, opacity: [0, 1], duration: 220, easing: 'easeOutQuad' });

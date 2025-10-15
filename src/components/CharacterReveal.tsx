@@ -48,7 +48,8 @@ export default function CharacterReveal({ characterId, open, onClose }: { charac
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+          className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-[14px]"
+          style={{ background: 'linear-gradient(160deg, rgba(255,246,255,0.92), rgba(240,252,255,0.9))' }}
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
@@ -58,7 +59,7 @@ export default function CharacterReveal({ characterId, open, onClose }: { charac
             className="relative w-[min(96vw,720px)] overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur"
           >
             {/* Portal glow */}
-            <div className="absolute -inset-8 -z-10 opacity-50" style={{ backgroundImage: 'radial-gradient(600px 300px at 50% -10%, #22d3ee 0%, transparent 60%), radial-gradient(600px 300px at 50% 110%, #f59e0b 0%, transparent 60%)' }} />
+            <div className="absolute -inset-8 -z-10 opacity-50" style={{ backgroundImage: 'radial-gradient(600px 300px at 50% -10%, rgba(255,159,213,0.55) 0%, transparent 60%), radial-gradient(600px 300px at 50% 110%, rgba(127,234,255,0.45) 0%, transparent 60%)' }} />
 
             <div className="p-6 border-b border-white/10 text-center">
               <h2 className="text-2xl font-extrabold font-display text-white">Character Unlocked</h2>
@@ -78,8 +79,8 @@ export default function CharacterReveal({ characterId, open, onClose }: { charac
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.05 }}
-                    className="aspect-[4/3] rounded-xl border border-white/10 bg-gradient-to-br from-cyan-200 via-amber-200 to-rose-200 bg-cover bg-center"
-                    style={{ backgroundImage: character.artRefs?.full || character.artRefs?.thumbnail ? `linear-gradient(to bottom right, rgba(34,211,238,0.35), rgba(245,158,11,0.35)), url(${character.artRefs.full || character.artRefs.thumbnail})` : undefined }}
+                    className="aspect-[4/3] rounded-xl border border-white/10 bg-gradient-to-br from-[#FFE4FB] via-[#FFF4D6] to-[#D4F6FF] bg-cover bg-center"
+                    style={{ backgroundImage: character.artRefs?.full || character.artRefs?.thumbnail ? `linear-gradient(to bottom right, rgba(255,159,213,0.45), rgba(127,234,255,0.4)), url(${character.artRefs.full || character.artRefs.thumbnail})` : undefined }}
                   />
                   <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.12 }}>
                     <div className="text-sm text-white/70">Name</div>

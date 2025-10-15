@@ -181,22 +181,22 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
       ctx.scale(dpr, dpr);
       // sky
       const g = ctx.createLinearGradient(0, 0, 0, H);
-      g.addColorStop(0, 'rgba(16,20,30,0.9)');
-      g.addColorStop(1, 'rgba(24,28,40,0.9)');
+      g.addColorStop(0, 'rgba(255,213,249,0.95)');
+      g.addColorStop(1, 'rgba(178,233,255,0.92)');
       ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
       // parallax hills
       const baseX = (w.t * 0.04) % (W*2);
-      ctx.fillStyle = 'rgba(255,255,255,0.04)';
+      ctx.fillStyle = 'rgba(198,165,255,0.22)';
       for (let i=-1;i<3;i++) {
         const x = -baseX + i*W*0.9; const y = H*0.75;
         ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x+W*0.2, y-90, x+W*0.45, y);
         ctx.quadraticCurveTo(x+W*0.7, y+60, x+W*0.95, y); ctx.lineTo(x+W, H); ctx.lineTo(x, H); ctx.closePath(); ctx.fill();
       }
       // ground line
-      ctx.fillStyle = 'rgba(255,255,255,0.08)';
+      ctx.fillStyle = 'rgba(255,159,213,0.45)';
       ctx.fillRect(0, w.ground+1, W, 2);
       // grid marks
-      ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1; ctx.beginPath();
+      ctx.strokeStyle = 'rgba(255,159,213,0.2)'; ctx.lineWidth = 1; ctx.beginPath();
       for (let x=0;x<W;x+=24) { ctx.moveTo(x, w.ground); ctx.lineTo(x, H); }
       ctx.stroke();
 
@@ -211,26 +211,28 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
 
       // player
       const px = w.player.x, py = (w.ground - (w.player.sliding ? 28 : w.player.h)) - w.player.y;
-      ctx.fillStyle = 'white';
+      ctx.fillStyle = '#FFB6E8';
       ctx.save();
       ctx.translate(px, py);
+      ctx.shadowColor = 'rgba(255,159,213,0.5)'; ctx.shadowBlur = 12;
       ctx.fillRect(0,0,w.player.w, w.player.sliding ? 28 : w.player.h);
+      ctx.shadowBlur = 0;
       // face
-      ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(8,8,6,6); ctx.fillRect(22,8,6,6);
+      ctx.fillStyle = 'rgba(48,18,67,0.55)'; ctx.fillRect(8,8,6,6); ctx.fillRect(22,8,6,6);
       ctx.restore();
 
       // HUD
-      ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.font = '700 16px Inter, system-ui, sans-serif'; ctx.fillText(`Score ${score}`, 12, 22);
+      ctx.fillStyle = '#301243'; ctx.font = '700 16px Inter, system-ui, sans-serif'; ctx.fillText(`Score ${score}`, 12, 22);
       ctx.fillText(`Coins ${coins}`, 12, 42);
       // show stat hooks when available
       if (stats) {
         ctx.font = '500 12px Inter, system-ui, sans-serif';
-        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.fillStyle = 'rgba(48,18,67,0.6)';
         ctx.fillText(`Base ${world.current.tuning.baseSpeed}px/s • Slide ${world.current.tuning.slideMs}ms • Invuln ${world.current.tuning.invulnMs}ms`, 12, 62);
       }
       if (state !== 'playing') {
-        ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(0,0,W,H);
-        ctx.fillStyle = 'white'; ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.fillRect(0,0,W,H);
+        ctx.fillStyle = '#301243'; ctx.textAlign = 'center';
         ctx.font = '800 28px Inter, system-ui, sans-serif';
         ctx.fillText(state==='menu'?'Endless Runner':'Game Over', W/2, H/2 - 24);
         ctx.font = '400 14px Inter, system-ui, sans-serif';

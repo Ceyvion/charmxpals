@@ -69,7 +69,7 @@ export default function CharacterCard({ c, owned = false }: { c: CharacterBasic;
                 style={{ transform: imgTransform }}
               />
               <div className="absolute inset-0 cp-inner-shadow pointer-events-none" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/0 to-black/20 pointer-events-none" />
+              <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(to top, rgba(48,18,67,0.2), rgba(48,18,67,0.04))' }} />
             </>
           ) : (
             <>
