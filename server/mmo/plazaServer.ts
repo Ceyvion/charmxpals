@@ -86,16 +86,16 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
 
   const broadcast = (obj: unknown, excludeId?: string) => {
     const msg = JSON.stringify(obj);
-    for (const [id, client] of clients) {
-      if (excludeId && id === excludeId) continue;
-      if (client.ws.readyState === WebSocket.OPEN) {
+    clients.forEach((client, id) => {
+      if (excludeId && id === excludeId) return;
+      if (client.ws.readyState === 1) {
         try {
           client.ws.send(msg);
-        } catch (err) {
+        } catch {
           // ignore send errors (socket will close eventually)
         }
       }
-    }
+    });
   };
 
   const emitPlayerCount = () => {
@@ -164,7 +164,7 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
 
     broadcast({ type: 'event', event: 'join', data: { player: you } }, id);
 
-    ws.on('message', (raw) => {
+    ws.on('message', (raw: unknown) => {
       let msg: any;
       try {
         msg = JSON.parse(String(raw));
@@ -224,13 +224,13 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
     last = now;
 
     const speed = 2.8;
-    for (const [, client] of clients) {
+    clients.forEach((client) => {
       const dx = client.axes.x * speed * (dt / 1000);
       const dy = client.axes.y * speed * (dt / 1000);
       client.pos.x = clamp(client.pos.x + dx, -10, 10);
       client.pos.y = clamp(client.pos.y + dy, -6, 6);
       if (dx || dy) client.rot = Math.atan2(dy, dx) || client.rot;
-    }
+    });
 
     if (now - lastSnapshot >= snapshotMs) {
       lastSnapshot = now;
@@ -259,11 +259,13 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
     clearInterval(tickHandle);
 
     await new Promise<void>((resolve) => {
-      for (const [, client] of clients) {
+      clients.forEach((client) => {
         try {
           client.ws.close(1001, 'server_shutdown');
-        } catch {/* noop */}
-      }
+        } catch {
+          /* noop */
+        }
+      });
       setTimeout(resolve, 20);
     });
 
@@ -286,4 +288,3 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
     events,
   };
 }
-

@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
   // Gate by ownership (dev can bypass in non-prod)
   const owns = await repo.listOwnershipsByUser(user.id);
-  const ownedCharIds = [...new Set(owns.map((o) => o.characterId))];
+  const ownedCharIds = Array.from(new Set(owns.map((o) => o.characterId)));
   if (!devAllow && ownedCharIds.length === 0) {
     return NextResponse.json({ ok: false, error: 'no_ownership' }, { status: 403 });
   }
@@ -50,4 +50,3 @@ export async function GET(request: NextRequest) {
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-

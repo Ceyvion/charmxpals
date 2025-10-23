@@ -24,9 +24,9 @@ const KEYS = redisKeys;
 
 type StoredUser = User & { createdAt: string; updatedAt: string };
 type StoredCharacter = Character & { createdAt: string; order: number };
-type StoredUnit = PhysicalUnit & { createdAt: string; claimedAt: string | null };
+type StoredUnit = Omit<PhysicalUnit, 'claimedAt'> & { createdAt: string; claimedAt: string | null };
 type StoredOwnership = { id: string; userId: string; characterId: string; source: string; cosmetics: string[]; createdAt: string };
-type StoredChallenge = ClaimChallenge & { createdAt: string; expiresAt: string };
+type StoredChallenge = Omit<ClaimChallenge, 'expiresAt'> & { createdAt: string; expiresAt: string };
 
 const redis = getRedis();
 
@@ -43,7 +43,7 @@ async function ensureReady(): Promise<void> {
 }
 
 async function seedIfNeeded(client: Redis): Promise<void> {
-  const alreadySeeded = await client.get<string | null>(KEYS.seeded);
+  const alreadySeeded = (await client.get(KEYS.seeded)) as string | null;
   if (alreadySeeded) return;
 
   const secret = process.env.CODE_HASH_SECRET;
@@ -297,7 +297,7 @@ function ownershipKey(userId: string): string {
 }
 
 async function readUser(id: string): Promise<User | null> {
-  const raw = await redis.hget<string>(KEYS.users, id);
+  const raw = (await redis.hget(KEYS.users, id)) as string | null;
   if (!raw) return null;
   const stored = JSON.parse(raw) as StoredUser;
   return { id: stored.id, email: stored.email, handle: stored.handle ?? null };
@@ -353,10 +353,10 @@ export const repoRedis: Repo = {
     const normalizedHandle = handle.trim().toLowerCase();
     const nowIso = new Date().toISOString();
 
-    const existingId = await redis.hget<string>(KEYS.userByEmail, normalizedEmail);
+    const existingId = (await redis.hget(KEYS.userByEmail, normalizedEmail)) as string | null;
 
     if (existingId) {
-      const userRaw = await redis.hget<string>(KEYS.users, existingId);
+      const userRaw = (await redis.hget(KEYS.users, existingId)) as string | null;
       if (!userRaw) {
         await redis.hdel(KEYS.userByEmail, normalizedEmail);
         return repoRedis.upsertDevUser({ handle, email });
@@ -403,7 +403,7 @@ export const repoRedis: Repo = {
     if (!handle) return null;
     const normalized = handle.trim().toLowerCase();
     if (!normalized) return null;
-    const userId = await redis.hget<string>(KEYS.userByHandle, normalized);
+    const userId = (await redis.hget(KEYS.userByHandle, normalized)) as string | null;
     if (!userId) return null;
     return readUser(userId);
   },
@@ -435,13 +435,13 @@ export const repoRedis: Repo = {
 
   async getChallengeById(id) {
     await ensureReady();
-    const raw = await redis.hget<string>(KEYS.challenges, id);
+    const raw = (await redis.hget(KEYS.challenges, id)) as string | null;
     return parseChallenge(raw);
   },
 
   async consumeChallenge(id) {
     await ensureReady();
-    const raw = await redis.hget<string>(KEYS.challenges, id);
+    const raw = (await redis.hget(KEYS.challenges, id)) as string | null;
     if (!raw) return;
     const stored = JSON.parse(raw) as StoredChallenge;
     stored.consumed = true;
@@ -450,15 +450,15 @@ export const repoRedis: Repo = {
 
   async findUnitByCodeHash(codeHash) {
     await ensureReady();
-    const unitId = await redis.hget<string>(KEYS.unitByCodeHash, codeHash);
+    const unitId = (await redis.hget(KEYS.unitByCodeHash, codeHash)) as string | null;
     if (!unitId) return null;
-    const raw = await redis.hget<string>(KEYS.units, unitId);
+    const raw = (await redis.hget(KEYS.units, unitId)) as string | null;
     return parseUnit(raw);
   },
 
   async claimUnitAndCreateOwnership({ unitId, userId }) {
     await ensureReady();
-    const raw = await redis.hget<string>(KEYS.units, unitId);
+    const raw = (await redis.hget(KEYS.units, unitId)) as string | null;
     if (!raw) throw new Error('Unit not found');
     const stored = JSON.parse(raw) as StoredUnit;
     if (stored.status !== 'available') {
@@ -488,7 +488,7 @@ export const repoRedis: Repo = {
 
   async listOwnershipsByUser(userId) {
     await ensureReady();
-    const items = await redis.lrange<string[]>(ownershipKey(userId), 0, -1);
+    const items = (await redis.lrange(ownershipKey(userId), 0, -1)) as string[] | null;
     return (items || []).map((entry) => {
       const parsed = JSON.parse(entry) as StoredOwnership;
       return {
@@ -504,7 +504,7 @@ export const repoRedis: Repo = {
 
   async getCharacterById(id) {
     await ensureReady();
-    const raw = await redis.hget<string>(KEYS.characters, id);
+    const raw = (await redis.hget(KEYS.characters, id)) as string | null;
     return toCharacter(raw);
   },
 
@@ -513,8 +513,8 @@ export const repoRedis: Repo = {
     const limit = params?.limit ?? 20;
     const offset = params?.offset ?? 0;
 
-    const raw = await redis.hvals<string[]>(KEYS.characters);
-    const parsed = (raw || []).map((entry) => JSON.parse(entry) as StoredCharacter);
+    const raw = (await redis.hvals(KEYS.characters)) as unknown[] | null;
+    const parsed = (raw || []).map((entry) => JSON.parse(String(entry)) as StoredCharacter);
     parsed.sort((a, b) => b.order - a.order);
     return parsed.slice(offset, offset + limit).map((character) => ({
       id: character.id,

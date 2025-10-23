@@ -11,12 +11,12 @@ const CODE_PREFIX = process.env.REDEEM_CODE_PREFIX || 'redeem:code';
 const CLAIM_LOG_KEY = process.env.REDEEM_CLAIMED_KEY || 'redeem:claimed';
 
 async function getAndDelete(key: string): Promise<string | null> {
-  // @ts-expect-error Upstash ships getdel at runtime; fall back to get+del if the type is missing.
-  if (typeof redis.getdel === 'function') {
-    // @ts-expect-error see above note about bundled types.
-    return redis.getdel<string>(key);
+  const maybeClient = redis as unknown as { getdel?: (k: string) => Promise<unknown> };
+  if (typeof maybeClient.getdel === 'function') {
+    const value = (await maybeClient.getdel(key)) as string | null;
+    return value;
   }
-  const value = await redis.get<string>(key);
+  const value = (await redis.get(key)) as string | null;
   if (!value) return null;
   await redis.del(key);
   return value;

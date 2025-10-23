@@ -115,13 +115,13 @@ export function toLongRows(csv: string): LongRow[] {
 }
 
 async function readExistingCharacters(): Promise<StoredCharacter[]> {
-  const raw = await redis.hvals<string[]>(redisKeys.characters);
-  return (raw || []).map((entry) => JSON.parse(entry) as StoredCharacter);
+  const raw = (await redis.hvals(redisKeys.characters)) as unknown[] | null;
+  return (raw || []).map((entry) => JSON.parse(String(entry)) as StoredCharacter);
 }
 
 async function readExistingCodes(hashes: string[]): Promise<Set<string>> {
   if (!hashes.length) return new Set();
-  const results = await Promise.all(hashes.map((hash) => redis.hget<string>(redisKeys.unitByCodeHash, hash)));
+  const results = await Promise.all(hashes.map((hash) => redis.hget(redisKeys.unitByCodeHash, hash)));
   const existing = new Set<string>();
   hashes.forEach((hash, idx) => {
     if (results[idx]) existing.add(hash);
@@ -147,7 +147,7 @@ export async function runImport(rows: LongRow[], setName: string): Promise<Impor
   }
 
   const normalizedSetName = setName.trim().toLowerCase();
-  const existingSetEntry = normalizedSetName ? await redis.hget<string>(redisKeys.characterSets, normalizedSetName) : null;
+  const existingSetEntry = normalizedSetName ? ((await redis.hget(redisKeys.characterSets, normalizedSetName)) as string | null) : null;
   let setId = uuid();
   if (existingSetEntry) {
     try {
@@ -216,7 +216,7 @@ export async function runImport(rows: LongRow[], setName: string): Promise<Impor
   const unitRecords: Record<string, string> = {};
   const createdHashes = new Set<string>();
   let unitsCreated = 0;
-  for (const [codeHash, { label }] of codeMap.entries()) {
+  for (const [codeHash, { label }] of Array.from(codeMap.entries())) {
     if (existingHashes.has(codeHash)) continue;
     const character = characterMap.get(label);
     if (!character) continue;
