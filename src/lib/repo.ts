@@ -56,7 +56,9 @@ export type Repo = {
   logAbuse(event: { type: string; actorRef: string; metadata: any }): Promise<void>;
 };
 
-const forceMemory = process.env.USE_MEMORY_DB === '1';
+const memoryFlag = process.env.USE_MEMORY_DB;
+const defaultMemory = !process.env.VERCEL && process.env.NODE_ENV !== 'production';
+const forceMemory = memoryFlag === '1' || (!memoryFlag && defaultMemory);
 const hasRedisEnv = Boolean(
   process.env.UPSTASH_REDIS_REST_URL &&
   process.env.UPSTASH_REDIS_REST_TOKEN &&
