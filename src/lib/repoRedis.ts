@@ -296,16 +296,31 @@ function ownershipKey(userId: string): string {
   return `${KEYS.ownershipsPrefix}:${userId}`;
 }
 
+function parseJson<T>(value: unknown): T | null {
+  if (value == null) return null;
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return null;
+    }
+  }
+  if (typeof value === 'object') {
+    return value as T;
+  }
+  return null;
+}
+
 async function readUser(id: string): Promise<User | null> {
-  const raw = (await redis.hget(KEYS.users, id)) as string | null;
-  if (!raw) return null;
-  const stored = JSON.parse(raw) as StoredUser;
+  const raw = await redis.hget(KEYS.users, id);
+  const stored = parseJson<StoredUser>(raw);
+  if (!stored) return null;
   return { id: stored.id, email: stored.email, handle: stored.handle ?? null };
 }
 
-function parseUnit(raw: string | null): PhysicalUnit | null {
-  if (!raw) return null;
-  const stored = JSON.parse(raw) as StoredUnit;
+function parseUnit(raw: unknown): PhysicalUnit | null {
+  const stored = parseJson<StoredUnit>(raw);
+  if (!stored) return null;
   return {
     id: stored.id,
     characterId: stored.characterId,
@@ -317,9 +332,9 @@ function parseUnit(raw: string | null): PhysicalUnit | null {
   };
 }
 
-function parseChallenge(raw: string | null): ClaimChallenge | null {
-  if (!raw) return null;
-  const stored = JSON.parse(raw) as StoredChallenge;
+function parseChallenge(raw: unknown): ClaimChallenge | null {
+  const stored = parseJson<StoredChallenge>(raw);
+  if (!stored) return null;
   return {
     id: stored.id,
     codeHash: stored.codeHash,
@@ -331,9 +346,9 @@ function parseChallenge(raw: string | null): ClaimChallenge | null {
   };
 }
 
-function toCharacter(raw: string | null): Character | null {
-  if (!raw) return null;
-  const stored = JSON.parse(raw) as StoredCharacter;
+function toCharacter(raw: unknown): Character | null {
+  const stored = parseJson<StoredCharacter>(raw);
+  if (!stored) return null;
   return {
     id: stored.id,
     setId: stored.setId,
@@ -356,13 +371,17 @@ export const repoRedis: Repo = {
     const existingId = (await redis.hget(KEYS.userByEmail, normalizedEmail)) as string | null;
 
     if (existingId) {
-      const userRaw = (await redis.hget(KEYS.users, existingId)) as string | null;
+      const userRaw = await redis.hget(KEYS.users, existingId);
       if (!userRaw) {
         await redis.hdel(KEYS.userByEmail, normalizedEmail);
         return repoRedis.upsertDevUser({ handle, email });
       }
 
-      const stored = JSON.parse(userRaw) as StoredUser;
+      const stored = parseJson<StoredUser>(userRaw);
+      if (!stored) {
+        await redis.hdel(KEYS.userByEmail, normalizedEmail);
+        return repoRedis.upsertDevUser({ handle, email });
+      }
       if (stored.handle && stored.handle.toLowerCase() !== normalizedHandle) {
         await redis.hdel(KEYS.userByHandle, stored.handle.toLowerCase());
       }
@@ -435,15 +454,16 @@ export const repoRedis: Repo = {
 
   async getChallengeById(id) {
     await ensureReady();
-    const raw = (await redis.hget(KEYS.challenges, id)) as string | null;
+    const raw = await redis.hget(KEYS.challenges, id);
     return parseChallenge(raw);
   },
 
   async consumeChallenge(id) {
     await ensureReady();
-    const raw = (await redis.hget(KEYS.challenges, id)) as string | null;
+    const raw = await redis.hget(KEYS.challenges, id);
     if (!raw) return;
-    const stored = JSON.parse(raw) as StoredChallenge;
+    const stored = parseJson<StoredChallenge>(raw);
+    if (!stored) return;
     stored.consumed = true;
     await redis.hset(KEYS.challenges, { [id]: JSON.stringify(stored) });
   },
@@ -452,15 +472,16 @@ export const repoRedis: Repo = {
     await ensureReady();
     const unitId = (await redis.hget(KEYS.unitByCodeHash, codeHash)) as string | null;
     if (!unitId) return null;
-    const raw = (await redis.hget(KEYS.units, unitId)) as string | null;
+    const raw = await redis.hget(KEYS.units, unitId);
     return parseUnit(raw);
   },
 
   async claimUnitAndCreateOwnership({ unitId, userId }) {
     await ensureReady();
-    const raw = (await redis.hget(KEYS.units, unitId)) as string | null;
+    const raw = await redis.hget(KEYS.units, unitId);
     if (!raw) throw new Error('Unit not found');
-    const stored = JSON.parse(raw) as StoredUnit;
+    const stored = parseJson<StoredUnit>(raw);
+    if (!stored) throw new Error('Unit not found');
     if (stored.status !== 'available') {
       throw new Error('Unit no longer available');
     }
@@ -504,7 +525,7 @@ export const repoRedis: Repo = {
 
   async getCharacterById(id) {
     await ensureReady();
-    const raw = (await redis.hget(KEYS.characters, id)) as string | null;
+    const raw = await redis.hget(KEYS.characters, id);
     return toCharacter(raw);
   },
 
@@ -513,10 +534,12 @@ export const repoRedis: Repo = {
     const limit = params?.limit ?? 20;
     const offset = params?.offset ?? 0;
 
-    const raw = (await redis.hvals(KEYS.characters)) as unknown[] | null;
-    const parsed = (raw || []).map((entry) => JSON.parse(String(entry)) as StoredCharacter);
-    parsed.sort((a, b) => b.order - a.order);
-    return parsed.slice(offset, offset + limit).map((character) => ({
+    const raw = await redis.hvals(KEYS.characters);
+    const parsed = (raw || [])
+      .map((entry: unknown) => parseJson<StoredCharacter>(entry))
+      .filter((entry: StoredCharacter | null): entry is StoredCharacter => Boolean(entry));
+    parsed.sort((a: StoredCharacter, b: StoredCharacter) => b.order - a.order);
+    return parsed.slice(offset, offset + limit).map((character: StoredCharacter) => ({
       id: character.id,
       setId: character.setId,
       name: character.name,

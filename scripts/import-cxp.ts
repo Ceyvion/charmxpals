@@ -115,8 +115,21 @@ export function toLongRows(csv: string): LongRow[] {
 }
 
 async function readExistingCharacters(): Promise<StoredCharacter[]> {
-  const raw = (await redis.hvals(redisKeys.characters)) as unknown[] | null;
-  return (raw || []).map((entry) => JSON.parse(String(entry)) as StoredCharacter);
+  const raw = await redis.hvals(redisKeys.characters);
+  return (raw || [])
+    .map((entry: unknown) => {
+      if (entry == null) return null;
+      if (typeof entry === 'string') {
+        try {
+          return JSON.parse(entry) as StoredCharacter;
+        } catch {
+          return null;
+        }
+      }
+      if (typeof entry === 'object') return entry as StoredCharacter;
+      return null;
+    })
+    .filter((value: StoredCharacter | null): value is StoredCharacter => Boolean(value));
 }
 
 async function readExistingCodes(hashes: string[]): Promise<Set<string>> {
