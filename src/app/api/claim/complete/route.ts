@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getRepo } from '@/lib/repo';
-import { computeChallengeDigest, hashCode, signChallengeWithCode } from '@/lib/crypto';
+import { computeChallengeDigest, hashClaimCode, signChallengeWithCode } from '@/lib/crypto';
 import { rateLimitCheck } from '@/lib/rateLimit';
 import { getClientIp } from '@/lib/ip';
 
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ success: false, error: 'Missing fields' }, { status: 400 });
     }
 
-    const codeHash = hashCode(code);
+    const codeHash = hashClaimCode(code);
 
     // Load and validate challenge
     const repo = await getRepo();

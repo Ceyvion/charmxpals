@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getRepo } from '@/lib/repo';
-import { hashCode } from '@/lib/crypto';
+import { hashClaimCode } from '@/lib/crypto';
 import { rateLimitCheck } from '@/lib/rateLimit';
 import { getClientIp } from '@/lib/ip';
 
@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     const ip = getClientIp(request.url, request.headers);
     const rl = rateLimitCheck(`${ip}:claim-verify`, { windowMs: 60_000, max: 30, prefix: 'claim' });
     if (!rl.allowed) {
-      return new Response(JSON.stringify({ success: false, error: 'Rate limit exceeded' }), {
+      return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
         status: 429,
         headers: {
           'Content-Type': 'application/json',
@@ -20,24 +20,33 @@ export async function POST(request: NextRequest) {
 
     const { code } = await request.json();
     if (!code || typeof code !== 'string') {
-      return Response.json({ success: false, error: 'Missing code' }, { status: 400 });
+      return Response.json({ error: 'Missing code' }, { status: 400 });
     }
 
-    const codeHash = hashCode(code);
+    const codeHash = hashClaimCode(code);
     const repo = await getRepo();
     const unit = await repo.findUnitByCodeHash(codeHash);
     if (!unit) {
-      return Response.json({ success: false, error: 'Invalid code' }, { status: 400 });
+      return Response.json({ status: 'not_found' as const, character: null });
     }
 
+    const character = await repo.getCharacterById(unit.characterId);
+
     return Response.json({
-      success: true,
       status: unit.status,
-      characterId: unit.characterId,
+      character: character
+        ? {
+            id: character.id,
+            name: character.name,
+            rarity: character.rarity,
+            artRefs: character.artRefs,
+            stats: character.stats,
+          }
+        : null,
     });
   } catch (error) {
     console.error('Verify error:', error);
-    return Response.json({ success: false, error: 'Failed to verify code' }, { status: 500 });
+    return Response.json({ error: 'Failed to verify code' }, { status: 500 });
   }
 }
 export const dynamic = 'force-dynamic';

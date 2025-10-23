@@ -1,12 +1,12 @@
 import { v4 as uuid } from 'uuid';
-import { hashCode } from './crypto';
+import { hashClaimCode } from './crypto';
 import type { Repo, User, Character, PhysicalUnit, ClaimChallenge } from './repo';
 
 type CharacterSet = { id: string; name: string; description: string | null };
 
 const now = () => new Date();
 
-// Demo data (mirrors prisma/seed.ts)
+// Demo data (mirrors the default Redis seed)
 const data = (() => {
   const set1: CharacterSet = { id: uuid(), name: 'Fantasy Collection', description: 'Mystical creatures from a magical realm' };
   const set2: CharacterSet = { id: uuid(), name: 'Elemental Forces', description: 'Masters of the fundamental elements' };
@@ -57,9 +57,9 @@ const data = (() => {
 
   const secureSalt = 'super-secret-salt';
   const units: PhysicalUnit[] = [
-    { id: uuid(), characterId: blaze.id, codeHash: hashCode('CHARM-XPAL-001'), secureSalt, status: 'available', claimedBy: null, claimedAt: null },
-    { id: uuid(), characterId: frost.id, codeHash: hashCode('CHARM-XPAL-002'), secureSalt, status: 'available', claimedBy: null, claimedAt: null },
-    { id: uuid(), characterId: tidal.id, codeHash: hashCode('CHARM-XPAL-003'), secureSalt, status: 'available', claimedBy: null, claimedAt: null },
+    { id: uuid(), characterId: blaze.id, codeHash: hashClaimCode('CHARM-XPAL-001'), secureSalt, status: 'available', claimedBy: null, claimedAt: null },
+    { id: uuid(), characterId: frost.id, codeHash: hashClaimCode('CHARM-XPAL-002'), secureSalt, status: 'available', claimedBy: null, claimedAt: null },
+    { id: uuid(), characterId: tidal.id, codeHash: hashClaimCode('CHARM-XPAL-003'), secureSalt, status: 'available', claimedBy: null, claimedAt: null },
   ];
 
   return {

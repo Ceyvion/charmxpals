@@ -7,8 +7,8 @@ export async function GET() {
     ok: true,
     repo: repo.kind || 'unknown',
     useMemoryEnv: process.env.USE_MEMORY_DB === '1',
-    hasDatabaseURL: Boolean(process.env.DATABASE_URL),
+    hasRedisConfig: Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN),
+    hasDatabaseURL: false,
     node: process.version,
   });
 }
-

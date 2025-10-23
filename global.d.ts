@@ -10,3 +10,19 @@ declare module 'three/examples/jsm/loaders/DRACOLoader' {
 declare module 'three/examples/jsm/loaders/KTX2Loader' {
   export class KTX2Loader {}
 }
+
+declare module 'ws' {
+  export default class WebSocket {
+    constructor(address: string, protocols?: string | string[]);
+    readyState: number;
+    send(data: any): void;
+    close(code?: number, reason?: string): void;
+    on(event: string, listener: (...args: any[]) => void): this;
+  }
+
+  export class WebSocketServer {
+    constructor(options: any);
+    on(event: string, listener: (...args: any[]) => void): this;
+    close(callback?: () => void): void;
+  }
+}

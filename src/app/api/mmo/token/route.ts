@@ -1,0 +1,53 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getRepo } from '@/lib/repo';
+import { rateLimitCheck } from '@/lib/rateLimit';
+import { randomUUID } from 'crypto';
+import { signToken, type MmoSessionClaims } from '@/lib/mmo/token';
+
+export async function GET(request: NextRequest) {
+  // Simple rate limit
+  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'local';
+  const rl = rateLimitCheck(`mmo-token:${ip}`, { windowMs: 15_000, max: 10, prefix: 'mmo' });
+  if (!rl.allowed) {
+    return NextResponse.json({ ok: false, error: 'rate_limited' }, { status: 429, headers: { 'Retry-After': Math.max(0, Math.ceil((rl.resetAt - Date.now()) / 1000)).toString() } });
+  }
+
+  const repo = await getRepo();
+  const url = new URL(request.url);
+  const devAllow = process.env.NODE_ENV !== 'production';
+
+  // Identify user (dev cookie in non-prod; replace with real auth later)
+  const userId = request.cookies.get('cp_user')?.value || null;
+  if (!userId) {
+    return NextResponse.json({ ok: false, error: 'unauthenticated' }, { status: 401 });
+  }
+  const user = await repo.getUserById(userId);
+  if (!user) return NextResponse.json({ ok: false, error: 'no_user' }, { status: 404 });
+
+  // Gate by ownership (dev can bypass in non-prod)
+  const owns = await repo.listOwnershipsByUser(user.id);
+  const ownedCharIds = [...new Set(owns.map((o) => o.characterId))];
+  if (!devAllow && ownedCharIds.length === 0) {
+    return NextResponse.json({ ok: false, error: 'no_ownership' }, { status: 403 });
+  }
+
+  // Mint short-lived session token
+  const sessionId = randomUUID();
+  const now = Math.floor(Date.now() / 1000);
+  const ttlSec = 10 * 60; // 10 minutes
+  const claims: MmoSessionClaims = {
+    sub: user.id,
+    sid: sessionId,
+    exp: now + ttlSec,
+    nonce: randomUUID(),
+    scope: ['plaza:join'],
+    owned: ownedCharIds,
+  };
+  const token = signToken(claims);
+
+  return NextResponse.json({ ok: true, token, claims: { ...claims, iat: now } });
+}
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+

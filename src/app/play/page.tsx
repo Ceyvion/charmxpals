@@ -5,6 +5,11 @@ import Link from 'next/link';
 export default function GameHub() {
   const games = [
     {
+      id: 'plaza',
+      title: 'Plaza (Preview)',
+      description: 'Meet other players with your collectible in a small social space'
+    },
+    {
       id: 'runner',
       title: 'Endless Runner',
       description: 'Run as far as you can while avoiding obstacles'
@@ -38,7 +43,7 @@ export default function GameHub() {
                 <h2 className="text-2xl font-bold text-white font-display mb-2">{game.title}</h2>
                 <p className="text-gray-300 mb-6 flex-grow">{game.description}</p>
                 <Link
-                  href={`/play/${game.id}`}
+                  href={game.id === 'plaza' ? `/plaza` : `/play/${game.id}`}
                   className="mt-4 px-6 py-3 bg-white text-gray-900 font-bold rounded-lg hover:bg-gray-100 transition-colors text-center"
                 >
                   Play Now

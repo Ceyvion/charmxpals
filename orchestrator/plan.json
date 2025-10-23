@@ -33,21 +33,21 @@
     {
       "id": "A1.3",
       "title": "Character page SSR",
-      "detail": "Server component for /character/[id] loading from Prisma with not-found UI.",
+      "detail": "Server component for /character/[id] loading from Redis-backed repo with not-found UI.",
       "status": "done",
       "area": "frontend"
     },
     {
       "id": "A0",
       "title": "No-DB preview mode",
-      "detail": "In-memory repository fallback for claim + character routes to run without Postgres.",
+      "detail": "In-memory repository fallback for claim + character routes to run without Redis.",
       "status": "done",
       "area": "infra"
     },
     {
       "id": "A3.1",
       "title": "DX: Docker + env example",
-      "detail": "Add docker-compose Postgres, .env.example, npm DB scripts, README quickstart.",
+      "detail": "Add Upstash env example, npm scripts, README quickstart.",
       "status": "done",
       "area": "infra"
     },
@@ -99,7 +99,14 @@
       "detail": "Add /login dev credentials (admin/admin), set cp_user cookie, and create /u/[handle] profile page.",
       "status": "done",
       "area": "infra"
-    }
+    },
+    {
+      "id": "A1.12",
+      "title": "CXP Wave 1 import + verify hashing",
+      "detail": "CLI importer for CXP codes, Redis structure updates, and verify endpoint returning character previews.",
+      "status": "in_review",
+      "area": "backend"
+    },
     {
       "id": "A2",
       "title": "Auth: passwordless email (magic link)",
@@ -109,13 +116,62 @@
     },
     {
       "id": "A3",
-      "title": "Database migrations baseline",
-      "detail": "Run prisma migrate, seed minimal sample units, and document env setup.",
+      "title": "Redis persistence baseline",
+      "detail": "Define Upstash data layout, seed minimal sample units, and document env setup.",
       "status": "todo",
       "area": "infra"
     }
   ],
   "next": [
+    {
+      "id": "B0-MM0-1",
+      "title": "MMO: Feature spec v1",
+      "detail": "Define Plaza scope, player count, interactions, performance targets, risks, and success metrics.",
+      "status": "done",
+      "area": "product"
+    },
+    {
+      "id": "B0-MM0-2",
+      "title": "MMO: Tech RFC v1",
+      "detail": "Authoritative server, WS protocol, smoothing, interest mgmt, and deployment plan.",
+      "status": "done",
+      "area": "architecture"
+    },
+    {
+      "id": "B0-MM0-3",
+      "title": "MMO: Token API",
+      "detail": "Next.js route to mint short-lived WS tokens gated by ownership or dev users.",
+      "status": "done",
+      "area": "backend"
+    },
+    {
+      "id": "B0-MM0-4",
+      "title": "MMO: Protocol TS types",
+      "detail": "Define client/server message and state types for the Plaza prototype.",
+      "status": "done",
+      "area": "frontend"
+    },
+    {
+      "id": "B0-COLL-1",
+      "title": "Collectible scan plan",
+      "detail": "Document schema, APIs, and anti-fraud flow for QR/NFC scanning + auto claim sync.",
+      "status": "done",
+      "area": "product"
+    },
+    {
+      "id": "B0-UX-PALETTE",
+      "title": "Palette refresh (feminine)",
+      "detail": "Shift core gradient + surfaces to Rosette Prism hues without changing layout components.",
+      "status": "done",
+      "area": "frontend"
+    },
+    {
+      "id": "B0-MM0-5",
+      "title": "MMO: Prototype room",
+      "detail": "Spin up a small WS server (Colyseus or ws) with 3-player movement replication.",
+      "status": "todo",
+      "area": "gameplay"
+    },
     {
       "id": "B1",
       "title": "Server Actions for claim + ownership",

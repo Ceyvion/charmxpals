@@ -17,8 +17,8 @@ Welcome to CharmPals, a platform that links physical collectibles to digital exp
 ## Tech Stack
 
 - **Frontend**: Next.js, React, TypeScript, Tailwind CSS, Framer Motion
-- **Backend**: Next.js API routes, Prisma ORM
-- **Database**: PostgreSQL
+- **Backend**: Next.js API routes, Upstash Redis (with an in-memory fallback for local preview)
+- **Data Store**: Upstash Redis (serverless REST API)
 - **Authentication**: Passwordless (email OTP/magic link)
 - **Analytics**: PostHog
 
@@ -26,18 +26,16 @@ Welcome to CharmPals, a platform that links physical collectibles to digital exp
 
 1. Clone the repository
 2. Install dependencies: `npm install`
-3. Option A — No‑DB preview (default):
-   - Ensure `DATABASE_URL` is unset or set `USE_MEMORY_DB=1` in your env.
-   - Start dev server: `npm run dev`.
-   - Use codes like `CHARM-XPAL-001` on `/claim`.
+3. Configure environment variables:
+   - Copy the sample: `cp .env.example .env`.
+   - Update `CODE_HASH_SECRET` to a value you control (it must match whatever was used when hashing claim codes).
+   - Keep `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` pointed at your Upstash database (the provided defaults match the shared demo instance).
+   - Optional: set `USE_MEMORY_DB=1` to run entirely in-memory without touching Redis.
+4. Start the app: `npm run dev`.
+   - Use `CHARM-XPAL-001`, `CHARM-XPAL-002`, etc. on `/claim` to test the flow.
    - Visiting `/claim` or hitting `/api/dev/user` will set a `cp_user` cookie to simulate a profile; your inventory appears at `/me` and owned badges show in listings.
-   - Dev login: go to `/login` and sign in with username `admin` / password `admin` (configurable via `DEV_AUTH_USER` / `DEV_AUTH_PASS`, and only enabled outside production unless `DEV_AUTH_ENABLED=1`).
-4. Option B — Postgres locally:
-   - Copy env: `cp .env.example .env` and adjust values if needed
-   - Start DB: `npm run db:up`
-   - Migrate: `npm run prisma:migrate`
-   - Seed: `npm run seed`
-   - Start dev server: `npm run dev`
+   - Dev login: go to `/login` and sign in with username `admin` / password `admin` (configurable via `DEV_AUTH_USER` / `DEV_AUTH_PASS`, only enable in production if you understand the risk).
+   - Import additional claim codes from CSVs with `npm run import:cxp -- --file path/to/codes.csv --set "Wave Name"` (requires valid Upstash credentials and `CODE_HASH_SECRET`).
 
 ## Orchestrator (Project Plan)
 
@@ -46,6 +44,28 @@ Welcome to CharmPals, a platform that links physical collectibles to digital exp
 - CLI summary: `npm run orchestrator`
 
 Update statuses in `orchestrator/plan.json` after each meaningful change to keep the team aligned on what's next.
+
+## MMO (Social Plaza)
+
+- Docs: see `docs/mmo/FEATURE_SPEC.md` and `docs/mmo/TECH_RFC.md` for scope and architecture.
+- Token API: `GET /api/mmo/token` mints a short-lived WebSocket token for the real-time server.
+  - Requires a dev user (`/api/dev/user`) or real ownership in production.
+  - Env: set `MMO_WS_SECRET` in `.env`.
+- Dev server:
+  - Install deps (ws): `npm install`
+  - Start MMO WS: `npm run mmo:server` (listens on `ws://localhost:8787`)
+  - Start Next.js: `npm run dev`
+  - Open app: `/plaza` (or via Play → Plaza)
+
+## Brand & Color
+
+- Trend research summary: `docs/brand/COLOR_RESEARCH_2025.md` (sources: WGSN, Pantone, Adobe, Pinterest, 99designs).
+- Current UI palette: Future Dusk base with Transcendent Pink / Digital Lavender / Aquatic Awe accents.
+
+## Collectible Scanning
+
+- High-level flow and schema live in `docs/collectibles/SCANNING_PLAN.md`.
+- Upcoming work: extend `PhysicalUnit`, add `ScanEvent`/`ScanSession`, and wire `/api/scan/*` endpoints.
 
 ## Recent UX Changes
 

@@ -1,5 +1,7 @@
 import { memoryRepo } from './repoMemory';
 
+export type UnitStatus = 'available' | 'claimed' | 'blocked';
+
 export type User = { id: string; email: string; handle: string | null };
 export type Character = {
   id: string;
@@ -17,7 +19,7 @@ export type PhysicalUnit = {
   secureSalt: string;
   claimedBy: string | null;
   claimedAt: Date | null;
-  status: 'available' | 'claimed' | 'blocked';
+  status: UnitStatus;
 };
 export type ClaimChallenge = {
   id: string;
@@ -30,7 +32,7 @@ export type ClaimChallenge = {
 };
 
 export type Repo = {
-  kind?: 'memory' | 'prisma';
+  kind?: 'memory' | 'redis';
   // Users
   upsertDevUser(params: { handle: string; email: string }): Promise<User>;
   getUserById(id: string): Promise<User | null>;
@@ -54,17 +56,18 @@ export type Repo = {
   logAbuse(event: { type: string; actorRef: string; metadata: any }): Promise<void>;
 };
 
-const useMemory = !process.env.DATABASE_URL || process.env.USE_MEMORY_DB === '1';
+const forceMemory = process.env.USE_MEMORY_DB === '1';
+const hasRedisEnv = Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
 
 let repoPromise: Promise<Repo> | null = null;
 
 export async function getRepo(): Promise<Repo> {
-  if (useMemory) return memoryRepo;
+  if (forceMemory || !hasRedisEnv) return memoryRepo;
   if (!repoPromise) {
-    repoPromise = import('./repoPrisma')
-      .then((m) => m.repoPrisma as Repo)
+    repoPromise = import('./repoRedis')
+      .then((m) => m.repoRedis as Repo)
       .catch((err) => {
-        console.warn('Prisma repo unavailable; falling back to memory. Set USE_MEMORY_DB=1 to silence.', err);
+        console.warn('Redis repo unavailable; falling back to memory. Set USE_MEMORY_DB=1 to silence.', err);
         return memoryRepo as Repo;
       });
   }

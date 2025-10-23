@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getRepo } from '@/lib/repo';
-import { computeChallengeDigest, generateNonce, hashCode } from '@/lib/crypto';
+import { computeChallengeDigest, generateNonce, hashClaimCode } from '@/lib/crypto';
 import { rateLimitCheck } from '@/lib/rateLimit';
 import { getClientIp } from '@/lib/ip';
 
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ success: false, error: 'Missing code' }, { status: 400 });
     }
 
-    const codeHash = hashCode(code);
+    const codeHash = hashClaimCode(code);
 
     // Validate the physical unit exists and is available
     const repo = await getRepo();

@@ -45,3 +45,8 @@ next-env.d.ts
 # local dev artifacts
 .dev.*
 test-results/
+
+# seeding data
+*.ndjson
+*.csv
+ops/

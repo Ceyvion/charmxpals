@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { hashCode, computeChallengeDigest, signChallengeWithCode } from './crypto';
+import { hashClaimCode, computeChallengeDigest, signChallengeWithCode } from './crypto';
 
 describe('crypto helpers', () => {
   const prev = process.env.CODE_HASH_SECRET;
@@ -12,12 +12,18 @@ describe('crypto helpers', () => {
     process.env.CODE_HASH_SECRET = prev;
   });
 
-  it('hashCode is deterministic with secret', () => {
-    const a = hashCode('CHARM-XPAL-001');
-    const b = hashCode('CHARM-XPAL-001');
-    const c = hashCode('CHARM-XPAL-002');
+  it('hashClaimCode is deterministic with secret', () => {
+    const a = hashClaimCode('CHARM-XPAL-001');
+    const b = hashClaimCode('CHARM-XPAL-001');
+    const c = hashClaimCode('CHARM-XPAL-002');
     expect(a).toBe(b);
     expect(a).not.toBe(c);
+  });
+
+  it('hashClaimCode trims and uppercases input', () => {
+    const a = hashClaimCode('   charm-xpal-001 ');
+    const b = hashClaimCode('CHARM-XPAL-001');
+    expect(a).toBe(b);
   });
 
   it('computeChallengeDigest combines codeHash, nonce, timestamp, salt', () => {
@@ -37,4 +43,3 @@ describe('crypto helpers', () => {
     expect(sig).toBe(signChallengeWithCode('CHARM-XPAL-001', 'cafed00dbabe'));
   });
 });
-

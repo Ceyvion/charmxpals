@@ -1,7 +1,4 @@
-import { describe, it, expect } from 'vitest';
-import { POST as startClaim } from './start/route';
-import { POST as completeClaim } from './complete/route';
-import { POST as verifyCode } from './verify/route';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { signChallengeWithCode } from '@/lib/crypto';
 
 function makeReq(url: string, body: any) {
@@ -12,15 +9,32 @@ function makeReq(url: string, body: any) {
   } as any;
 }
 
+let startClaim: typeof import('./start/route').POST;
+let completeClaim: typeof import('./complete/route').POST;
+let verifyCode: typeof import('./verify/route').POST;
+
 describe('claim flow (memory repo)', () => {
   const code = 'CHARM-XPAL-001';
+  const prevSecret = process.env.CODE_HASH_SECRET;
+
+  beforeAll(async () => {
+    process.env.CODE_HASH_SECRET = 'test-secret';
+    ({ POST: startClaim } = await import('./start/route'));
+    ({ POST: completeClaim } = await import('./complete/route'));
+    ({ POST: verifyCode } = await import('./verify/route'));
+  });
+
+  afterAll(() => {
+    process.env.CODE_HASH_SECRET = prevSecret;
+  });
 
   it('verifies availability, starts challenge, completes claim, and reflects claimed status', async () => {
     // 1) Verify before claim
     let res = await verifyCode(makeReq('http://local/api/claim/verify', { code }));
     let json: any = await res.json();
-    expect(json.success).toBe(true);
+    expect(res.status).toBe(200);
     expect(json.status).toBe('available');
+    expect(json.character?.id).toBeTruthy();
 
     // 2) Start claim
     res = await startClaim(makeReq('http://local/api/claim/start', { code }));
@@ -46,7 +60,7 @@ describe('claim flow (memory repo)', () => {
     // 4) Verify reflects claimed
     const res2 = await verifyCode(makeReq('http://local/api/claim/verify', { code }));
     const json2: any = await res2.json();
-    expect(json2.success).toBe(true);
+    expect(res2.status).toBe(200);
     expect(json2.status).toBe('claimed');
   });
 
