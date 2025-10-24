@@ -1,6 +1,7 @@
 import { v4 as uuid } from 'uuid';
 import { hashClaimCode } from './crypto';
 import type { Repo, User, Character, PhysicalUnit, ClaimChallenge } from './repo';
+import { characterLore } from '@/data/characterLore';
 
 type CharacterSet = { id: string; name: string; description: string | null };
 
@@ -8,64 +9,63 @@ const now = () => new Date();
 
 // Demo data (mirrors the default Redis seed)
 const data = (() => {
-  const set1: CharacterSet = { id: uuid(), name: 'Fantasy Collection', description: 'Mystical creatures from a magical realm' };
-  const set2: CharacterSet = { id: uuid(), name: 'Elemental Forces', description: 'Masters of the fundamental elements' };
-
-  const blaze: Character = {
+  const set: CharacterSet = {
     id: uuid(),
-    setId: set1.id,
-    name: 'Blaze the Dragon',
-    description: 'A fierce fire-breathing dragon with incredible speed and agility.',
-    rarity: 5,
-    stats: { strength: 85, speed: 92, intelligence: 78, defense: 80 },
-    artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' },
-  };
-  const frost: Character = {
-    id: uuid(),
-    setId: set1.id,
-    name: 'Frost Wolf',
-    description: 'A cunning wolf with ice-blue fur and razor-sharp claws.',
-    rarity: 4,
-    stats: { strength: 78, speed: 88, intelligence: 85, defense: 82 },
-    artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' },
-  };
-  const tidal: Character = {
-    id: uuid(),
-    setId: set2.id,
-    name: 'Tidal Serpent',
-    description: 'A massive sea serpent that commands the power of the ocean.',
-    rarity: 5,
-    stats: { strength: 90, speed: 75, intelligence: 88, defense: 85 },
-    artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' },
+    name: 'Dance Across Dimensions',
+    description: 'CharmXPals champions defending the MotionXChange Arena.',
   };
 
-  // Additional characters to fill out the grid
-  const extras: Character[] = [
-    { id: uuid(), setId: set1.id, name: 'Volt Lynx', description: 'Crackling with static speed.', rarity: 4, stats: { strength: 70, speed: 95, intelligence: 82, defense: 60 }, artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' } },
-    { id: uuid(), setId: set1.id, name: 'Terra Golem', description: 'Unshakable mountain defender.', rarity: 3, stats: { strength: 88, speed: 40, intelligence: 65, defense: 95 }, artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' } },
-    { id: uuid(), setId: set1.id, name: 'Aero Falcon', description: 'Master of the jetstream.', rarity: 4, stats: { strength: 68, speed: 97, intelligence: 70, defense: 55 }, artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' } },
-    { id: uuid(), setId: set1.id, name: 'Shadow Mantis', description: 'Silent strikes from the dark.', rarity: 5, stats: { strength: 85, speed: 90, intelligence: 90, defense: 70 }, artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' } },
-    { id: uuid(), setId: set2.id, name: 'Crystal Nymph', description: 'Prism magic and light bends.', rarity: 3, stats: { strength: 55, speed: 72, intelligence: 93, defense: 61 }, artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' } },
-    { id: uuid(), setId: set2.id, name: 'Pyro Beetle', description: 'Molten armor, blazing trail.', rarity: 4, stats: { strength: 82, speed: 70, intelligence: 68, defense: 74 }, artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' } },
-    { id: uuid(), setId: set2.id, name: 'Storm Leviathan', description: 'Tidal thunder reign.', rarity: 5, stats: { strength: 92, speed: 78, intelligence: 84, defense: 88 }, artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' } },
-    { id: uuid(), setId: set2.id, name: 'Quartz Sentinel', description: 'Shards of unbreakable will.', rarity: 3, stats: { strength: 76, speed: 55, intelligence: 72, defense: 89 }, artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' } },
-    { id: uuid(), setId: set2.id, name: 'Vine Warden', description: 'Roots that never yield.', rarity: 4, stats: { strength: 79, speed: 64, intelligence: 77, defense: 83 }, artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' } },
-    { id: uuid(), setId: set1.id, name: 'Nova Kitsune', description: 'Starlit trickster fox.', rarity: 5, stats: { strength: 81, speed: 93, intelligence: 94, defense: 66 }, artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' } },
-    { id: uuid(), setId: set1.id, name: 'Aurora Stag', description: 'Dawnsong guardian.', rarity: 4, stats: { strength: 75, speed: 82, intelligence: 80, defense: 72 }, artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' } },
-    { id: uuid(), setId: set1.id, name: 'Obsidian Panther', description: 'Night-glass hunter.', rarity: 5, stats: { strength: 88, speed: 94, intelligence: 76, defense: 69 }, artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' } },
-  ];
+  const characters: Character[] = characterLore.map((entry) => {
+    const artRefs = entry.artRefs && Object.keys(entry.artRefs).length > 0
+      ? entry.artRefs
+      : { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' };
+    return {
+      id: uuid(),
+      setId: set.id,
+      name: entry.name,
+      description: entry.description,
+      rarity: entry.rarity,
+      stats: entry.stats,
+      artRefs,
+      codeSeries: entry.series,
+      slug: entry.slug,
+      realm: entry.realm,
+      color: entry.color,
+      title: entry.title,
+      vibe: entry.vibe,
+      danceStyle: entry.danceStyle,
+      coreCharm: entry.coreCharm,
+      personality: entry.personality,
+      tagline: entry.tagline,
+    };
+  });
 
   const secureSalt = 'super-secret-salt';
-  const units: PhysicalUnit[] = [
-    { id: uuid(), characterId: blaze.id, codeHash: hashClaimCode('CHARM-XPAL-001'), secureSalt, status: 'available', claimedBy: null, claimedAt: null },
-    { id: uuid(), characterId: frost.id, codeHash: hashClaimCode('CHARM-XPAL-002'), secureSalt, status: 'available', claimedBy: null, claimedAt: null },
-    { id: uuid(), characterId: tidal.id, codeHash: hashClaimCode('CHARM-XPAL-003'), secureSalt, status: 'available', claimedBy: null, claimedAt: null },
+  const sampleUnits = [
+    { code: 'CHARM-XPAL-001', series: 'Red Dash' },
+    { code: 'CHARM-XPAL-002', series: 'Blue Dash' },
+    { code: 'CHARM-XPAL-003', series: 'Pink Dash' },
   ];
+  const units: PhysicalUnit[] = sampleUnits
+    .map(({ code, series }) => {
+      const character = characters.find((c) => c.codeSeries === series);
+      if (!character) return null;
+      return {
+        id: uuid(),
+        characterId: character.id,
+        codeHash: hashClaimCode(code),
+        secureSalt,
+        status: 'available' as const,
+        claimedBy: null,
+        claimedAt: null,
+      };
+    })
+    .filter((unit): unit is PhysicalUnit => Boolean(unit));
 
   return {
     users: [] as User[],
-    sets: [set1, set2],
-    characters: [blaze, frost, tidal, ...extras],
+    sets: [set],
+    characters,
     units,
     challenges: [] as ClaimChallenge[],
     abuse: [] as any[],

@@ -3,10 +3,14 @@ import { cookies } from 'next/headers';
 import HeroDeck from '@/components/HeroDeck';
 import Aurora from '@/components/Aurora';
 import HeroHeader from '@/components/HeroHeader';
+import { withCharacterLore, type CharacterWithLore } from '@/lib/characterLore';
 
 export default async function Home() {
   const repo = await getRepo();
   const characters = await repo.listCharacters({ limit: 5, offset: 0 });
+  const enriched = characters
+    .map((character) => withCharacterLore(character))
+    .filter((value): value is CharacterWithLore => Boolean(value));
   const userId = cookies().get('cp_user')?.value || null;
   const ownedIds = new Set<string>();
   if (userId) {
@@ -24,7 +28,18 @@ export default async function Home() {
 
           <div className="mt-10 md:mt-12">
             {/* Mark owned cards inline */}
-            <HeroDeck items={characters.map((c) => ({ ...c, owned: ownedIds.has(c.id) })) as any} />
+            <HeroDeck
+              items={enriched.map((c) => ({
+                id: c.id,
+                name: c.name,
+                rarity: c.rarity,
+                owned: ownedIds.has(c.id),
+                realm: c.realm,
+                title: c.title,
+                tagline: c.tagline,
+                description: c.description,
+              }))}
+            />
           </div>
         </div>
       </section>

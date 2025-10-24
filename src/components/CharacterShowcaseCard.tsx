@@ -7,6 +7,9 @@ type Props = {
   rarity: number;
   image?: string | null;
   rating?: number | null;
+  realm?: string | null;
+  title?: string | null;
+  tagline?: string | null;
 };
 
 function rarityMeta(r: number) {
@@ -15,7 +18,7 @@ function rarityMeta(r: number) {
   return { label: "Rare" };
 }
 
-export default function CharacterShowcaseCard({ name, rarity, image, rating }: Props) {
+export default function CharacterShowcaseCard({ name, rarity, image, rating, realm, title, tagline }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [tCard, setTCard] = useState("none");
   const [tImg, setTImg] = useState("scale(1)");
@@ -41,7 +44,7 @@ export default function CharacterShowcaseCard({ name, rarity, image, rating }: P
   const score = rating ?? Number((rarity + 2.7).toFixed(1));
 
   return (
-    <div className="cp-parallax">
+    <div className="cp-parallax space-y-4">
       <div
         ref={ref}
         className="relative rounded-2xl border border-white/10 bg-white/5 overflow-hidden cp-parallax-card"
@@ -67,11 +70,14 @@ export default function CharacterShowcaseCard({ name, rarity, image, rating }: P
           {/* Badges */}
           <div className="absolute top-4 left-4 cp-chip text-xs font-bold">{meta.label}</div>
           <div className="absolute top-4 right-4 cp-chip text-xs font-bold">{score}</div>
-          <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
-            <div className="text-white font-display text-3xl md:text-4xl font-extrabold drop-shadow-[0_6px_18px_rgba(255,159,213,0.55)]">{name}</div>
+          <div className="absolute bottom-4 left-4 right-4 text-white drop-shadow-[0_6px_18px_rgba(255,159,213,0.55)]">
+            {realm && <div className="cp-kicker text-[11px] tracking-[0.24em] uppercase text-white/70 mb-1">{realm}</div>}
+            <div className="font-display text-3xl md:text-4xl font-extrabold">{name}</div>
+            {title && <div className="text-white/85 font-medium text-sm mt-1">{title}</div>}
           </div>
         </div>
       </div>
+      {tagline && <p className="cp-muted text-sm text-center max-w-md mx-auto">{tagline}</p>}
     </div>
   );
 }

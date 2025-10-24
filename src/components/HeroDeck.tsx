@@ -12,6 +12,9 @@ type Item = {
   description?: string | null;
   rarity?: number;
   owned?: boolean;
+  realm?: string | null;
+  title?: string | null;
+  tagline?: string | null;
 };
 
 function overlayOpacity(i: number) { return [0.85, 0.8, 0.78, 0.82, 0.8][i % 5]; }
@@ -63,8 +66,14 @@ export default function HeroDeck({ items }: { items: Item[] }) {
               {c.owned && <div className="absolute bottom-3 left-3 cp-chip text-xs">Owned</div>}
             </div>
             <div className="p-4">
+              {c.realm && <div className="cp-kicker text-xs mb-1 uppercase tracking-[0.2em] text-white/70">{c.realm}</div>}
               <div className="text-white font-display text-xl font-extrabold truncate">{c.name}</div>
-              {c.description && <div className="cp-muted text-sm line-clamp-2">{c.description}</div>}
+              {c.title && <div className="text-white/80 text-sm font-medium">{c.title}</div>}
+              {c.tagline ? (
+                <div className="cp-muted text-sm line-clamp-2 mt-2">{c.tagline}</div>
+              ) : c.description ? (
+                <div className="cp-muted text-sm line-clamp-2 mt-2">{c.description}</div>
+              ) : null}
               <div className="mt-3">
                 <button onClick={(e) => onCardClick(e as any, c)} className="px-3 py-2 bg-white text-gray-900 rounded-lg text-xs font-bold">Open</button>
               </div>
@@ -171,13 +180,22 @@ function FlyOverlay({ state, onClose }: { state: FlyState; onClose: () => void }
           <div className="absolute top-3 right-3 cp-chip text-xs">{(item.rarity ?? 3) + 2.7}</div>
         </div>
         <div className="p-4">
+          {item.realm && <div className="cp-kicker text-xs mb-1 uppercase tracking-[0.2em] text-white/70">{item.realm}</div>}
           <div className="text-white font-display text-xl font-extrabold truncate">{item.name}</div>
-          {item.description && <div className="cp-muted text-sm line-clamp-2">{item.description}</div>}
-          {done && (
-            <div className="mt-3 flex gap-2">
-              <Link href={`/character/${item.id}`} className="px-4 py-2 bg-white text-gray-900 rounded-lg text-sm font-bold">View Character</Link>
-              <button onClick={onClose} className="px-4 py-2 border border-white/20 text-white rounded-lg text-sm font-bold hover:bg-white/5">Close</button>
+          {item.title && <div className="text-white/80 text-sm font-medium">{item.title}</div>}
+          {(item.tagline || item.description) && (
+            <div className="cp-muted text-sm mt-2">
+              {item.tagline || item.description}
             </div>
+          )}
+          {done && (
+            <>
+              <p className="cp-muted text-sm mt-3">Scan its charm code to add this champion to your roster in seconds.</p>
+              <div className="mt-3 flex gap-2">
+                <Link href={`/character/${item.id}`} className="px-4 py-2 bg-white text-gray-900 rounded-lg text-sm font-bold">View Character</Link>
+                <button onClick={onClose} className="px-4 py-2 border border-white/20 text-white rounded-lg text-sm font-bold hover:bg-white/5">Close</button>
+              </div>
+            </>
           )}
         </div>
       </div>

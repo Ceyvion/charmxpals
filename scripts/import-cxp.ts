@@ -8,6 +8,7 @@ import { getRedis } from '@/lib/redis';
 import { redisKeys } from '@/lib/repoRedis';
 import { hashClaimCode } from '@/lib/crypto';
 import type { Character } from '@/lib/repo';
+import { loreBySeries } from '@/data/characterLore';
 
 type CliOptions = {
   file: string;
@@ -44,6 +45,7 @@ type ImportSummary = {
 };
 
 const redis = getRedis();
+const DEFAULT_ART_REFS = { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' };
 
 function parseArgs(): CliOptions {
   const args = process.argv.slice(2);
@@ -173,39 +175,81 @@ export async function runImport(rows: LongRow[], setName: string): Promise<Impor
   }
 
   const existingCharacters = await readExistingCharacters();
-  const characterMap = new Map<string, StoredCharacter>(existingCharacters.map((c) => [c.name, c]));
+  const existingBySeries = new Map<string, StoredCharacter>();
+  const existingByName = new Map<string, StoredCharacter>();
+  existingCharacters.forEach((character) => {
+    if (character.codeSeries) existingBySeries.set(character.codeSeries, character);
+    if (character.name) existingByName.set(character.name, character);
+  });
+
   const baseOrder = existingCharacters.reduce((max, current) => Math.max(max, current.order ?? 0), 0);
   const nowIso = new Date().toISOString();
 
-  const labels = Array.from(new Set(rows.map((row) => row.label))).sort();
-  const newCharacterRecords: Record<string, string> = {};
+  const labels = Array.from(new Set(rows.map((row) => row.label))).sort((a, b) => {
+    const orderA = loreBySeries[a]?.order ?? 999;
+    const orderB = loreBySeries[b]?.order ?? 999;
+    if (orderA === orderB) return a.localeCompare(b);
+    return orderA - orderB;
+  });
+
+  const characterRecords: Record<string, string> = {};
+  const charactersForSeries = new Map<string, StoredCharacter>();
+  const uniqueCharacterIds = new Set(existingCharacters.map((c) => c.id));
   let charactersCreated = 0;
 
   labels.forEach((label, idx) => {
-    if (characterMap.has(label)) return;
-    const exemplar = rows.find((row) => row.label === label);
-    const description = exemplar ? buildDescription(exemplar) : null;
-    const character: StoredCharacter = {
-      id: uuid(),
+    const lore = loreBySeries[label];
+    if (!lore) {
+      throw new Error(`No lore mapping found for series "${label}". Update src/data/characterLore.ts.`);
+    }
+
+    const existing = existingBySeries.get(label) ?? existingByName.get(label);
+    const order = lore.order ?? existing?.order ?? baseOrder + idx + 1;
+    const artRefs =
+      (lore.artRefs && Object.keys(lore.artRefs).length > 0 && lore.artRefs) ||
+      (existing?.artRefs && Object.keys(existing.artRefs ?? {}).length > 0 && existing.artRefs) ||
+      DEFAULT_ART_REFS;
+
+    const updated: StoredCharacter = {
+      id: existing?.id ?? uuid(),
       setId,
-      name: label,
-      description,
-      rarity: 3,
-      stats: {},
-      artRefs: {},
-      order: baseOrder + idx + 1,
-      createdAt: nowIso,
+      name: lore.name,
+      description: lore.description,
+      rarity: lore.rarity,
+      stats: lore.stats,
+      artRefs,
+      codeSeries: lore.series,
+      slug: lore.slug,
+      realm: lore.realm,
+      color: lore.color,
+      title: lore.title,
+      vibe: lore.vibe,
+      danceStyle: lore.danceStyle,
+      coreCharm: lore.coreCharm,
+      personality: lore.personality,
+      tagline: lore.tagline,
+      order,
+      createdAt: existing?.createdAt ?? nowIso,
     };
-    characterMap.set(label, character);
-    newCharacterRecords[character.id] = JSON.stringify(character);
-    charactersCreated += 1;
+
+    if (!existing) {
+      charactersCreated += 1;
+    }
+
+    uniqueCharacterIds.add(updated.id);
+    characterRecords[updated.id] = JSON.stringify(updated);
+    existingBySeries.set(label, updated);
+    if (updated.codeSeries) existingBySeries.set(updated.codeSeries, updated);
+    existingByName.set(updated.name, updated);
+    charactersForSeries.set(label, updated);
+    if (updated.codeSeries) charactersForSeries.set(updated.codeSeries, updated);
   });
 
-  if (Object.keys(newCharacterRecords).length) {
-    await redis.hset(redisKeys.characters, newCharacterRecords);
+  if (Object.keys(characterRecords).length) {
+    await redis.hset(redisKeys.characters, characterRecords);
   }
 
-  if (!existingSetEntry && normalizedSetName) {
+  if (normalizedSetName) {
     await redis.hset(redisKeys.characterSets, { [normalizedSetName]: JSON.stringify({ id: setId, name: setName }) });
   }
 
@@ -213,7 +257,7 @@ export async function runImport(rows: LongRow[], setName: string): Promise<Impor
 
   for (const row of rows) {
     const label = row.label;
-    if (!characterMap.has(label)) {
+    if (!charactersForSeries.has(label)) {
       throw new Error(`No character found for label "${label}"`);
     }
     const codeHash = hashClaimCode(row.code, secret);
@@ -231,7 +275,7 @@ export async function runImport(rows: LongRow[], setName: string): Promise<Impor
   let unitsCreated = 0;
   for (const [codeHash, { label }] of Array.from(codeMap.entries())) {
     if (existingHashes.has(codeHash)) continue;
-    const character = characterMap.get(label);
+    const character = charactersForSeries.get(label);
     if (!character) continue;
     const unit: StoredUnit = {
       id: uuid(),
@@ -282,7 +326,7 @@ export async function runImport(rows: LongRow[], setName: string): Promise<Impor
   return {
     setId,
     charactersCreated,
-    charactersTotal: characterMap.size,
+    charactersTotal: uniqueCharacterIds.size,
     unitsCreated,
     unitsSkipped,
     uniqueCodes,

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 import anime from 'animejs';
+import { worldTagline } from '@/data/characterLore';
 
 export default function HeroHeader() {
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -37,31 +38,28 @@ export default function HeroHeader() {
   return (
     <div ref={rootRef} className="text-center max-w-4xl mx-auto">
       <div className="inline-flex items-center gap-2 mb-4">
-        <span className="cp-chip">Season One • Free Access</span>
+        <span className="cp-chip">Connected Toy Drop • Open Beta</span>
       </div>
       <h1 className="font-display font-extrabold leading-tight text-5xl sm:text-6xl md:text-8xl" data-hero-title>
-        <span>Scan a Charm.</span>
+        <span>Scan Your Charm.</span>
         <br />
-        <span>Meet Your Pal.</span>
+        <span>Command the Arena.</span>
       </h1>
       <p className="mt-3 cp-muted text-base sm:text-lg md:text-xl" data-hero-sub>
-        Unlock a 3D pal from your physical charm and jump into quick arcade games. No app—play in seconds.
+        Turn every CharmXPal collectible into a browser-playable champion in under five seconds. {worldTagline} Pair physical hype with instant dance battles—no downloads, no wallets, just rhythm.
       </p>
       <div className="mt-5 flex items-center justify-center" data-hero-cta>
         <div className="cp-cta">
-          <Link href="/claim" className="px-5 py-2.5 bg-white text-gray-900 rounded-lg font-bold">Claim Your Pal</Link>
-          <Link href="/play" className="px-5 py-2.5 border border-white/20 text-white rounded-lg font-bold hover:bg-white/5">Try a Game</Link>
-          <Link href="/explore" className="hidden md:inline-flex px-5 py-2.5 border border-white/20 text-white rounded-lg font-bold hover:bg-white/5">Explore the Squad</Link>
+          <Link href="/claim" className="px-5 py-2.5 bg-white text-gray-900 rounded-lg font-bold">Unlock Now</Link>
+          <Link href="/explore" className="hidden md:inline-flex px-5 py-2.5 border border-white/20 text-white rounded-lg font-bold hover:bg-white/5">Preview the Crew</Link>
+          <Link href="/play" className="px-5 py-2.5 border border-white/20 text-white rounded-lg font-bold hover:bg-white/5">Start a Demo Match</Link>
         </div>
       </div>
       <div className="mt-5 flex items-center justify-center gap-3 text-sm text-white/80" data-hero-proof>
-        <span className="cp-pill">Trusted by players and creators</span>
-        <span className="cp-chip">Indie Studios</span>
-        <span className="cp-chip">Game Jams</span>
-        <span className="cp-chip hidden sm:inline-flex">Toy Makers</span>
-        <span className="cp-chip hidden md:inline-flex">Arcade Nights</span>
+        <span className="cp-pill">Onboarding <5s • Zero installs • Secure single-use codes</span>
+        <span className="cp-chip hidden sm:inline-flex">No App Required</span>
+        <span className="cp-chip hidden md:inline-flex">Dance MMO Alpha</span>
       </div>
     </div>
   );
 }
-

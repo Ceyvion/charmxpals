@@ -11,6 +11,16 @@ export type Character = {
   rarity: number;
   stats: Record<string, number>;
   artRefs: Record<string, string>;
+  codeSeries?: string | null;
+  slug?: string | null;
+  realm?: string | null;
+  color?: string | null;
+  title?: string | null;
+  vibe?: string | null;
+  danceStyle?: string | null;
+  coreCharm?: string | null;
+  personality?: string | null;
+  tagline?: string | null;
 };
 export type PhysicalUnit = {
   id: string;

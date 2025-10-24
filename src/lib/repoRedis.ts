@@ -4,6 +4,7 @@ import type { Redis } from '@upstash/redis';
 import { getRedis } from '@/lib/redis';
 import { hashClaimCode } from '@/lib/crypto';
 import type { Repo, User, Character, PhysicalUnit, ClaimChallenge } from './repo';
+import { characterLore } from '@/data/characterLore';
 
 const PREFIX = 'charmxpals';
 export const redisKeys = {
@@ -54,226 +55,61 @@ async function seedIfNeeded(client: Redis): Promise<void> {
   const now = new Date();
   const nowIso = now.toISOString();
 
-  const fantasySetId = uuid();
-  const elementalSetId = uuid();
+  const rosterSetId = uuid();
+  const rosterSetSlug = 'dance-across-dimensions';
+  const rosterSetName = 'Dance Across Dimensions';
 
-  const characters: Array<{ data: Character; order: number }> = [
-    {
-      order: 1,
+  const characters: Array<{ data: Character; order: number }> = characterLore.map((entry, idx) => {
+    const artRefs = entry.artRefs && Object.keys(entry.artRefs).length > 0
+      ? entry.artRefs
+      : { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' };
+    return {
+      order: entry.order ?? idx + 1,
       data: {
         id: uuid(),
-        setId: fantasySetId,
-        name: 'Blaze the Dragon',
-        description: 'A fierce fire-breathing dragon with incredible speed and agility.',
-        rarity: 5,
-        stats: { strength: 85, speed: 92, intelligence: 78, defense: 80 },
-        artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' },
+        setId: rosterSetId,
+        name: entry.name,
+        description: entry.description,
+        rarity: entry.rarity,
+        stats: entry.stats,
+        artRefs,
+        codeSeries: entry.series,
+        slug: entry.slug,
+        realm: entry.realm,
+        color: entry.color,
+        title: entry.title,
+        vibe: entry.vibe,
+        danceStyle: entry.danceStyle,
+        coreCharm: entry.coreCharm,
+        personality: entry.personality,
+        tagline: entry.tagline,
       },
-    },
-    {
-      order: 2,
-      data: {
-        id: uuid(),
-        setId: fantasySetId,
-        name: 'Frost Wolf',
-        description: 'A cunning wolf with ice-blue fur and razor-sharp claws.',
-        rarity: 4,
-        stats: { strength: 78, speed: 88, intelligence: 85, defense: 82 },
-        artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' },
-      },
-    },
-    {
-      order: 3,
-      data: {
-        id: uuid(),
-        setId: elementalSetId,
-        name: 'Tidal Serpent',
-        description: 'A massive sea serpent that commands the power of the ocean.',
-        rarity: 5,
-        stats: { strength: 90, speed: 75, intelligence: 88, defense: 85 },
-        artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' },
-      },
-    },
-    {
-      order: 4,
-      data: {
-        id: uuid(),
-        setId: fantasySetId,
-        name: 'Volt Lynx',
-        description: 'Crackling with static speed.',
-        rarity: 4,
-        stats: { strength: 70, speed: 95, intelligence: 82, defense: 60 },
-        artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' },
-      },
-    },
-    {
-      order: 5,
-      data: {
-        id: uuid(),
-        setId: fantasySetId,
-        name: 'Terra Golem',
-        description: 'Unshakable mountain defender.',
-        rarity: 3,
-        stats: { strength: 88, speed: 40, intelligence: 65, defense: 95 },
-        artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' },
-      },
-    },
-    {
-      order: 6,
-      data: {
-        id: uuid(),
-        setId: fantasySetId,
-        name: 'Aero Falcon',
-        description: 'Master of the jetstream.',
-        rarity: 4,
-        stats: { strength: 68, speed: 97, intelligence: 70, defense: 55 },
-        artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' },
-      },
-    },
-    {
-      order: 7,
-      data: {
-        id: uuid(),
-        setId: fantasySetId,
-        name: 'Shadow Mantis',
-        description: 'Silent strikes from the dark.',
-        rarity: 5,
-        stats: { strength: 85, speed: 90, intelligence: 90, defense: 70 },
-        artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' },
-      },
-    },
-    {
-      order: 8,
-      data: {
-        id: uuid(),
-        setId: elementalSetId,
-        name: 'Crystal Nymph',
-        description: 'Prism magic and light bends.',
-        rarity: 3,
-        stats: { strength: 55, speed: 72, intelligence: 93, defense: 61 },
-        artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' },
-      },
-    },
-    {
-      order: 9,
-      data: {
-        id: uuid(),
-        setId: elementalSetId,
-        name: 'Pyro Beetle',
-        description: 'Molten armor, blazing trail.',
-        rarity: 4,
-        stats: { strength: 82, speed: 70, intelligence: 68, defense: 74 },
-        artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' },
-      },
-    },
-    {
-      order: 10,
-      data: {
-        id: uuid(),
-        setId: elementalSetId,
-        name: 'Storm Leviathan',
-        description: 'Tidal thunder reign.',
-        rarity: 5,
-        stats: { strength: 92, speed: 78, intelligence: 84, defense: 88 },
-        artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' },
-      },
-    },
-    {
-      order: 11,
-      data: {
-        id: uuid(),
-        setId: elementalSetId,
-        name: 'Quartz Sentinel',
-        description: 'Shards of unbreakable will.',
-        rarity: 3,
-        stats: { strength: 76, speed: 55, intelligence: 72, defense: 89 },
-        artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' },
-      },
-    },
-    {
-      order: 12,
-      data: {
-        id: uuid(),
-        setId: elementalSetId,
-        name: 'Vine Warden',
-        description: 'Roots that never yield.',
-        rarity: 4,
-        stats: { strength: 79, speed: 64, intelligence: 77, defense: 83 },
-        artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' },
-      },
-    },
-    {
-      order: 13,
-      data: {
-        id: uuid(),
-        setId: fantasySetId,
-        name: 'Nova Kitsune',
-        description: 'Starlit trickster fox.',
-        rarity: 5,
-        stats: { strength: 81, speed: 93, intelligence: 94, defense: 66 },
-        artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' },
-      },
-    },
-    {
-      order: 14,
-      data: {
-        id: uuid(),
-        setId: fantasySetId,
-        name: 'Aurora Stag',
-        description: 'Dawnsong guardian.',
-        rarity: 4,
-        stats: { strength: 75, speed: 82, intelligence: 80, defense: 72 },
-        artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' },
-      },
-    },
-    {
-      order: 15,
-      data: {
-        id: uuid(),
-        setId: fantasySetId,
-        name: 'Obsidian Panther',
-        description: 'Night-glass hunter.',
-        rarity: 5,
-        stats: { strength: 88, speed: 94, intelligence: 76, defense: 69 },
-        artRefs: { thumbnail: '/card-placeholder.svg', full: '/card-placeholder.svg' },
-      },
-    },
-  ];
+    };
+  });
 
   const secureSalt = 'super-secret-salt';
-
-  const units: StoredUnit[] = [
-    {
-      id: uuid(),
-      characterId: characters[0]?.data.id ?? '',
-      codeHash: hashClaimCode('CHARM-XPAL-001', secret),
-      secureSalt,
-      status: 'available',
-      claimedBy: null,
-      claimedAt: null,
-      createdAt: nowIso,
-    },
-    {
-      id: uuid(),
-      characterId: characters[1]?.data.id ?? '',
-      codeHash: hashClaimCode('CHARM-XPAL-002', secret),
-      secureSalt,
-      status: 'available',
-      claimedBy: null,
-      claimedAt: null,
-      createdAt: nowIso,
-    },
-    {
-      id: uuid(),
-      characterId: characters[2]?.data.id ?? '',
-      codeHash: hashClaimCode('CHARM-XPAL-003', secret),
-      secureSalt,
-      status: 'available',
-      claimedBy: null,
-      claimedAt: null,
-      createdAt: nowIso,
-    },
+  const sampleUnits = [
+    { code: 'CHARM-XPAL-001', series: 'Red Dash' },
+    { code: 'CHARM-XPAL-002', series: 'Blue Dash' },
+    { code: 'CHARM-XPAL-003', series: 'Pink Dash' },
   ];
+
+  const units: StoredUnit[] = sampleUnits
+    .map(({ code, series }) => {
+      const characterEntry = characters.find((entry) => entry.data.codeSeries === series);
+      if (!characterEntry) return null;
+      return {
+        id: uuid(),
+        characterId: characterEntry.data.id,
+        codeHash: hashClaimCode(code, secret),
+        secureSalt,
+        status: 'available',
+        claimedBy: null,
+        claimedAt: null,
+        createdAt: nowIso,
+      } satisfies StoredUnit;
+    })
+    .filter((unit): unit is StoredUnit => Boolean(unit));
 
   const characterEntries = characters.map(({ data, order }) => [
     data.id,
@@ -283,6 +119,10 @@ async function seedIfNeeded(client: Redis): Promise<void> {
   if (characterEntries.length) {
     await client.hset(KEYS.characters, Object.fromEntries(characterEntries));
   }
+
+  await client.hset(KEYS.characterSets, {
+    [rosterSetSlug]: JSON.stringify({ id: rosterSetId, name: rosterSetName }),
+  });
 
   for (const unit of units) {
     await client.hset(KEYS.units, { [unit.id]: JSON.stringify(unit) });
@@ -356,7 +196,17 @@ function toCharacter(raw: unknown): Character | null {
     description: stored.description,
     rarity: stored.rarity,
     stats: stored.stats,
-    artRefs: stored.artRefs,
+    artRefs: stored.artRefs ?? {},
+    codeSeries: stored.codeSeries ?? null,
+    slug: stored.slug ?? null,
+    realm: stored.realm ?? null,
+    color: stored.color ?? null,
+    title: stored.title ?? null,
+    vibe: stored.vibe ?? null,
+    danceStyle: stored.danceStyle ?? null,
+    coreCharm: stored.coreCharm ?? null,
+    personality: stored.personality ?? null,
+    tagline: stored.tagline ?? null,
   };
 }
 
@@ -538,7 +388,11 @@ export const repoRedis: Repo = {
     const parsed = (raw || [])
       .map((entry: unknown) => parseJson<StoredCharacter>(entry))
       .filter((entry: StoredCharacter | null): entry is StoredCharacter => Boolean(entry));
-    parsed.sort((a: StoredCharacter, b: StoredCharacter) => b.order - a.order);
+    parsed.sort((a: StoredCharacter, b: StoredCharacter) => {
+      const orderA = typeof a.order === 'number' ? a.order : 0;
+      const orderB = typeof b.order === 'number' ? b.order : 0;
+      return orderA - orderB;
+    });
     return parsed.slice(offset, offset + limit).map((character: StoredCharacter) => ({
       id: character.id,
       setId: character.setId,
@@ -546,7 +400,17 @@ export const repoRedis: Repo = {
       description: character.description,
       rarity: character.rarity,
       stats: character.stats,
-      artRefs: character.artRefs,
+      artRefs: character.artRefs ?? {},
+      codeSeries: character.codeSeries ?? null,
+      slug: character.slug ?? null,
+      realm: character.realm ?? null,
+      color: character.color ?? null,
+      title: character.title ?? null,
+      vibe: character.vibe ?? null,
+      danceStyle: character.danceStyle ?? null,
+      coreCharm: character.coreCharm ?? null,
+      personality: character.personality ?? null,
+      tagline: character.tagline ?? null,
     } satisfies Character));
   },
 

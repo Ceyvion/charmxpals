@@ -3,10 +3,14 @@ import { getRepo } from '@/lib/repo';
 import CharacterCard from '@/components/CharacterCard';
 import ExploreClient from './ExploreClient';
 import { cookies } from 'next/headers';
+import { withCharacterLore, type CharacterWithLore } from '@/lib/characterLore';
 
 export default async function ExplorePage() {
   const repo = await getRepo();
   const characters = await repo.listCharacters({ limit: 24, offset: 0 });
+  const enriched = characters
+    .map((character) => withCharacterLore(character))
+    .filter((value): value is CharacterWithLore => Boolean(value));
   const userId = cookies().get('cp_user')?.value || null;
   const ownedIds = new Set<string>();
   if (userId) {
@@ -18,8 +22,8 @@ export default async function ExplorePage() {
   return (
     <div className="min-h-screen py-12">
       <div className="cp-container">
-        {characters.length > 0 ? (
-          <ExploreClient characters={characters as any} ownedIds={owned} />
+        {enriched.length > 0 ? (
+          <ExploreClient characters={enriched} ownedIds={owned} />
         ) : (
           <div className="mt-8 text-center p-8 border border-white/10 rounded-2xl bg-white/5">
             <p className="cp-muted">No characters yet. Seed data or use memory mode.</p>

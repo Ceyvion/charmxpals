@@ -9,6 +9,10 @@ export type CharacterBasic = {
   description: string | null;
   rarity: number;
   artRefs?: Record<string, string>;
+  realm?: string | null;
+  title?: string | null;
+  tagline?: string | null;
+  codeSeries?: string | null;
 };
 
 function rarityInfo(r: number) {
@@ -86,10 +90,15 @@ export default function CharacterCard({ c, owned = false }: { c: CharacterBasic;
 
         <div className="p-4">
           <div className="flex items-center justify-between mb-1">
-            <h3 className="text-white text-xl font-display font-extrabold truncate pr-2">{c.name}</h3>
+            <div className="min-w-0">
+              {c.realm && <div className="cp-kicker text-[10px] tracking-[0.24em] uppercase text-white/60">{c.realm}</div>}
+              <h3 className="text-white text-xl font-display font-extrabold truncate pr-2">{c.name}</h3>
+            </div>
             <span className="cp-chip">{r.label}</span>
           </div>
-          {c.description && <p className="cp-muted text-sm line-clamp-2">{c.description}</p>}
+          {c.title && <div className="text-white/80 text-xs font-medium mb-1">{c.title}</div>}
+          {(c.tagline || c.description) && <p className="cp-muted text-sm line-clamp-2">{c.tagline || c.description}</p>}
+          {c.codeSeries && <p className="text-[11px] text-white/50 mt-1 uppercase tracking-[0.18em]">Codes: {c.codeSeries}</p>}
           <div className="mt-4 flex gap-2">
             <Link href={`/character/${c.id}`} className="px-4 py-2 bg-white text-gray-900 rounded-lg text-sm font-bold">View</Link>
             <Link href="/play" className="px-4 py-2 border border-white/20 text-white rounded-lg text-sm font-bold hover:bg-white/5">Play</Link>

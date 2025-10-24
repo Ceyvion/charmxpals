@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import CharacterCard from '@/components/CharacterCard';
 import RevealOnView from '@/components/RevealOnView';
+import { worldTagline } from '@/data/characterLore';
 
 type Character = {
   id: string;
@@ -11,6 +12,12 @@ type Character = {
   description: string | null;
   rarity: number;
   artRefs?: Record<string, string>;
+  realm?: string | null;
+  title?: string | null;
+  tagline?: string | null;
+  codeSeries?: string | null;
+  danceStyle?: string | null;
+  coreCharm?: string | null;
 };
 
 export default function ExploreClient({ characters, ownedIds }: { characters: Character[]; ownedIds: string[] }) {
@@ -32,7 +39,21 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
     }
     if (query.trim()) {
       const q = query.trim().toLowerCase();
-      list = list.filter((c) => c.name.toLowerCase().includes(q) || (c.description || '').toLowerCase().includes(q));
+      list = list.filter((c) => {
+        const haystack = [
+          c.name,
+          c.description || '',
+          c.realm || '',
+          c.title || '',
+          c.tagline || '',
+          c.codeSeries || '',
+          c.danceStyle || '',
+          c.coreCharm || '',
+        ]
+          .join(' ')
+          .toLowerCase();
+        return haystack.includes(q);
+      });
     }
     if (sortBy === 'rarity') list = [...list].sort((a, b) => b.rarity - a.rarity || a.name.localeCompare(b.name));
     else list = [...list].sort((a, b) => a.name.localeCompare(b.name));
@@ -52,9 +73,9 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
     <div>
       {/* Title */}
       <div className="mb-4">
-        <div className="cp-kicker mb-1">Explore</div>
-        <h1 className="text-3xl md:text-5xl font-extrabold font-display leading-tight">Meet the CharmPals</h1>
-        <p className="mt-2 cp-muted max-w-prose">Browse by rarity, search by name, or view them all in a tidy grid.</p>
+        <div className="cp-kicker mb-1">Build Your Crew</div>
+        <h1 className="text-3xl md:text-5xl font-extrabold font-display leading-tight">Recruit Across Dimensions</h1>
+        <p className="mt-2 cp-muted max-w-prose">{worldTagline} Preview every champion before you scan—compare realms, study Core Charms, and queue up the next unlock.</p>
       </div>
 
       {/* Sticky controls */}

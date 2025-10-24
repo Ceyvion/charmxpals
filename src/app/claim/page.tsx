@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { loreBySeries } from '@/data/characterLore';
 
 type RedeemResponse = {
   success: true;
@@ -19,11 +20,58 @@ type Message = { kind: 'success' | 'error'; text: string };
 
 const QrScannerDynamic = () => import('@/components/QrScanner');
 
+const CODE_REGEX = /CXP-(?:[A-Z0-9]+-){4,}[A-Z0-9]+/i;
+
+function findCodeInText(text: string): string | null {
+  const match = text.toUpperCase().match(CODE_REGEX);
+  return match ? match[0].toUpperCase() : null;
+}
+
+function extractClaimCode(raw: string): string {
+  if (!raw) return '';
+  const trimmed = raw.trim();
+  if (!trimmed) return '';
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      const url = new URL(trimmed);
+      const keys = ['code', 'claim', 'token'];
+      for (const key of keys) {
+        const value = url.searchParams.get(key);
+        if (value) {
+          const match = findCodeInText(value);
+          if (match) return match;
+          return value.trim().toUpperCase();
+        }
+      }
+      const pathSegments = url.pathname.split('/').filter(Boolean);
+      if (pathSegments.length) {
+        const segmentMatch = findCodeInText(pathSegments[pathSegments.length - 1]);
+        if (segmentMatch) return segmentMatch;
+      }
+      if (url.hash) {
+        const hashMatch = findCodeInText(url.hash.replace(/^#/, ''));
+        if (hashMatch) return hashMatch;
+      }
+    } catch {
+      // fall through to generic matching
+    }
+  }
+
+  const directMatch = findCodeInText(trimmed);
+  if (directMatch) return directMatch;
+
+  if (/^https?:\/\//i.test(trimmed)) return '';
+
+  return trimmed.toUpperCase();
+}
+
 export default function ClaimPage() {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<Message | null>(null);
-  const [redeemSeries, setRedeemSeries] = useState<string | null>(null);
+  const [redeemSeriesDisplay, setRedeemSeriesDisplay] = useState<string | null>(null);
+  const [redeemSeriesCode, setRedeemSeriesCode] = useState<string | null>(null);
   const [claimedAt, setClaimedAt] = useState<string | null>(null);
   const [scanOpen, setScanOpen] = useState(false);
 
@@ -53,15 +101,24 @@ export default function ClaimPage() {
 
     setLoading(true);
     setMessage(null);
-    setRedeemSeries(null);
+    setRedeemSeriesDisplay(null);
+    setRedeemSeriesCode(null);
     setClaimedAt(null);
+
+    const sanitized = extractClaimCode(code);
+    if (!sanitized) {
+      setMessage({ kind: 'error', text: 'We couldn’t detect a CharmXPal code in that entry. Try scanning again or type the code printed on your collectible.' });
+      setLoading(false);
+      return;
+    }
+    if (sanitized !== code) setCode(sanitized);
 
     try {
       const res = await fetch('/api/redeem', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          code: codeNormalized,
+          code: sanitized,
           metadata: { source: 'claim-page' },
         }),
       });
@@ -72,11 +129,15 @@ export default function ClaimPage() {
         throw new Error(errorMessage);
       }
 
-      setRedeemSeries(json.series ?? null);
+      const originalSeries = json.series ?? null;
+      const lore = originalSeries ? loreBySeries[originalSeries] : undefined;
+      const displaySeries = lore?.name ?? originalSeries;
+      setRedeemSeriesDisplay(displaySeries ?? null);
+      setRedeemSeriesCode(originalSeries);
       setClaimedAt(json.claimedAt);
       const formatted = new Date(json.claimedAt).toLocaleString();
-      const successMessage = json.series
-        ? `Success! Series "${json.series}" unlocked at ${formatted}.`
+      const successMessage = displaySeries
+        ? `Success! ${displaySeries} unlocked at ${formatted}.`
         : `Success! Redeemed at ${formatted}.`;
       setMessage({ kind: 'success', text: successMessage });
     } catch (error: any) {
@@ -93,9 +154,9 @@ export default function ClaimPage() {
       <div className="max-w-xl w-full mx-auto">
         <div className="cp-panel supports-[backdrop-filter]:bg-white/10 rounded-2xl shadow-sm overflow-hidden">
           <div className="border-b border-white/10 p-6 text-center">
-            <h1 className="text-3xl font-extrabold tracking-tight font-display text-white">Redeem Your Code</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight font-display text-white">Sync Your CharmXPal</h1>
             <p className="text-gray-300 mt-2">
-              Enter the code that shipped with your collectible. Each code is single-use and locks instantly once redeemed.
+              Scan or paste the 16-character code on your collectible to drop its champion into your roster. Each code is single-use and locks the instant it hits the arena.
             </p>
           </div>
 
@@ -129,17 +190,25 @@ export default function ClaimPage() {
                 >
                   Scan QR
                 </button>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      const text = await navigator.clipboard.readText();
-                      if (text) setCode(String(text).trim().toUpperCase());
-                    } catch {}
-                  }}
-                  disabled={loading}
-                  className="px-4 py-3 rounded-xl border border-white/10 bg-white/10 text-white font-semibold hover:bg-white/20 disabled:opacity-50"
-                >
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const text = await navigator.clipboard.readText();
+                    if (text) {
+                      const parsed = extractClaimCode(String(text));
+                      if (parsed) {
+                        setCode(parsed);
+                        setMessage(null);
+                      } else {
+                        setMessage({ kind: 'error', text: 'Clipboard content did not include a CharmXPal code.' });
+                      }
+                    }
+                  } catch {}
+                }}
+                disabled={loading}
+                className="px-4 py-3 rounded-xl border border-white/10 bg-white/10 text-white font-semibold hover:bg-white/20 disabled:opacity-50"
+              >
                   Paste
                 </button>
               </div>
@@ -172,13 +241,20 @@ export default function ClaimPage() {
             </div>
           </form>
 
-          {(redeemSeries || claimedAt) && (
+          {(redeemSeriesDisplay || claimedAt) && (
             <div className="border-t border-white/10 p-6 space-y-2">
               <div className="flex items-center gap-3 text-green-300 bg-green-900/20 border border-green-700/40 px-4 py-3 rounded-xl">
                 <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-white font-bold">✓</span>
                 <div className="text-white font-semibold">Code redeemed successfully</div>
               </div>
-              {redeemSeries && <div className="text-sm text-white/70">Series: {redeemSeries}</div>}
+              {(redeemSeriesDisplay || redeemSeriesCode) && (
+                <div className="text-sm text-white/70">
+                  Character: {redeemSeriesDisplay ?? 'Unknown'}
+                  {redeemSeriesCode && (
+                    <span className="text-white/50"> • Codeset {redeemSeriesCode}</span>
+                  )}
+                </div>
+              )}
               {claimedAt && (
                 <div className="text-sm text-white/70">
                   Timestamp: {new Date(claimedAt).toLocaleString()}
@@ -191,8 +267,13 @@ export default function ClaimPage() {
             open={scanOpen}
             onClose={() => setScanOpen(false)}
             onResult={(value: string) => {
-              const parsed = String(value || '').trim().toUpperCase();
-              if (parsed) setCode(parsed);
+              const parsed = extractClaimCode(String(value || ''));
+              if (parsed) {
+                setCode(parsed);
+                setMessage(null);
+              } else {
+                setMessage({ kind: 'error', text: 'Scan detected no CharmXPal code. Try aligning the QR again or enter the code manually.' });
+              }
               setScanOpen(false);
             }}
           />
