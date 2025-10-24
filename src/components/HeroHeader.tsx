@@ -56,7 +56,7 @@ export default function HeroHeader() {
         </div>
       </div>
       <div className="mt-5 flex items-center justify-center gap-3 text-sm text-white/80" data-hero-proof>
-        <span className="cp-pill">Onboarding <5s • Zero installs • Secure single-use codes</span>
+        <span className="cp-pill">Onboarding &lt;5s • Zero installs • Secure single-use codes</span>
         <span className="cp-chip hidden sm:inline-flex">No App Required</span>
         <span className="cp-chip hidden md:inline-flex">Dance MMO Alpha</span>
       </div>
