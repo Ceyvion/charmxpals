@@ -94,22 +94,21 @@ async function seedIfNeeded(client: Redis): Promise<void> {
     { code: 'CHARM-XPAL-003', series: 'Pink Dash' },
   ];
 
-  const units: StoredUnit[] = sampleUnits
-    .map(({ code, series }) => {
-      const characterEntry = characters.find((entry) => entry.data.codeSeries === series);
-      if (!characterEntry) return null;
-      return {
-        id: uuid(),
-        characterId: characterEntry.data.id,
-        codeHash: hashClaimCode(code, secret),
-        secureSalt,
-        status: 'available',
-        claimedBy: null,
-        claimedAt: null,
-        createdAt: nowIso,
-      } satisfies StoredUnit;
-    })
-    .filter((unit): unit is StoredUnit => Boolean(unit));
+  const units: StoredUnit[] = sampleUnits.reduce<StoredUnit[]>((acc, { code, series }) => {
+    const characterEntry = characters.find((entry) => entry.data.codeSeries === series);
+    if (!characterEntry) return acc;
+    acc.push({
+      id: uuid(),
+      characterId: characterEntry.data.id,
+      codeHash: hashClaimCode(code, secret),
+      secureSalt,
+      status: 'available',
+      claimedBy: null,
+      claimedAt: null,
+      createdAt: nowIso,
+    });
+    return acc;
+  }, []);
 
   const characterEntries = characters.map(({ data, order }) => [
     data.id,
