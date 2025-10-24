@@ -46,21 +46,20 @@ const data = (() => {
     { code: 'CHARM-XPAL-002', series: 'Blue Dash' },
     { code: 'CHARM-XPAL-003', series: 'Pink Dash' },
   ];
-  const units: PhysicalUnit[] = sampleUnits
-    .map(({ code, series }) => {
-      const character = characters.find((c) => c.codeSeries === series);
-      if (!character) return null;
-      return {
-        id: uuid(),
-        characterId: character.id,
-        codeHash: hashClaimCode(code),
-        secureSalt,
-        status: 'available' as const,
-        claimedBy: null,
-        claimedAt: null,
-      };
-    })
-    .filter((unit): unit is PhysicalUnit => Boolean(unit));
+  const units: PhysicalUnit[] = sampleUnits.reduce<PhysicalUnit[]>((acc, { code, series }) => {
+    const character = characters.find((c) => c.codeSeries === series);
+    if (!character) return acc;
+    acc.push({
+      id: uuid(),
+      characterId: character.id,
+      codeHash: hashClaimCode(code),
+      secureSalt,
+      status: 'available',
+      claimedBy: null,
+      claimedAt: null,
+    });
+    return acc;
+  }, []);
 
   return {
     users: [] as User[],
