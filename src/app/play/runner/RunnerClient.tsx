@@ -39,8 +39,13 @@ export default function RunnerClient({ cid }: { cid?: string }) {
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-4">
           <div className="text-left">
-            <h1 className="text-3xl md:text-4xl font-extrabold text-white font-display">Endless Runner</h1>
-            <p className="text-white/80">Tap to jump • Swipe down to slide. Collect coins and survive.</p>
+            <h1 className="text-3xl md:text-4xl font-extrabold text-white font-display">Breakline Runner</h1>
+            <p className="text-white/80">Tap to jump • Swipe down to slide • Stay on beat with Vexa&apos;s tempo gates.</p>
+            {stats && (
+              <div className="mt-1 text-sm text-white/60">
+                Flow {stats.flow ?? '—'} • Rhythm {stats.rhythm ?? '—'} — dialed in from your collectible&apos;s sheet.
+              </div>
+            )}
           </div>
           <label className="flex items-center gap-2 text-white/80 text-sm select-none">
             <input type="checkbox" checked={audioEnabled} onChange={(e) => setAudioEnabled(e.target.checked)} />
@@ -59,4 +64,3 @@ export default function RunnerClient({ cid }: { cid?: string }) {
     </div>
   );
 }
-

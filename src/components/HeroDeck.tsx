@@ -90,6 +90,7 @@ function FlyOverlay({ state, onClose }: { state: FlyState; onClose: () => void }
   const { item, from } = state!;
   const ref = useRef<HTMLDivElement | null>(null);
   const [done, setDone] = useState(false);
+  const closeRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     const el = ref.current;
@@ -99,29 +100,38 @@ function FlyOverlay({ state, onClose }: { state: FlyState; onClose: () => void }
     document.body.style.overflow = 'hidden';
 
     // Set initial position and size
+    const startRadius = window.getComputedStyle(el).borderRadius || '24px';
     Object.assign(el.style, {
       position: 'fixed',
       left: `${from.left}px`,
       top: `${from.top}px`,
       width: `${from.width}px`,
       height: `${from.height}px`,
-      transform: 'translate3d(0px, 0px, 0px) scale(1)',
-      transformOrigin: 'center center',
       zIndex: '60',
-      willChange: 'transform',
+      willChange: 'left, top, width, height',
     });
     const vv = (window as any).visualViewport as VisualViewport | undefined;
     const vw = vv?.width ?? window.innerWidth;
     const vh = vv?.height ?? window.innerHeight;
-    const endW = Math.min(420, Math.max(280, Math.round(vw * 0.8)));
-    const scale = endW / from.width;
-    // Compute delta to center the element in the viewport by translating from its current center
-    const centerX = (vw / 2) + (vv?.offsetLeft ?? 0);
-    const centerY = (vh / 2) + (vv?.offsetTop ?? 0);
-    const fromCenterX = from.left + from.width / 2;
-    const fromCenterY = from.top + from.height / 2;
-    const dx = centerX - fromCenterX;
-    const dy = centerY - fromCenterY;
+    const offsetLeft = vv?.offsetLeft ?? 0;
+    const offsetTop = vv?.offsetTop ?? 0;
+
+    const horizontalAllowance = Math.max(260, Math.min(420, vw - 48));
+    const baseWidth = Math.min(420, Math.max(280, horizontalAllowance));
+    const aspect = from.height > 0 && from.width > 0 ? from.height / from.width : 1.4;
+    let targetWidth = Math.round(baseWidth);
+    let targetHeight = Math.round(targetWidth * aspect);
+    const maxHeight = Math.max(280, vh - 64);
+    if (targetHeight > maxHeight) {
+      const scale = maxHeight / targetHeight;
+      targetHeight = Math.round(targetHeight * scale);
+      targetWidth = Math.round(targetWidth * scale);
+    }
+
+    const centerX = offsetLeft + vw / 2;
+    const centerY = offsetTop + vh / 2;
+    const targetLeft = Math.round(centerX - targetWidth / 2);
+    const targetTop = Math.round(centerY - targetHeight / 2);
 
     // Dim backdrop
     const dim = document.createElement('div');
@@ -131,29 +141,40 @@ function FlyOverlay({ state, onClose }: { state: FlyState; onClose: () => void }
     document.body.appendChild(dim);
     anime({ targets: dim, opacity: [0, 1], duration: 220, easing: 'easeOutQuad' });
 
-    const tl = anime.timeline({ easing: 'easeOutCubic' });
-    tl.add({
+    const animation = anime({
       targets: el,
-      translateX: dx,
-      translateY: dy,
-      scale: scale,
-      rotateY: ['0deg', '360deg'],
-      duration: 700,
-    })
-    .add({ targets: el, duration: 200, easing: 'linear', complete: () => setDone(true) });
+      left: targetLeft,
+      top: targetTop,
+      width: targetWidth,
+      height: targetHeight,
+      borderRadius: [startRadius, '28px'],
+      easing: 'easeOutCubic',
+      duration: 520,
+      complete: () => {
+        setDone(true);
+        Object.assign(el.style, {
+          left: `${targetLeft}px`,
+          top: `${targetTop}px`,
+          width: `${targetWidth}px`,
+          height: `${targetHeight}px`,
+        });
+      },
+    });
 
-    const onKey = (ev: KeyboardEvent) => { if (ev.key === 'Escape') close(); };
-    window.addEventListener('keydown', onKey);
-
-    function close() {
+    let closing = false;
+    const close = () => {
+      if (closing) return;
+      closing = true;
+      animation.pause();
       anime({ targets: dim, opacity: [1, 0], duration: 180, easing: 'easeInQuad', complete: () => dim.remove() });
       anime({
         targets: el,
-        translateX: 0,
-        translateY: 0,
-        scale: 1,
-        rotateY: '0deg',
-        duration: 320,
+        left: from.left,
+        top: from.top,
+        width: from.width,
+        height: from.height,
+        borderRadius: startRadius,
+        duration: 280,
         easing: 'easeInCubic',
         complete: () => {
           onClose();
@@ -161,12 +182,21 @@ function FlyOverlay({ state, onClose }: { state: FlyState; onClose: () => void }
         },
       });
       window.removeEventListener('keydown', onKey);
-    }
+      dim.removeEventListener('click', close);
+    };
+
+    const onKey = (ev: KeyboardEvent) => { if (ev.key === 'Escape') close(); };
+    window.addEventListener('keydown', onKey);
+    dim.addEventListener('click', close);
+    closeRef.current = close;
 
     return () => {
       try { dim.remove(); } catch {}
       window.removeEventListener('keydown', onKey);
+      dim.removeEventListener('click', close);
       document.body.style.overflow = prevOverflow;
+      animation.pause();
+      closeRef.current = () => {};
     };
   }, [from, onClose]);
 
@@ -193,7 +223,7 @@ function FlyOverlay({ state, onClose }: { state: FlyState; onClose: () => void }
               <p className="cp-muted text-sm mt-3">Scan its charm code to add this champion to your roster in seconds.</p>
               <div className="mt-3 flex gap-2">
                 <Link href={`/character/${item.id}`} className="px-4 py-2 bg-white text-gray-900 rounded-lg text-sm font-bold">View Character</Link>
-                <button onClick={onClose} className="px-4 py-2 border border-white/20 text-white rounded-lg text-sm font-bold hover:bg-white/5">Close</button>
+                <button onClick={() => closeRef.current()} className="px-4 py-2 border border-white/20 text-white rounded-lg text-sm font-bold hover:bg-white/5">Close</button>
               </div>
             </>
           )}

@@ -1,56 +1,234 @@
 'use client';
 
 import Link from 'next/link';
+import type { CharacterLore } from '@/data/characterLore';
+import { loreBySlug, worldTagline } from '@/data/characterLore';
+
+type StatKey = keyof CharacterLore['stats'];
+
+type GameConfig = {
+  id: string;
+  title: string;
+  slug: string;
+  tagline: string;
+  intro: string;
+  cta: string;
+  roster: string[];
+  focus: Array<{ key: StatKey; blurb: string }>;
+};
+
+const statLabels: Record<StatKey, string> = {
+  rhythm: 'Rhythm',
+  style: 'Style',
+  power: 'Power',
+  flow: 'Flow',
+  teamwork: 'Teamwork',
+};
+
+const gameConfigs: GameConfig[] = [
+  {
+    id: 'plaza',
+    title: 'Signal Plaza (Preview)',
+    slug: '/plaza',
+    tagline: 'Nightly link-up inside the Skylink Atrium.',
+    intro:
+      'DJ Prismix keeps a shard between realms stable so crews can sync strats, swap charm loadouts, and show off new footwork without the Break listening in.',
+    cta: 'Drop in',
+    roster: ['prism-pulse', 'lunar-lux', 'solar-spire'],
+    focus: [
+      { key: 'teamwork', blurb: 'Boost call-and-response emotes and crew shoutouts.' },
+      { key: 'style', blurb: 'High style streaks unlock spotlight loops at the DJ pod.' },
+    ],
+  },
+  {
+    id: 'runner',
+    title: 'Breakline Runner',
+    slug: '/play/runner',
+    tagline: 'Sprint the neon transit spine before the Break scrambles the rails.',
+    intro:
+      'Vexa Volt patched tonight’s Skylink with tempo gates. Stay on beat, stash signal coins, and lean on Kai Tidal’s flow tricks when the tracks split.',
+    cta: 'Run the loop',
+    roster: ['neon-city', 'rhythm-reef', 'shadow-stage'],
+    focus: [
+      { key: 'flow', blurb: 'Flow keeps wall-runs and rail slides stable when lanes tilt.' },
+      { key: 'rhythm', blurb: 'Matching the gate tempo adds surge speed through each sector.' },
+    ],
+  },
+  {
+    id: 'battle',
+    title: 'Vaulted Stat Clashes',
+    slug: '/play/battle',
+    tagline: 'Quick-turn showdowns staged in the Crystal Vault.',
+    intro:
+      'Seraphine Gliss referees head-to-head stat gambits. Anchor your strongest charm, bluff your cooldowns, and let Raze Ember handle the counterstrikes.',
+    cta: 'Queue a clash',
+    roster: ['crystal-kingdom', 'ember-heights', 'shadow-stage'],
+    focus: [
+      { key: 'power', blurb: 'Explosive power swings decide the final round in sudden-death.' },
+      { key: 'rhythm', blurb: 'Rhythm parries tempo spikes and turns them into combo fuel.' },
+    ],
+  },
+  {
+    id: 'time-trial',
+    title: 'Realm Relay Trials',
+    slug: '/play/time-trial',
+    tagline: 'Timed runs weaving Wildbeat Jungle, Rhythm Reef, and Solar Spire.',
+    intro:
+      'Kai Tidal, Tarin Pulse, and Helio Trace rotate realm chores—chase sonic blooms, rebuild beat bridges, and hand off charms before the timer stutters.',
+    cta: 'Start a relay',
+    roster: ['rhythm-reef', 'wildbeat-jungle', 'solar-spire'],
+    focus: [
+      { key: 'teamwork', blurb: 'Clean hand-offs unlock shortcut portals between legs.' },
+      { key: 'flow', blurb: 'Flow keeps momentum when terrain flips mid-route.' },
+    ],
+  },
+];
+
+type FocusStat = {
+  key: StatKey;
+  label: string;
+  blurb: string;
+  bestValue: number | null;
+  bestName: string | null;
+};
+
+type PresentedGame = GameConfig & {
+  champions: CharacterLore[];
+  focusStats: FocusStat[];
+  accentColor: string;
+};
+
+const hexToRgba = (hex: string, alpha: number) => {
+  const normalized = hex.replace('#', '');
+  if (normalized.length !== 6) return `rgba(148, 163, 184, ${alpha})`;
+  const r = parseInt(normalized.slice(0, 2), 16);
+  const g = parseInt(normalized.slice(2, 4), 16);
+  const b = parseInt(normalized.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+const buildGame = (config: GameConfig): PresentedGame => {
+  const champions = config.roster
+    .map((slug) => loreBySlug[slug])
+    .filter((entry): entry is CharacterLore => Boolean(entry));
+
+  const accentColor = champions[0]?.color ?? '#7c3aed';
+
+  const focusStats: FocusStat[] = config.focus.map((focus) => {
+    const best = champions.reduce<{ value: number; name: string } | null>((acc, champ) => {
+      const value = champ.stats?.[focus.key];
+      if (typeof value !== 'number') return acc;
+      if (!acc || value > acc.value) return { value, name: champ.name };
+      return acc;
+    }, null);
+
+    return {
+      key: focus.key,
+      label: statLabels[focus.key],
+      blurb: focus.blurb,
+      bestValue: best?.value ?? null,
+      bestName: best?.name ?? null,
+    };
+  });
+
+  return {
+    ...config,
+    champions,
+    focusStats,
+    accentColor,
+  };
+};
+
+const presentedGames = gameConfigs.map(buildGame);
 
 export default function GameHub() {
-  const games = [
-    {
-      id: 'plaza',
-      title: 'Plaza (Preview)',
-      description: 'Meet other players with your collectible in a small social space'
-    },
-    {
-      id: 'runner',
-      title: 'Endless Runner',
-      description: 'Run as far as you can while avoiding obstacles'
-    },
-    {
-      id: 'battle',
-      title: 'Stat Battle',
-      description: 'Challenge friends in quick turn-based battles'
-    },
-    {
-      id: 'time-trial',
-      title: 'Time Trial',
-      description: 'Complete challenges using your character\'s power-ups'
-    }
-  ];
-
   return (
-    <div className="min-h-screen bg-gray-950/90 py-12 px-4">
-      <div className="cp-container">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-white font-display mb-4">Game Hub</h1>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Play exciting mini-games with your collectibles and compete on leaderboards
+    <div className="relative min-h-screen bg-slate-950 py-16 px-4 text-white">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(124,58,237,0.25),_transparent_55%)]" aria-hidden="true" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,_rgba(14,165,233,0.18),_transparent_50%)]" aria-hidden="true" />
+      <div className="relative mx-auto flex max-w-6xl flex-col gap-12">
+        <header className="text-center">
+          <p className="text-sm uppercase tracking-[0.35em] text-white/50">Playgrounds</p>
+          <h1 className="mt-3 text-4xl font-bold font-display md:text-5xl">Pick Tonight&apos;s Stage</h1>
+          <p className="mt-4 text-lg text-white/70 md:text-xl">
+            {worldTagline} Choose a mode curated by the crew and lean into the strengths your collectible already carries.
           </p>
-        </div>
+        </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {games.map((game) => (
-            <div key={game.id} className="cp-card overflow-hidden backdrop-blur">
-              <div className="p-8 h-full flex flex-col">
-                <h2 className="text-2xl font-bold text-white font-display mb-2">{game.title}</h2>
-                <p className="text-gray-300 mb-6 flex-grow">{game.description}</p>
-                <Link
-                  href={game.id === 'plaza' ? `/plaza` : `/play/${game.id}`}
-                  className="mt-4 px-6 py-3 bg-white text-gray-900 font-bold rounded-lg hover:bg-gray-100 transition-colors text-center"
-                >
-                  Play Now
-                </Link>
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+          {presentedGames.map((game) => {
+            const cardBg = `linear-gradient(135deg, ${hexToRgba(game.accentColor, 0.14)}, rgba(15, 23, 42, 0.75))`;
+            const borderColor = hexToRgba(game.accentColor, 0.3);
+            return (
+              <div
+                key={game.id}
+                className="relative flex h-full flex-col overflow-hidden rounded-3xl border bg-slate-900/40 p-8 backdrop-blur"
+                style={{ borderColor, background: cardBg }}
+              >
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h2 className="text-2xl font-semibold font-display">{game.title}</h2>
+                      <p className="mt-1 text-sm text-white/60">{game.tagline}</p>
+                    </div>
+                    <div className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs uppercase tracking-[0.3em] text-white/60">
+                      Mode
+                    </div>
+                  </div>
+
+                  <p className="text-base text-white/80">{game.intro}</p>
+
+                  {game.focusStats.length > 0 && (
+                    <div className="rounded-2xl border border-white/10 bg-slate-900/30 p-4">
+                      <div className="text-xs uppercase tracking-[0.25em] text-white/50">Focus Stats</div>
+                      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                        {game.focusStats.map((focus) => (
+                          <div key={focus.key}>
+                            <div className="flex items-baseline justify-between gap-2">
+                              <span className="text-sm font-semibold text-white">{focus.label}</span>
+                              {typeof focus.bestValue === 'number' && (
+                                <span className="text-xs text-white/60">
+                                  {focus.bestValue} • {focus.bestName}
+                                </span>
+                              )}
+                            </div>
+                            <p className="mt-1 text-sm text-white/70">{focus.blurb}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {game.champions.length > 0 && (
+                    <div className="rounded-2xl border border-white/10 bg-slate-900/30 p-4">
+                      <div className="text-xs uppercase tracking-[0.25em] text-white/50">Crew On Call</div>
+                      <ul className="mt-3 space-y-3">
+                        {game.champions.map((champion) => (
+                          <li key={champion.slug} className="flex flex-col">
+                            <span className="font-semibold text-white">{champion.name}</span>
+                            <span className="text-xs uppercase tracking-[0.2em] text-white/50">{champion.realm}</span>
+                            <p className="mt-1 text-sm text-white/70">{champion.tagline}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-8 flex items-center justify-between gap-3">
+                  <Link
+                    href={game.slug}
+                    className="inline-flex items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
+                  >
+                    {game.cta}
+                  </Link>
+                  <Link href="/explore" className="text-sm font-semibold text-white/60 hover:text-white">
+                    Browse characters
+                  </Link>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
