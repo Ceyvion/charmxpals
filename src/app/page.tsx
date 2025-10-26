@@ -3,6 +3,8 @@ import { cookies } from 'next/headers';
 import HeroDeck from '@/components/HeroDeck';
 import Aurora from '@/components/Aurora';
 import HeroHeader from '@/components/HeroHeader';
+import HeroAtmosphere from '@/components/HeroAtmosphere';
+import RealmSpotlights from '@/components/RealmSpotlights';
 import { withCharacterLore, type CharacterWithLore } from '@/lib/characterLore';
 
 export default async function Home() {
@@ -22,6 +24,7 @@ export default async function Home() {
     <div className="min-h-screen bg-grid-overlay">
       <section className="relative py-12 md:py-16 cp-hero-warp overflow-hidden cp-grid-soft">
         <Aurora />
+        <HeroAtmosphere />
         <div className="cp-vignette" />
         <div className="cp-container">
           <HeroHeader />
@@ -43,6 +46,8 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      <RealmSpotlights items={enriched.slice(0, 3)} />
     </div>
   );
 }
