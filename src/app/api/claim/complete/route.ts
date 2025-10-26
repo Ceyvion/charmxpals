@@ -64,9 +64,9 @@ export async function POST(request: NextRequest) {
 
     // Atomically claim and create ownership; also consume the challenge
     await repo.consumeChallenge(challenge.id);
-    const { characterId } = await repo.claimUnitAndCreateOwnership({ unitId: unit.id, userId });
+    const { characterId, claimedAt } = await repo.claimUnitAndCreateOwnership({ unitId: unit.id, userId });
 
-    return Response.json({ success: true, message: 'Successfully claimed character', characterId });
+    return Response.json({ success: true, message: 'Successfully claimed character', characterId, claimedAt: claimedAt.toISOString() });
   } catch (error) {
     console.error('Claim complete error:', error);
     return Response.json(

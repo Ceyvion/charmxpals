@@ -122,11 +122,12 @@ export const memoryRepo: Repo = {
   async claimUnitAndCreateOwnership({ unitId, userId }) {
     const unit = data.units.find((u) => u.id === unitId);
     if (!unit) throw new Error('Unit not found');
+    const claimedAt = now();
     unit.status = 'claimed';
     unit.claimedBy = userId;
-    unit.claimedAt = now();
-    data.ownerships.push({ id: uuid(), userId, characterId: unit.characterId, source: 'claim', cosmetics: [], createdAt: now() });
-    return { characterId: unit.characterId };
+    unit.claimedAt = claimedAt;
+    data.ownerships.push({ id: uuid(), userId, characterId: unit.characterId, source: 'claim', cosmetics: [], createdAt: claimedAt });
+    return { characterId: unit.characterId, claimedAt };
   },
   async listOwnershipsByUser(userId) {
     return data.ownerships.filter((o) => o.userId === userId);

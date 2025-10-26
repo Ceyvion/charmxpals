@@ -56,6 +56,7 @@ describe('claim flow (memory repo)', () => {
     const completeJson: any = await complete.json();
     expect(completeJson.success).toBe(true);
     expect(completeJson.characterId).toBeTruthy();
+    expect(typeof completeJson.claimedAt).toBe('string');
 
     // 4) Verify reflects claimed
     const res2 = await verifyCode(makeReq('http://local/api/claim/verify', { code }));
@@ -96,6 +97,7 @@ describe('claim flow (memory repo)', () => {
     );
     const okJson: any = await okRes.json();
     expect(okJson.success).toBe(true);
+    expect(typeof okJson.claimedAt).toBe('string');
 
     // Try to reuse the same challenge
     const reuse = await completeClaim(

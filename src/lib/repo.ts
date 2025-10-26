@@ -55,7 +55,7 @@ export type Repo = {
 
   // Units/ownership
   findUnitByCodeHash(codeHash: string): Promise<PhysicalUnit | null>;
-  claimUnitAndCreateOwnership(params: { unitId: string; userId: string }): Promise<{ characterId: string }>;
+  claimUnitAndCreateOwnership(params: { unitId: string; userId: string }): Promise<{ characterId: string; claimedAt: Date }>;
   listOwnershipsByUser(userId: string): Promise<Array<{ id: string; userId: string; characterId: string; source: string; cosmetics: string[]; createdAt: Date }>>;
 
   // Characters

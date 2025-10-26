@@ -38,9 +38,16 @@ export async function POST(request: NextRequest) {
         ? {
             id: character.id,
             name: character.name,
+            description: character.description,
             rarity: character.rarity,
             artRefs: character.artRefs,
             stats: character.stats,
+            realm: character.realm ?? null,
+            title: character.title ?? null,
+            tagline: character.tagline ?? null,
+            codeSeries: character.codeSeries ?? null,
+            slug: character.slug ?? null,
+            color: character.color ?? null,
           }
         : null,
     });

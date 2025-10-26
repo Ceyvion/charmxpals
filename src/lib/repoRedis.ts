@@ -338,6 +338,7 @@ export const repoRedis: Repo = {
     stored.status = 'claimed';
     stored.claimedBy = userId;
     const claimedAtIso = new Date().toISOString();
+    const claimedAtDate = new Date(claimedAtIso);
     stored.claimedAt = claimedAtIso;
 
     await redis.hset(KEYS.units, { [unitId]: JSON.stringify(stored) });
@@ -353,7 +354,7 @@ export const repoRedis: Repo = {
 
     await redis.lpush(ownershipKey(userId), JSON.stringify(ownership));
 
-    return { characterId: stored.characterId };
+    return { characterId: stored.characterId, claimedAt: claimedAtDate };
   },
 
   async listOwnershipsByUser(userId) {
