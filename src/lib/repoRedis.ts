@@ -360,17 +360,17 @@ export const repoRedis: Repo = {
   async listOwnershipsByUser(userId) {
     await ensureReady();
     const items = (await redis.lrange(ownershipKey(userId), 0, -1)) as string[] | null;
-    return (items || []).map((entry) => {
-      const parsed = JSON.parse(entry) as StoredOwnership;
-      return {
+    return (items || [])
+      .map((entry) => parseJson<StoredOwnership>(entry))
+      .filter((parsed): parsed is StoredOwnership => Boolean(parsed))
+      .map((parsed) => ({
         id: parsed.id,
         userId: parsed.userId,
         characterId: parsed.characterId,
         source: parsed.source,
         cosmetics: parsed.cosmetics,
         createdAt: new Date(parsed.createdAt),
-      };
-    });
+      }));
   },
 
   async getCharacterById(id) {
