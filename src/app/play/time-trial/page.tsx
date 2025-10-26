@@ -118,46 +118,46 @@ export default function TimeTrial() {
   };
 
   const cardStyle = {
-    borderColor: hexToRgba(accentColor, 0.35),
-    background: `linear-gradient(140deg, ${hexToRgba(accentColor, 0.22)}, rgba(15, 23, 42, 0.85))`,
+    borderColor: hexToRgba(accentColor, 0.28),
+    background: `linear-gradient(140deg, ${hexToRgba(accentColor, 0.28)}, rgba(255, 255, 255, 0.92))`,
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 py-12 px-4">
+    <div className="min-h-screen bg-gradient-to-b from-white via-rose-50/70 to-sky-50 py-12 px-4">
       <div
-        className="mx-auto flex max-w-xl flex-col gap-5 rounded-3xl border bg-slate-900/60 p-6 text-white shadow-[0_18px_90px_rgba(34,211,238,0.25)] backdrop-blur"
+        className="mx-auto flex max-w-xl flex-col gap-5 rounded-3xl border bg-white/80 p-6 text-slate-900 shadow-[0_18px_90px_rgba(56,189,248,0.25)] backdrop-blur"
         style={cardStyle}
       >
         <div className="text-center">
-          <p className="text-xs uppercase tracking-[0.35em] text-white/50">Realm Relay Trials</p>
-          <h1 className="mt-2 text-3xl font-extrabold font-display">Signal Split Challenge</h1>
-          <p className="mt-2 text-sm text-white/70">
+          <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Realm Relay Trials</p>
+          <h1 className="mt-2 text-3xl font-extrabold font-display text-slate-900">Signal Split Challenge</h1>
+          <p className="mt-2 text-sm text-slate-600">
             {champion?.name ?? 'The crew'} • {champion?.realm ?? 'Unknown realm'}
           </p>
-          <p className="mt-3 text-sm text-white/80">{phase.prompt}</p>
+          <p className="mt-3 text-sm text-slate-600">{phase.prompt}</p>
         </div>
 
-        <div className="flex items-center justify-center gap-8 text-sm uppercase tracking-[0.2em] text-white/60">
+        <div className="flex items-center justify-center gap-8 text-sm uppercase tracking-[0.2em] text-slate-500">
           <div className="flex flex-col items-center">
             <span>Time</span>
-            <span className="mt-1 text-3xl font-semibold text-white">{timeLeft}s</span>
+            <span className="mt-1 text-3xl font-semibold text-slate-900">{timeLeft}s</span>
           </div>
           <div className="flex flex-col items-center">
             <span>Beacons</span>
-            <span className="mt-1 text-3xl font-semibold text-white">{score}</span>
+            <span className="mt-1 text-3xl font-semibold text-slate-900">{score}</span>
           </div>
         </div>
 
         <div className="flex items-center justify-center gap-3">
           <button
             onClick={start}
-            className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
+            className="rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
           >
             Launch relay
           </button>
           <Link
             href="/play"
-            className="rounded-xl border border-white/15 px-6 py-3 text-sm font-semibold text-white/70 transition hover:text-white hover:bg-white/5"
+            className="rounded-xl border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-600 transition hover:bg-white/70 hover:text-slate-900"
           >
             Game Hub
           </Link>
@@ -166,7 +166,7 @@ export default function TimeTrial() {
         <div
           ref={areaRef}
           onClick={onAreaClick}
-          className="relative mx-auto h-64 w-full max-w-md rounded-2xl border border-white/10 bg-black/30"
+          className="relative mx-auto h-64 w-full max-w-md rounded-2xl border border-slate-200 bg-white/60"
         >
           {target && timeLeft > 0 && (
             <div
@@ -176,22 +176,22 @@ export default function TimeTrial() {
                 top: target.y - target.r,
                 width: target.r * 2,
                 height: target.r * 2,
-                background: hexToRgba(accentColor, 0.9),
-                boxShadow: `0 0 15px ${hexToRgba(accentColor, 0.7)}`,
+                background: hexToRgba(accentColor, 0.8),
+                boxShadow: `0 0 15px ${hexToRgba(accentColor, 0.6)}`,
               }}
             />
           )}
           {timeLeft <= 0 && (
-            <div className="absolute inset-0 grid place-items-center text-sm text-white/70">
+            <div className="absolute inset-0 grid place-items-center text-sm text-slate-500">
               Launch a relay to reopen the portal.
             </div>
           )}
         </div>
 
         {timeLeft === 0 && score > 0 && (
-          <div className="rounded-2xl border border-white/10 bg-black/40 p-4 text-sm text-white/80">
+          <div className="rounded-2xl border border-slate-200 bg-white/85 p-4 text-sm text-slate-600 shadow-sm">
             <p>
-              Relay complete. {champion?.name ?? 'The crew'} logged <span className="font-semibold text-white">{score}</span> beacons.
+              Relay complete. {champion?.name ?? 'The crew'} logged <span className="font-semibold text-slate-900">{score}</span> beacons.
               Tag in another pilot to push the record.
             </p>
           </div>

@@ -96,36 +96,36 @@ export default function BattlePage() {
   const result = matchOver ? (wins === losses ? 'draw' : wins > losses ? 'win' : 'lose') : null;
 
   return (
-    <div className="min-h-screen bg-slate-950 py-12 px-4">
-      <div className="mx-auto flex max-w-4xl flex-col gap-6 rounded-3xl border border-white/10 bg-slate-900/40 p-6 text-white shadow-[0_25px_120px_rgba(124,58,237,0.25)] backdrop-blur">
+    <div className="min-h-screen bg-gradient-to-b from-white via-rose-50/70 to-indigo-50/60 py-12 px-4">
+      <div className="mx-auto flex max-w-4xl flex-col gap-6 rounded-3xl border border-slate-200/80 bg-white/85 p-6 text-slate-900 shadow-[0_25px_120px_rgba(244,114,182,0.28)] backdrop-blur">
         <div className="text-center">
-          <p className="text-xs uppercase tracking-[0.35em] text-white/50">Crystal Vault Circuit</p>
-          <h1 className="mt-2 text-3xl font-extrabold font-display md:text-4xl">Vaulted Stat Clashes</h1>
-          <p className="mt-2 text-sm text-white/70 md:text-base">
+          <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Crystal Vault Circuit</p>
+          <h1 className="mt-2 text-3xl font-extrabold font-display text-slate-900 md:text-4xl">Vaulted Stat Clashes</h1>
+          <p className="mt-2 text-sm text-slate-600 md:text-base">
             {roundIdx + 1} / 3 rounds • Highest {roundStat.toUpperCase()} takes the point. Charm Surge adds +10 to your current stat.
           </p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
           <div
-            className={`rounded-2xl border border-white/10 bg-white/10 p-5 transition ${flash === 'win' ? 'ring-2 ring-emerald-400/70' : ''}`}
+            className={`rounded-2xl border border-slate-200 bg-white/80 p-5 transition ${flash === 'win' ? 'ring-2 ring-emerald-300/70' : ''}`}
           >
-            <div className="text-xs uppercase tracking-[0.3em] text-white/50">You</div>
-            <div className="mt-2 text-2xl font-semibold font-display">{you?.name ?? '—'}</div>
-            <div className="text-sm text-white/60">{you?.title}</div>
-            <div className="mt-3 text-sm text-white/70">
-              {roundStat.toUpperCase()}: <span className="font-semibold text-white">{you?.stats?.[roundStat] ?? 0}</span>
+            <div className="text-xs uppercase tracking-[0.3em] text-slate-500">You</div>
+            <div className="mt-2 text-2xl font-semibold font-display text-slate-900">{you?.name ?? '—'}</div>
+            <div className="text-sm text-slate-500">{you?.title}</div>
+            <div className="mt-3 text-sm text-slate-600">
+              {roundStat.toUpperCase()}: <span className="font-semibold text-slate-900">{you?.stats?.[roundStat] ?? 0}</span>
               {!usedBoost && ' • Charm Surge ready'}
             </div>
           </div>
           <div
-            className={`rounded-2xl border border-white/10 bg-white/10 p-5 transition ${flash === 'lose' ? 'ring-2 ring-rose-400/70' : ''}`}
+            className={`rounded-2xl border border-slate-200 bg-white/80 p-5 transition ${flash === 'lose' ? 'ring-2 ring-rose-300/70' : ''}`}
           >
-            <div className="text-xs uppercase tracking-[0.3em] text-white/50">Opponent</div>
-            <div className="mt-2 text-2xl font-semibold font-display">{foe?.name ?? '—'}</div>
-            <div className="text-sm text-white/60">{foe?.title}</div>
-            <div className="mt-3 text-sm text-white/70">
-              {roundStat.toUpperCase()}: <span className="font-semibold text-white">{foe?.stats?.[roundStat] ?? 0}</span>
+            <div className="text-xs uppercase tracking-[0.3em] text-slate-500">Opponent</div>
+            <div className="mt-2 text-2xl font-semibold font-display text-slate-900">{foe?.name ?? '—'}</div>
+            <div className="text-sm text-slate-500">{foe?.title}</div>
+            <div className="mt-3 text-sm text-slate-600">
+              {roundStat.toUpperCase()}: <span className="font-semibold text-slate-900">{foe?.stats?.[roundStat] ?? 0}</span>
             </div>
           </div>
         </div>
@@ -135,22 +135,22 @@ export default function BattlePage() {
             <>
               <button
                 onClick={() => runRound(false)}
-                className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
+                className="rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
               >
                 Clash
               </button>
               <button
                 onClick={() => runRound(true)}
                 disabled={usedBoost}
-                className="rounded-xl border border-amber-300/40 bg-amber-400/20 px-6 py-3 text-sm font-semibold text-amber-100 transition hover:bg-amber-400/30 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-xl border border-amber-200/70 bg-amber-100/70 px-6 py-3 text-sm font-semibold text-amber-700 transition hover:bg-amber-200/70 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Charm Surge {usedBoost ? 'used' : '+10'}
               </button>
               <button
                 onClick={() => setArmedShield((armed) => !armed)}
                 disabled={shieldSpent}
-                className={`rounded-xl border border-cyan-300/40 px-6 py-3 text-sm font-semibold transition ${
-                  armedShield && !shieldSpent ? 'bg-cyan-400/40 text-white' : 'bg-cyan-400/15 text-cyan-100'
+                className={`rounded-xl border border-cyan-200/70 px-6 py-3 text-sm font-semibold transition ${
+                  armedShield && !shieldSpent ? 'bg-cyan-200/70 text-cyan-900' : 'bg-cyan-100/70 text-cyan-700'
                 } disabled:cursor-not-allowed disabled:opacity-60`}
               >
                 Tempo Guard {shieldSpent ? 'spent' : armedShield ? 'armed' : 'arm'}
@@ -160,20 +160,20 @@ export default function BattlePage() {
           {matchOver && (
             <button
               onClick={start}
-              className="rounded-xl border border-white/20 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/5"
+              className="rounded-xl border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-600 transition hover:bg-white/70 hover:text-slate-900"
             >
               Run it back
             </button>
           )}
           <Link
             href="/play"
-            className="rounded-xl border border-white/15 px-6 py-3 text-sm font-semibold text-white/70 transition hover:text-white hover:bg-white/5"
+            className="rounded-xl border border-slate-200 px-6 py-3 text-sm font-semibold text-slate-600 transition hover:bg-white/70 hover:text-slate-900"
           >
             Game Hub
           </Link>
         </div>
 
-        <div className="text-center text-sm text-white/70">
+        <div className="text-center text-sm text-slate-600">
           Score {wins} - {losses}
           {matchOver && result && (
             <>
@@ -184,11 +184,11 @@ export default function BattlePage() {
         </div>
 
         {log.length > 0 && (
-          <div className="rounded-2xl border border-white/10 bg-black/40 p-4">
-            <div className="text-xs uppercase tracking-[0.3em] text-white/50">Match Log</div>
-            <ul className="mt-3 space-y-2 text-xs text-white/70">
+          <div className="rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
+            <div className="text-xs uppercase tracking-[0.3em] text-slate-500">Match Log</div>
+            <ul className="mt-3 space-y-2 text-xs text-slate-600">
               {log.map((line, idx) => (
-                <li key={`${line}-${idx}`} className="rounded-lg border border-white/5 bg-white/5 px-3 py-2">
+                <li key={`${line}-${idx}`} className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
                   {line}
                 </li>
               ))}

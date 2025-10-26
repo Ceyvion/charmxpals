@@ -143,56 +143,56 @@ const presentedGames = gameConfigs.map(buildGame);
 
 export default function GameHub() {
   return (
-    <div className="relative min-h-screen bg-slate-950 py-16 px-4 text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(124,58,237,0.25),_transparent_55%)]" aria-hidden="true" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,_rgba(14,165,233,0.18),_transparent_50%)]" aria-hidden="true" />
+    <div className="relative min-h-screen bg-gradient-to-b from-white via-rose-50/70 to-sky-50 py-16 px-4 text-slate-900">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,203,230,0.45),_transparent_55%)]" aria-hidden="true" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_bottom,_rgba(165,243,252,0.38),_transparent_52%)]" aria-hidden="true" />
       <div className="relative mx-auto flex max-w-6xl flex-col gap-12">
         <header className="text-center">
-          <p className="text-sm uppercase tracking-[0.35em] text-white/50">Playgrounds</p>
-          <h1 className="mt-3 text-4xl font-bold font-display md:text-5xl">Pick Tonight&apos;s Stage</h1>
-          <p className="mt-4 text-lg text-white/70 md:text-xl">
+          <p className="text-sm uppercase tracking-[0.35em] text-slate-500">Playgrounds</p>
+          <h1 className="mt-3 text-4xl font-bold font-display text-slate-900 md:text-5xl">Pick Tonight&apos;s Stage</h1>
+          <p className="mt-4 text-lg text-slate-600 md:text-xl">
             {worldTagline} Choose a mode curated by the crew and lean into the strengths your collectible already carries.
           </p>
         </header>
 
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           {presentedGames.map((game) => {
-            const cardBg = `linear-gradient(135deg, ${hexToRgba(game.accentColor, 0.14)}, rgba(15, 23, 42, 0.75))`;
-            const borderColor = hexToRgba(game.accentColor, 0.3);
+            const cardBg = `linear-gradient(140deg, ${hexToRgba(game.accentColor, 0.18)}, rgba(255,255,255,0.92))`;
+            const borderColor = hexToRgba(game.accentColor, 0.32);
             return (
               <div
                 key={game.id}
-                className="relative flex h-full flex-col overflow-hidden rounded-3xl border bg-slate-900/40 p-8 backdrop-blur"
+                className="relative flex h-full flex-col overflow-hidden rounded-3xl border bg-white/80 p-8 shadow-[0_25px_90px_rgba(15,23,42,0.08)] backdrop-blur"
                 style={{ borderColor, background: cardBg }}
               >
                 <div className="flex flex-col gap-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <h2 className="text-2xl font-semibold font-display">{game.title}</h2>
-                      <p className="mt-1 text-sm text-white/60">{game.tagline}</p>
+                      <h2 className="text-2xl font-semibold font-display text-slate-900">{game.title}</h2>
+                      <p className="mt-1 text-sm text-slate-600">{game.tagline}</p>
                     </div>
-                    <div className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs uppercase tracking-[0.3em] text-white/60">
+                    <div className="rounded-full border border-white/60 bg-white/70 px-3 py-1 text-xs uppercase tracking-[0.3em] text-slate-500">
                       Mode
                     </div>
                   </div>
 
-                  <p className="text-base text-white/80">{game.intro}</p>
+                  <p className="text-base text-slate-700">{game.intro}</p>
 
                   {game.focusStats.length > 0 && (
-                    <div className="rounded-2xl border border-white/10 bg-slate-900/30 p-4">
-                      <div className="text-xs uppercase tracking-[0.25em] text-white/50">Focus Stats</div>
+                    <div className="rounded-2xl border border-white/70 bg-white/70 p-4 shadow-[0_12px_40px_rgba(148,163,184,0.18)]">
+                      <div className="text-xs uppercase tracking-[0.25em] text-slate-500">Focus Stats</div>
                       <div className="mt-3 grid gap-3 sm:grid-cols-2">
                         {game.focusStats.map((focus) => (
                           <div key={focus.key}>
                             <div className="flex items-baseline justify-between gap-2">
-                              <span className="text-sm font-semibold text-white">{focus.label}</span>
+                              <span className="text-sm font-semibold text-slate-900">{focus.label}</span>
                               {typeof focus.bestValue === 'number' && (
-                                <span className="text-xs text-white/60">
+                                <span className="text-xs text-slate-500">
                                   {focus.bestValue} • {focus.bestName}
                                 </span>
                               )}
                             </div>
-                            <p className="mt-1 text-sm text-white/70">{focus.blurb}</p>
+                            <p className="mt-1 text-sm text-slate-600">{focus.blurb}</p>
                           </div>
                         ))}
                       </div>
@@ -200,14 +200,14 @@ export default function GameHub() {
                   )}
 
                   {game.champions.length > 0 && (
-                    <div className="rounded-2xl border border-white/10 bg-slate-900/30 p-4">
-                      <div className="text-xs uppercase tracking-[0.25em] text-white/50">Crew On Call</div>
+                    <div className="rounded-2xl border border-white/70 bg-white/75 p-4">
+                      <div className="text-xs uppercase tracking-[0.25em] text-slate-500">Crew On Call</div>
                       <ul className="mt-3 space-y-3">
                         {game.champions.map((champion) => (
                           <li key={champion.slug} className="flex flex-col">
-                            <span className="font-semibold text-white">{champion.name}</span>
-                            <span className="text-xs uppercase tracking-[0.2em] text-white/50">{champion.realm}</span>
-                            <p className="mt-1 text-sm text-white/70">{champion.tagline}</p>
+                            <span className="font-semibold text-slate-900">{champion.name}</span>
+                            <span className="text-xs uppercase tracking-[0.2em] text-slate-500">{champion.realm}</span>
+                            <p className="mt-1 text-sm text-slate-600">{champion.tagline}</p>
                           </li>
                         ))}
                       </ul>
@@ -218,11 +218,11 @@ export default function GameHub() {
                 <div className="mt-8 flex items-center justify-between gap-3">
                   <Link
                     href={game.slug}
-                    className="inline-flex items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
+                    className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(15,23,42,0.25)] transition hover:bg-slate-800"
                   >
                     {game.cta}
                   </Link>
-                  <Link href="/explore" className="text-sm font-semibold text-white/60 hover:text-white">
+                  <Link href="/explore" className="text-sm font-semibold text-slate-600 transition hover:text-slate-900">
                     Browse characters
                   </Link>
                 </div>
