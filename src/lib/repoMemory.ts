@@ -15,6 +15,19 @@ const data = (() => {
     description: 'CharmXPals champions defending the MotionXChange Arena.',
   };
 
+const isProdLike = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+let memorySecret = process.env.CODE_HASH_SECRET || null;
+if (!memorySecret) {
+  if (isProdLike) {
+    throw new Error('CODE_HASH_SECRET missing');
+  }
+  memorySecret = 'memory-dev-secret';
+  if (process.env.NODE_ENV !== 'test') {
+    console.warn('[memoryRepo] CODE_HASH_SECRET missing; using fallback dev secret for in-memory data seeding.');
+  }
+  process.env.CODE_HASH_SECRET = memorySecret;
+}
+
   const characters: Character[] = characterLore.map((entry) => {
     const artRefs = entry.artRefs && Object.keys(entry.artRefs).length > 0
       ? entry.artRefs
@@ -52,7 +65,7 @@ const data = (() => {
     acc.push({
       id: uuid(),
       characterId: character.id,
-      codeHash: hashClaimCode(code),
+      codeHash: hashClaimCode(code, memorySecret!),
       secureSalt,
       status: 'available',
       claimedBy: null,
