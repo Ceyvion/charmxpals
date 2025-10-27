@@ -42,16 +42,16 @@ const gameConfigs: GameConfig[] = [
   },
   {
     id: 'runner',
-    title: 'Breakline Runner',
+    title: 'Skylink Pulsegrid',
     slug: '/play/runner',
-    tagline: 'Sprint the neon transit spine before the Break scrambles the rails.',
+    tagline: 'Sync taps across the Skylink beat rail before the Break fractures the mix.',
     intro:
-      'Vexa Volt patched tonight’s Skylink with tempo gates. Stay on beat, stash signal coins, and lean on Kai Tidal’s flow tricks when the tracks split.',
-    cta: 'Run the loop',
+      'DJ Prismix spun a four-lane pulsegrid through the transit spine. Ride the chroma lanes, chain perfect strikes, and let Vexa Volt bend the tempo when the Break surges.',
+    cta: 'Queue the mix',
     roster: ['neon-city', 'rhythm-reef', 'shadow-stage'],
     focus: [
-      { key: 'flow', blurb: 'Flow keeps wall-runs and rail slides stable when lanes tilt.' },
-      { key: 'rhythm', blurb: 'Matching the gate tempo adds surge speed through each sector.' },
+      { key: 'rhythm', blurb: 'High rhythm tightens the perfect window during each beat impact.' },
+      { key: 'flow', blurb: 'Flow steadies note travel when Prismix spikes the mix speed mid-track.' },
     ],
   },
   {

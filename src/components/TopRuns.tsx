@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 type Entry = { score: number; coins?: number; at: string; name?: string };
 
-export default function TopRuns({ mode = 'runner' }: { mode?: 'runner' | 'timeTrial' | 'battle' }) {
+export default function TopRuns({ mode = 'runner', coinsLabel = 'Coins' }: { mode?: 'runner' | 'timeTrial' | 'battle'; coinsLabel?: string }) {
   const [entries, setEntries] = useState<Entry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,7 +28,7 @@ export default function TopRuns({ mode = 'runner' }: { mode?: 'runner' | 'timeTr
           {entries.slice(0, 10).map((e, i) => (
             <div key={i} className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white/90">
               <div className="text-sm">#{i + 1} • {e.name || 'Anonymous'}</div>
-              <div className="text-sm font-semibold">Score {e.score}{typeof e.coins === 'number' ? ` • Coins ${e.coins}` : ''}</div>
+              <div className="text-sm font-semibold">Score {e.score}{typeof e.coins === 'number' ? ` • ${coinsLabel} ${e.coins}` : ''}</div>
             </div>
           ))}
         </div>

@@ -11,7 +11,12 @@ let ctx: AudioContext | null = null;
 
 function ensureCtx() {
   if (typeof window === 'undefined') return null;
-  if (!ctx) ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  if (!ctx) {
+    const extendedWindow = window as Window & { webkitAudioContext?: typeof AudioContext };
+    const AudioCtor = window.AudioContext || extendedWindow.webkitAudioContext;
+    if (!AudioCtor) return null;
+    ctx = new AudioCtor();
+  }
   return ctx;
 }
 
@@ -43,5 +48,11 @@ export function useTinyAudio(): TinyAudio {
 export const TinyAudioOnce = {
   jump: () => beep(520, 90, 'square', 0.05),
   coin: () => beep(880, 70, 'sine', 0.06),
+  hit: () => {
+    beep(1040, 70, 'triangle', 0.05);
+    beep(1560, 110, 'sine', 0.04);
+  },
+  miss: () => beep(260, 220, 'sawtooth', 0.05),
+  pulse: () => beep(660, 120, 'square', 0.05),
 };
 
