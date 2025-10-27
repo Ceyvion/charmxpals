@@ -5,15 +5,13 @@ import type { CSSProperties } from 'react';
 
 type Props = {
   children: React.ReactNode;
-  as?: keyof JSX.IntrinsicElements;
   className?: string;
   delay?: number;
   translateY?: number;
 };
 
-export default function RevealOnView({ children, as = 'div', className, delay = 0, translateY = 12 }: Props) {
-  const Tag = as;
-  const ref = useRef<HTMLElement | null>(null);
+export default function RevealOnView({ children, className, delay = 0, translateY = 12 }: Props) {
+  const ref = useRef<HTMLDivElement | null>(null);
   const style = {
     '--reveal-delay': `${delay}ms`,
     '--reveal-offset': `${translateY}px`,
@@ -50,8 +48,8 @@ export default function RevealOnView({ children, as = 'div', className, delay = 
   }, []);
 
   return (
-    <Tag ref={ref} className={className} style={style}>
+    <div ref={ref} className={className} style={style}>
       {children}
-    </Tag>
+    </div>
   );
 }
