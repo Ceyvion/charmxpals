@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import type { CSSProperties } from 'react';
 
 type Props = {
@@ -17,7 +17,7 @@ export default function RevealOnView({ children, className, delay = 0, translate
     '--reveal-offset': `${translateY}px`,
   } as CSSProperties;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = ref.current;
     if (!el || typeof window === 'undefined') return;
     const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)');
@@ -28,7 +28,8 @@ export default function RevealOnView({ children, className, delay = 0, translate
 
     const rect = el.getBoundingClientRect();
     const vh = window.innerHeight || 1;
-    if (rect.top <= vh && rect.bottom >= 0) {
+    const inView = rect.top <= vh && rect.bottom >= 0;
+    if (inView) {
       el.dataset.revealState = 'shown';
       return;
     }

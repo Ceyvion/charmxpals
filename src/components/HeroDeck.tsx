@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import { createPortal } from "react-dom";
-import anime from 'animejs';
 import { useRouter } from "next/navigation";
 
 type Item = {
@@ -127,7 +126,14 @@ function FlyOverlay({ state, onClose }: { state: FlyState; onClose: () => void }
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    setDone(false);
     const releaseScrollLock = acquireScrollLock();
+    let released = false;
+    const release = () => {
+      if (released) return;
+      released = true;
+      releaseScrollLock();
+    };
 
     const startRadius = window.getComputedStyle(el).borderRadius || '24px';
     const vv = typeof window !== 'undefined' && 'visualViewport' in window ? window.visualViewport : undefined;
@@ -169,51 +175,59 @@ function FlyOverlay({ state, onClose }: { state: FlyState; onClose: () => void }
     const translateY = from.top - targetTop;
     const scaleX = from.width / targetWidth;
     const scaleY = from.height / targetHeight;
-    el.style.transform = `translate3d(${translateX}px, ${translateY}px, 0) scale(${scaleX}, ${scaleY})`;
+    const startTransform = `translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`;
+    const endTransform = 'translate(0px, 0px) scale(1, 1)';
+    el.style.transform = startTransform;
 
-    // Dim backdrop
     const dim = document.createElement('div');
     Object.assign(dim.style, {
       position: 'fixed', inset: '0', background: 'rgba(48,18,67,0.22)', opacity: '0', zIndex: '50', backdropFilter: 'blur(14px)',
     } as CSSStyleDeclaration);
     document.body.appendChild(dim);
-    anime({ targets: dim, opacity: [0, 1], duration: 220, easing: 'easeOutQuad' });
 
-    const animation = anime({
-      targets: el,
-      translateX: 0,
-      translateY: 0,
-      scaleX: 1,
-      scaleY: 1,
-      borderRadius: [startRadius, '28px'],
-      easing: 'easeOutCubic',
-      duration: 520,
-      complete: () => {
-        setDone(true);
-        el.style.transform = 'translate3d(0px, 0px, 0) scale(1, 1)';
-        el.style.borderRadius = '28px';
-      },
-    });
+    const animations: Animation[] = [];
+    const dimFadeIn = dim.animate([
+      { opacity: 0 },
+      { opacity: 1 },
+    ], { duration: 220, easing: 'ease-out', fill: 'forwards' });
+    animations.push(dimFadeIn);
+
+    const openAnimation = el.animate([
+      { transform: startTransform, borderRadius: startRadius },
+      { transform: endTransform, borderRadius: '28px' },
+    ], { duration: 520, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' });
+    animations.push(openAnimation);
+    openAnimation.finished.then(() => {
+      setDone(true);
+      el.style.transform = endTransform;
+      el.style.borderRadius = '28px';
+    }).catch(() => {});
 
     let closing = false;
     const close = () => {
       if (closing) return;
       closing = true;
-      animation.pause();
-      anime({ targets: dim, opacity: [1, 0], duration: 180, easing: 'easeInQuad', complete: () => dim.remove() });
-      anime({
-        targets: el,
-        translateX,
-        translateY,
-        scaleX,
-        scaleY,
-        borderRadius: startRadius,
-        duration: 280,
-        easing: 'easeInCubic',
-        complete: () => {
-          onClose();
-        },
+      openAnimation.cancel();
+      const dimFadeOut = dim.animate([
+        { opacity: 1 },
+        { opacity: 0 },
+      ], { duration: 180, easing: 'ease-in', fill: 'forwards' });
+      dimFadeOut.finished.then(() => dim.remove()).catch(() => dim.remove());
+      animations.push(dimFadeOut);
+
+      const closeAnimation = el.animate([
+        { transform: endTransform, borderRadius: '28px' },
+        { transform: startTransform, borderRadius: startRadius },
+      ], { duration: 280, easing: 'cubic-bezier(0.55, 0, 0.45, 1)', fill: 'forwards' });
+      animations.push(closeAnimation);
+      closeAnimation.finished.then(() => {
+        release();
+        onClose();
+      }).catch(() => {
+        release();
+        onClose();
       });
+
       window.removeEventListener('keydown', onKey);
       dim.removeEventListener('click', close);
     };
@@ -227,8 +241,10 @@ function FlyOverlay({ state, onClose }: { state: FlyState; onClose: () => void }
       try { dim.remove(); } catch {}
       window.removeEventListener('keydown', onKey);
       dim.removeEventListener('click', close);
-      releaseScrollLock();
-      animation.pause();
+      animations.forEach((anim) => {
+        try { anim.cancel(); } catch {}
+      });
+      release();
       closeRef.current = () => {};
     };
   }, [from, onClose]);
