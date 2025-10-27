@@ -240,8 +240,87 @@ html:not([data-appearance="light"]) .bg-black\/30 { background-color: rgba(198,1
 .cp-noise { position: absolute; inset: -20%; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23n)" opacity=".035"/></svg>'); opacity: .55; mix-blend-mode: soft-light; }
 
 /* CTA glass group */
-.cp-cta { display: inline-flex; gap: .5rem; padding: .5rem; border-radius: 1rem; border: 1px solid rgba(255,159,213,0.4); background: linear-gradient(140deg, rgba(255,255,255,0.92), rgba(255,255,255,0.78)); -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2); box-shadow: 0 12px 30px rgba(198,165,255,0.22); }
-[data-appearance="light"] .cp-cta { border-color: rgba(255,159,213,0.28); background: linear-gradient(140deg, rgba(255,255,255,0.96), rgba(255,255,255,0.86)); }
+.cp-cta {
+  display: inline-flex;
+  gap: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(117, 180, 255, 0.42);
+  background: linear-gradient(160deg, rgba(12, 8, 36, 0.88), rgba(38, 14, 70, 0.72));
+  -webkit-backdrop-filter: blur(20px) saturate(1.35);
+  backdrop-filter: blur(20px) saturate(1.35);
+  box-shadow: 0 24px 60px rgba(10, 5, 36, 0.55);
+}
+[data-appearance="light"] .cp-cta {
+  border-color: rgba(148, 198, 255, 0.45);
+  background: linear-gradient(160deg, rgba(24, 14, 56, 0.84), rgba(40, 22, 82, 0.72));
+  box-shadow: 0 24px 58px rgba(20, 10, 52, 0.48);
+}
+.cp-hero-cta-primary,
+.cp-hero-cta-secondary {
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 1.6rem;
+  border-radius: 0.95rem;
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: 0.012em;
+  line-height: 1.25;
+  min-width: 0;
+  text-shadow: 0 2px 14px rgba(4, 2, 14, 0.28);
+  transition: transform .2s ease, box-shadow .2s ease, filter .2s ease, border-color .2s ease;
+}
+.cp-hero-cta-primary {
+  background: linear-gradient(125deg, rgba(255, 244, 194, 0.96), rgba(255, 172, 232, 0.92), rgba(128, 224, 255, 0.9));
+  color: #14072c;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 18px 48px rgba(255, 148, 232, 0.4);
+}
+.cp-hero-cta-primary:hover {
+  transform: translateY(-1px);
+  filter: saturate(1.05);
+  box-shadow: 0 26px 62px rgba(255, 176, 238, 0.45);
+}
+.cp-hero-cta-primary:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.75);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 3px rgba(126, 216, 255, 0.35), 0 18px 48px rgba(255, 148, 232, 0.42);
+}
+.cp-hero-cta-secondary {
+  background: linear-gradient(160deg, rgba(40, 28, 92, 0.78), rgba(26, 92, 158, 0.72));
+  border: 1px solid rgba(134, 206, 255, 0.6);
+  color: rgba(244, 246, 255, 0.95);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 20px 50px rgba(8, 5, 28, 0.6);
+}
+.cp-hero-cta-secondary:hover {
+  transform: translateY(-1px);
+  filter: saturate(1.12);
+  border-color: rgba(188, 238, 255, 0.88);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 26px 62px rgba(10, 7, 40, 0.68);
+}
+.cp-hero-cta-secondary:focus-visible {
+  outline: 2px solid rgba(190, 238, 255, 0.9);
+  outline-offset: 3px;
+}
+[data-hero-proof] .cp-pill {
+  background: linear-gradient(150deg, rgba(36, 22, 74, 0.82), rgba(28, 88, 148, 0.78));
+  border-color: rgba(148, 212, 255, 0.62);
+  color: rgba(248, 249, 255, 0.95);
+  box-shadow: 0 18px 50px rgba(8, 5, 30, 0.58);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+[data-hero-proof] .cp-chip {
+  background: linear-gradient(150deg, rgba(40, 28, 92, 0.78), rgba(26, 102, 172, 0.74));
+  border-color: rgba(152, 218, 255, 0.64);
+  color: rgba(244, 247, 255, 0.94);
+  box-shadow: 0 16px 44px rgba(8, 4, 28, 0.55);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+[data-hero-proof] .cp-chip:hover,
+[data-hero-proof] .cp-pill:hover {
+  filter: saturate(1.1);
+  border-color: rgba(194, 238, 255, 0.85);
+}
 
 /* Card sheen on hero */
 .cp-card-hero .sheen { position: absolute; inset: -20% -50% auto -50%; height: 180%; background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.2) 10%, transparent 20%); transform: rotate(12deg); animation: sheen-move 6s linear infinite; pointer-events: none; }

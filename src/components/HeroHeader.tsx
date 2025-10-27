@@ -50,9 +50,9 @@ export default function HeroHeader() {
       </p>
       <div className="mt-5 flex items-center justify-center" data-hero-cta>
         <div className="cp-cta">
-          <Link href="/claim" className="px-5 py-2.5 bg-white text-gray-900 rounded-lg font-bold">Unlock Now</Link>
-          <Link href="/explore" className="hidden md:inline-flex px-5 py-2.5 border border-white/20 text-white rounded-lg font-bold hover:bg-white/5">Preview the Crew</Link>
-          <Link href="/play" className="px-5 py-2.5 border border-white/20 text-white rounded-lg font-bold hover:bg-white/5">Start a Demo Match</Link>
+          <Link href="/claim" className="inline-flex cp-hero-cta-primary">Unlock Now</Link>
+          <Link href="/explore" className="hidden md:inline-flex cp-hero-cta-secondary">Preview the Crew</Link>
+          <Link href="/play" className="inline-flex cp-hero-cta-secondary">Start a Demo Match</Link>
         </div>
       </div>
       <div className="mt-5 flex items-center justify-center gap-3 text-sm text-white/80" data-hero-proof>
