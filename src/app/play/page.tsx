@@ -46,7 +46,7 @@ const gameConfigs: GameConfig[] = [
     slug: '/play/runner',
     tagline: 'Sync taps across the Skylink beat rail before the Break fractures the mix.',
     intro:
-      'DJ Prismix spun a four-lane pulsegrid through the transit spine. Ride the chroma lanes, chain perfect strikes, and let Vexa Volt bend the tempo when the Break surges.',
+      'DJ Prismix spun a four-lane pulsegrid through the transit spine. Ride imported K-pop beat tapes, chain perfect strikes, and let Vexa Volt bend the tempo when the Break surges.',
     cta: 'Queue the mix',
     roster: ['neon-city', 'rhythm-reef', 'shadow-stage'],
     focus: [

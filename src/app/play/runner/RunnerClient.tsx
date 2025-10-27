@@ -5,6 +5,7 @@ import Runner from '@/components/Runner';
 import TopRuns from '@/components/TopRuns';
 import { useEffect, useMemo, useState } from 'react';
 import { TinyAudioOnce } from '@/lib/audio';
+import { pulsegridTracks } from '@/data/pulsegridTracks';
 
 function findStat(stats: Record<string, number> | null, key: string) {
   if (!stats) return null;
@@ -19,7 +20,7 @@ function findStat(stats: Record<string, number> | null, key: string) {
 export default function RunnerClient({ cid }: { cid?: string }) {
   const [stats, setStats] = useState<Record<string, number> | null>(null);
   const [audioEnabled, setAudioEnabled] = useState(false);
-  const [lastScore, setLastScore] = useState<{ score: number; maxCombo: number } | null>(null);
+  const [lastScore, setLastScore] = useState<{ score: number; maxCombo: number; trackId: string } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -38,15 +39,23 @@ export default function RunnerClient({ cid }: { cid?: string }) {
     playPulse: () => { if (audioEnabled) TinyAudioOnce.pulse(); },
   }), [audioEnabled]);
 
-  const submitScore = async (score: number, maxCombo: number) => {
-    setLastScore({ score, maxCombo });
+  const submitScore = async (score: number, maxCombo: number, trackId: string) => {
+    setLastScore({ score, maxCombo, trackId });
     try {
-      await fetch('/api/score', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ mode: 'runner', score, coins: maxCombo }) });
+      await fetch('/api/score', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ mode: 'runner', score, coins: maxCombo, trackId }),
+      });
     } catch {}
   };
 
   const rhythmStat = useMemo(() => findStat(stats, 'rhythm'), [stats]);
   const flowStat = useMemo(() => findStat(stats, 'flow'), [stats]);
+  const lastRunTrack = useMemo(() => {
+    if (!lastScore) return null;
+    return pulsegridTracks.find((track) => track.id === lastScore.trackId) || null;
+  }, [lastScore]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-rose-50/70 to-sky-50 py-10 px-4">
@@ -54,7 +63,7 @@ export default function RunnerClient({ cid }: { cid?: string }) {
         <div className="mb-4 flex items-center justify-between">
           <div className="text-left">
             <h1 className="text-3xl font-extrabold text-slate-900 font-display md:text-4xl">Skylink Pulsegrid</h1>
-            <p className="text-slate-600">Tap the neon lane pads or press F • G • H • J to stay synced with Prismix&apos;s mix.</p>
+            <p className="text-slate-600">Tap the neon lane pads or press F • G • H • J to stay synced with Prismix&apos;s imported K-pop beat mixes.</p>
             {(rhythmStat !== null || flowStat !== null) && (
               <div className="mt-1 text-sm text-slate-500">
                 Rhythm {rhythmStat ?? '—'} • Flow {flowStat ?? '—'} — tighter rhythm shrinks the hit window while flow speeds the beat rail.
@@ -66,9 +75,12 @@ export default function RunnerClient({ cid }: { cid?: string }) {
             Synth Audio
           </label>
         </div>
-        <Runner stats={stats} audio={audio} onGameOver={(s, c) => submitScore(s, c)} />
+        <Runner stats={stats} audio={audio} onGameOver={(s, c, trackId) => submitScore(s, c, trackId)} />
         {lastScore && (
-          <div className="mt-3 text-center text-sm text-slate-500">Submitted score {lastScore.score} • Max Combo {lastScore.maxCombo}</div>
+          <div className="mt-3 text-center text-sm text-slate-500">
+            Submitted {lastScore.score.toLocaleString()} pts • Max Combo {lastScore.maxCombo}{' '}
+            {lastRunTrack ? `on ${lastRunTrack.title}` : ''}
+          </div>
         )}
         <TopRuns mode="runner" coinsLabel="Max Combo" />
         <div className="mt-6 text-center">
