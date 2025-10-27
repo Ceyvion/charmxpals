@@ -36,7 +36,7 @@ export default function HeroHeader() {
   }, []);
 
   return (
-    <div ref={rootRef} className="text-center max-w-4xl mx-auto">
+    <div ref={rootRef} className="relative z-20 text-center max-w-4xl mx-auto">
       <div className="inline-flex items-center gap-2 mb-4">
         <span className="cp-chip">Connected Toy Drop • Open Beta</span>
       </div>

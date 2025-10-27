@@ -29,7 +29,7 @@ export default async function Home() {
         <div className="cp-container">
           <HeroHeader />
 
-          <div className="mt-10 md:mt-12">
+          <div className="mt-12 md:mt-16 lg:mt-24">
             {/* Mark owned cards inline */}
             <HeroDeck
               items={enriched.map((c) => ({

@@ -53,7 +53,7 @@ export default function HeroDeck({ items }: { items: Item[] }) {
   }, [reduced, router]);
 
   return (
-    <div className="cp-hero-deck select-none" data-testid="home-hero-deck">
+    <div className="cp-hero-deck select-none relative z-10" data-testid="home-hero-deck">
       {deck.map((c, i) => (
         <div key={c.id} className="card">
           <div className="cp-card-hero cp-grad-border cursor-pointer" onClick={(e) => onCardClick(e, c)}>
