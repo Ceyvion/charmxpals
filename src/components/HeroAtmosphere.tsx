@@ -22,8 +22,13 @@ export default function HeroAtmosphere() {
 
   useEffect(() => {
     const root = rootRef.current;
-    if (!root) return;
+    if (!root || typeof window === "undefined") return;
+
+    const prefersReduced = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    const pointerFine = window.matchMedia?.("(pointer: fine)");
+
     let raf: number | null = null;
+    let attached = false;
 
     const handlePointer = (event: PointerEvent) => {
       if (raf) return;
@@ -37,10 +42,62 @@ export default function HeroAtmosphere() {
       });
     };
 
-    window.addEventListener("pointermove", handlePointer, { passive: true });
-    return () => {
-      if (raf) window.cancelAnimationFrame(raf);
+    const detach = () => {
+      if (!attached) return;
       window.removeEventListener("pointermove", handlePointer);
+      attached = false;
+      if (raf) {
+        window.cancelAnimationFrame(raf);
+        raf = null;
+      }
+      root.style.setProperty("--tilt-x", "0deg");
+      root.style.setProperty("--tilt-y", "0deg");
+    };
+
+    const attach = () => {
+      if (attached) return;
+      window.addEventListener("pointermove", handlePointer, { passive: true });
+      attached = true;
+    };
+
+    const evaluate = () => {
+      const allowMotion = !prefersReduced?.matches;
+      const allowPointer = pointerFine?.matches ?? true;
+      if (allowMotion && allowPointer) {
+        attach();
+      } else {
+        detach();
+      }
+    };
+
+    evaluate();
+
+    const subscribe = (query: MediaQueryList | undefined, listener: (event: MediaQueryListEvent) => void) => {
+      if (!query) return;
+      if (typeof query.addEventListener === "function") {
+        query.addEventListener("change", listener);
+      } else if (typeof query.addListener === "function") {
+        query.addListener(listener);
+      }
+    };
+
+    const unsubscribe = (query: MediaQueryList | undefined, listener: (event: MediaQueryListEvent) => void) => {
+      if (!query) return;
+      if (typeof query.removeEventListener === "function") {
+        query.removeEventListener("change", listener);
+      } else if (typeof query.removeListener === "function") {
+        query.removeListener(listener);
+      }
+    };
+
+    const handleChange = () => evaluate();
+    subscribe(prefersReduced, handleChange);
+    subscribe(pointerFine, handleChange);
+
+    return () => {
+      unsubscribe(prefersReduced, handleChange);
+      unsubscribe(pointerFine, handleChange);
+      detach();
     };
   }, []);
 

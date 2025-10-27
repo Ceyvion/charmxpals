@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import { createPortal } from "react-dom";
 import anime from 'animejs';
 import { useRouter } from "next/navigation";
@@ -26,22 +27,51 @@ function useReducedMotion() {
     const m = window.matchMedia('(prefers-reduced-motion: reduce)');
     const update = () => setReduced(!!m.matches);
     update();
-    m.addEventListener ? m.addEventListener('change', update) : m.addListener(update);
-    return () => { m.removeEventListener ? m.removeEventListener('change', update) : m.removeListener(update); };
+    if (typeof m.addEventListener === 'function') {
+      m.addEventListener('change', update);
+    } else if (typeof m.addListener === 'function') {
+      m.addListener(update);
+    }
+    return () => {
+      if (typeof m.removeEventListener === 'function') {
+        m.removeEventListener('change', update);
+      } else if (typeof m.removeListener === 'function') {
+        m.removeListener(update);
+      }
+    };
   }, []);
   return reduced;
 }
 
 type FlyState = { item: Item; from: DOMRect } | null;
 
+const SCROLL_LOCK_CLASS = 'cp-scroll-lock';
+
+function acquireScrollLock(): () => void {
+  if (typeof document === 'undefined') return () => {};
+  const root = document.documentElement;
+  const current = Number(root.dataset.cpScrollLock || '0');
+  const next = current + 1;
+  root.dataset.cpScrollLock = String(next);
+  if (next === 1) root.classList.add(SCROLL_LOCK_CLASS);
+  return () => {
+    const count = Number(root.dataset.cpScrollLock || '1') - 1;
+    if (count <= 0) {
+      root.classList.remove(SCROLL_LOCK_CLASS);
+      delete root.dataset.cpScrollLock;
+    } else {
+      root.dataset.cpScrollLock = String(count);
+    }
+  };
+}
+
 export default function HeroDeck({ items }: { items: Item[] }) {
   const deck = items.slice(0, 5);
   const router = useRouter();
   const reduced = useReducedMotion();
   const [fly, setFly] = useState<FlyState>(null);
-  if (!deck.length) return null;
 
-  const onCardClick = useCallback((e: React.MouseEvent, item: Item) => {
+  const onCardClick = useCallback((e: ReactMouseEvent<HTMLDivElement | HTMLButtonElement>, item: Item) => {
     e.preventDefault();
     const target = (e.currentTarget as HTMLElement);
     const from = target.getBoundingClientRect();
@@ -51,6 +81,8 @@ export default function HeroDeck({ items }: { items: Item[] }) {
     }
     setFly({ item, from });
   }, [reduced, router]);
+
+  if (!deck.length) return null;
 
   return (
     <div className="cp-hero-deck select-none relative z-10" data-testid="home-hero-deck">
@@ -75,7 +107,7 @@ export default function HeroDeck({ items }: { items: Item[] }) {
                 <div className="cp-muted text-sm line-clamp-2 mt-2">{c.description}</div>
               ) : null}
               <div className="mt-3">
-                <button onClick={(e) => onCardClick(e as any, c)} className="px-3 py-2 bg-white text-gray-900 rounded-lg text-xs font-bold">Open</button>
+                <button onClick={(e) => onCardClick(e, c)} className="px-3 py-2 bg-white text-gray-900 rounded-lg text-xs font-bold">Open</button>
               </div>
             </div>
           </div>
@@ -95,22 +127,10 @@ function FlyOverlay({ state, onClose }: { state: FlyState; onClose: () => void }
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    // Lock scroll during animation
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const releaseScrollLock = acquireScrollLock();
 
-    // Set initial position and size
     const startRadius = window.getComputedStyle(el).borderRadius || '24px';
-    Object.assign(el.style, {
-      position: 'fixed',
-      left: `${from.left}px`,
-      top: `${from.top}px`,
-      width: `${from.width}px`,
-      height: `${from.height}px`,
-      zIndex: '60',
-      willChange: 'left, top, width, height',
-    });
-    const vv = (window as any).visualViewport as VisualViewport | undefined;
+    const vv = typeof window !== 'undefined' && 'visualViewport' in window ? window.visualViewport : undefined;
     const vw = vv?.width ?? window.innerWidth;
     const vh = vv?.height ?? window.innerHeight;
     const offsetLeft = vv?.offsetLeft ?? 0;
@@ -133,6 +153,24 @@ function FlyOverlay({ state, onClose }: { state: FlyState; onClose: () => void }
     const targetLeft = Math.round(centerX - targetWidth / 2);
     const targetTop = Math.round(centerY - targetHeight / 2);
 
+    Object.assign(el.style, {
+      position: 'fixed',
+      left: `${targetLeft}px`,
+      top: `${targetTop}px`,
+      width: `${targetWidth}px`,
+      height: `${targetHeight}px`,
+      zIndex: '60',
+      willChange: 'transform',
+      transformOrigin: 'top left',
+      borderRadius: startRadius,
+    });
+
+    const translateX = from.left - targetLeft;
+    const translateY = from.top - targetTop;
+    const scaleX = from.width / targetWidth;
+    const scaleY = from.height / targetHeight;
+    el.style.transform = `translate3d(${translateX}px, ${translateY}px, 0) scale(${scaleX}, ${scaleY})`;
+
     // Dim backdrop
     const dim = document.createElement('div');
     Object.assign(dim.style, {
@@ -143,21 +181,17 @@ function FlyOverlay({ state, onClose }: { state: FlyState; onClose: () => void }
 
     const animation = anime({
       targets: el,
-      left: targetLeft,
-      top: targetTop,
-      width: targetWidth,
-      height: targetHeight,
+      translateX: 0,
+      translateY: 0,
+      scaleX: 1,
+      scaleY: 1,
       borderRadius: [startRadius, '28px'],
       easing: 'easeOutCubic',
       duration: 520,
       complete: () => {
         setDone(true);
-        Object.assign(el.style, {
-          left: `${targetLeft}px`,
-          top: `${targetTop}px`,
-          width: `${targetWidth}px`,
-          height: `${targetHeight}px`,
-        });
+        el.style.transform = 'translate3d(0px, 0px, 0) scale(1, 1)';
+        el.style.borderRadius = '28px';
       },
     });
 
@@ -169,16 +203,15 @@ function FlyOverlay({ state, onClose }: { state: FlyState; onClose: () => void }
       anime({ targets: dim, opacity: [1, 0], duration: 180, easing: 'easeInQuad', complete: () => dim.remove() });
       anime({
         targets: el,
-        left: from.left,
-        top: from.top,
-        width: from.width,
-        height: from.height,
+        translateX,
+        translateY,
+        scaleX,
+        scaleY,
         borderRadius: startRadius,
         duration: 280,
         easing: 'easeInCubic',
         complete: () => {
           onClose();
-          document.body.style.overflow = prevOverflow;
         },
       });
       window.removeEventListener('keydown', onKey);
@@ -194,7 +227,7 @@ function FlyOverlay({ state, onClose }: { state: FlyState; onClose: () => void }
       try { dim.remove(); } catch {}
       window.removeEventListener('keydown', onKey);
       dim.removeEventListener('click', close);
-      document.body.style.overflow = prevOverflow;
+      releaseScrollLock();
       animation.pause();
       closeRef.current = () => {};
     };

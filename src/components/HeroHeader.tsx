@@ -1,38 +1,29 @@
 "use client";
 
 import Link from 'next/link';
-import { useEffect, useRef } from 'react';
-import anime from 'animejs';
+import { useLayoutEffect, useRef } from 'react';
 import { worldTagline } from '@/data/characterLore';
 
 export default function HeroHeader() {
   const rootRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = rootRef.current;
-    if (!root) return;
-    const titleLines = root.querySelectorAll<HTMLElement>('[data-hero-title] > span');
-    const sub = root.querySelector<HTMLElement>('[data-hero-sub]');
-    const cta = root.querySelector<HTMLElement>('[data-hero-cta]');
-    const proof = root.querySelector<HTMLElement>('[data-hero-proof]');
-
-    // Reset initial states
-    titleLines.forEach((el) => { el.style.opacity = '0'; el.style.transform = 'translateY(12px)'; });
-    if (sub) { sub.style.opacity = '0'; sub.style.transform = 'translateY(10px)'; }
-    if (cta) { cta.style.opacity = '0'; cta.style.transform = 'translateY(8px)'; }
-    if (proof) { proof.style.opacity = '0'; proof.style.transform = 'translateY(6px)'; }
-
-    const tl = anime.timeline({ easing: 'easeOutCubic' });
-    tl.add({
-      targets: Array.from(titleLines),
-      opacity: [0, 1],
-      translateY: [12, 0],
-      duration: 520,
-      delay: anime.stagger(70),
-    })
-      .add({ targets: sub, opacity: [0, 1], translateY: [10, 0], duration: 420 }, '-=200')
-      .add({ targets: cta, opacity: [0, 1], translateY: [8, 0], duration: 420 }, '-=140')
-      .add({ targets: proof, opacity: [0, 1], translateY: [6, 0], duration: 360 }, '-=140');
+    if (!root || typeof window === 'undefined') return;
+    const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    if (prefersReduced?.matches) {
+      root.dataset.heroReady = 'true';
+      return;
+    }
+    root.dataset.heroAnimated = 'true';
+    const frame = window.requestAnimationFrame(() => {
+      root.dataset.heroReady = 'true';
+    });
+    return () => {
+      window.cancelAnimationFrame(frame);
+      delete root.dataset.heroAnimated;
+      delete root.dataset.heroReady;
+    };
   }, []);
 
   return (

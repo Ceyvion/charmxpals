@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from 'react';
-import anime from 'animejs';
+import type { CSSProperties } from 'react';
 
 type Props = {
   children: React.ReactNode;
@@ -12,38 +12,45 @@ type Props = {
 };
 
 export default function RevealOnView({ children, as = 'div', className, delay = 0, translateY = 12 }: Props) {
-  const Tag: any = as;
-  const ref = useRef<HTMLDivElement | null>(null);
+  const Tag = as;
+  const ref = useRef<HTMLElement | null>(null);
+  const style = {
+    '--reveal-delay': `${delay}ms`,
+    '--reveal-offset': `${translateY}px`,
+  } as CSSProperties;
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
-    let observed = false;
+    if (!el || typeof window === 'undefined') return;
+    const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    if (prefersReduced?.matches) {
+      el.dataset.revealState = 'shown';
+      return;
+    }
+
+    const rect = el.getBoundingClientRect();
+    const vh = window.innerHeight || 1;
+    if (rect.top <= vh && rect.bottom >= 0) {
+      el.dataset.revealState = 'shown';
+      return;
+    }
+
+    el.dataset.revealState = 'pending';
     const io = new IntersectionObserver((entries) => {
       for (const entry of entries) {
-        if (entry.isIntersecting && !observed) {
-          observed = true;
-          anime({
-            targets: el,
-            opacity: [0, 1],
-            translateY: [translateY, 0],
-            duration: 520,
-            delay,
-            easing: 'easeOutQuad',
-          });
+        if (entry.isIntersecting) {
+          el.dataset.revealState = 'shown';
           io.disconnect();
           break;
         }
       }
     }, { threshold: 0.18 });
-    el.style.opacity = '0';
-    el.style.transform = `translateY(${translateY}px)`;
     io.observe(el);
     return () => io.disconnect();
-  }, [delay, translateY]);
+  }, []);
 
   return (
-    <Tag ref={ref} className={className}>
+    <Tag ref={ref} className={className} style={style}>
       {children}
     </Tag>
   );

@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from 'react';
 
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
 export default function Aurora() {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const aRef = useRef<HTMLDivElement | null>(null);
@@ -10,32 +12,62 @@ export default function Aurora() {
 
   useEffect(() => {
     const el = rootRef.current;
-    if (!el) return;
+    if (!el || typeof window === 'undefined') return;
+    const parent = el.parentElement as HTMLElement | null;
+    if (!parent) return;
+
+    const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    if (prefersReduced?.matches) {
+      el.style.opacity = '1';
+      return;
+    }
+
+    const metricsRef = { offsetTop: 0, height: parent.getBoundingClientRect().height || 1 };
     let raf: number | null = null;
-    const onScroll = () => {
-      if (raf) return; // throttle with rAF
+
+    const measure = () => {
+      const rect = parent.getBoundingClientRect();
+      metricsRef.offsetTop = rect.top + window.scrollY;
+      metricsRef.height = rect.height || 1;
+    };
+
+    const update = () => {
+      const scrollY = window.scrollY;
+      const vh = window.innerHeight || 1;
+      const top = metricsRef.offsetTop - scrollY;
+      const visible = clamp(1 - Math.abs(top) / (metricsRef.height + vh), 0, 1);
+      const base = clamp((vh - top) / (vh + metricsRef.height), 0, 1);
+      const dy = (base - 0.5) * 60;
+      const dx = (base - 0.5) * 30;
+      if (aRef.current) aRef.current.style.transform = `translate3d(${dx * -0.6}px, ${dy * -0.8}px, 0)`;
+      if (bRef.current) bRef.current.style.transform = `translate3d(${dx * 0.5}px, ${dy * -0.4}px, 0)`;
+      if (cRef.current) cRef.current.style.transform = `translate3d(${dx * 0.8}px, ${dy * 0.9}px, 0)`;
+      el.style.opacity = String(0.8 * visible + 0.2);
+    };
+
+    const schedule = () => {
+      if (raf) return;
       raf = requestAnimationFrame(() => {
         raf = null;
-        const parent = el.parentElement as HTMLElement | null;
-        const rect = parent?.getBoundingClientRect();
-        const vh = window.innerHeight || 1;
-        const visible = rect ? Math.max(0, Math.min(1, 1 - Math.abs(rect.top) / (rect.height + vh))) : 1;
-        const base = rect ? Math.max(0, Math.min(1, (vh - rect.top) / (vh + rect.height))) : 0.5;
-        const dy = (base - 0.5) * 60; // parallax range
-        const dx = (base - 0.5) * 30;
-        if (aRef.current) aRef.current.style.transform = `translate3d(${dx * -0.6}px, ${dy * -0.8}px, 0)`;
-        if (bRef.current) bRef.current.style.transform = `translate3d(${dx * 0.5}px, ${dy * -0.4}px, 0)`;
-        if (cRef.current) cRef.current.style.transform = `translate3d(${dx * 0.8}px, ${dy * 0.9}px, 0)`;
-        el.style.opacity = String(0.8 * visible + 0.2);
+        update();
       });
     };
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
+
+    const handleResize = () => {
+      measure();
+      schedule();
+    };
+
+    measure();
+    update();
+
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', handleResize);
+
     return () => {
       if (raf) cancelAnimationFrame(raf);
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', handleResize);
     };
   }, []);
 
