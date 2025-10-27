@@ -250,8 +250,12 @@ function FlyOverlay({ state, onClose }: { state: FlyState; onClose: () => void }
   }, [from, onClose]);
 
   const content = (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 60 }}>
-      <div ref={ref} className="cp-card-hero cp-grad-border" style={{ perspective: '1000px' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 60, pointerEvents: 'none' }}>
+      <div
+        ref={ref}
+        className="cp-card-hero cp-grad-border"
+        style={{ perspective: '1000px', pointerEvents: 'auto' }}
+      >
         <div className="cap relative">
           <div className="absolute inset-0" style={{ backgroundImage: 'var(--cp-gradient)', opacity: 0.85 }} />
           <div className="absolute inset-0 bg-grid-overlay opacity-20" />
