@@ -4,6 +4,7 @@ import HeroDeck from '@/components/HeroDeck';
 import Aurora from '@/components/Aurora';
 import HeroHeader from '@/components/HeroHeader';
 import HeroAtmosphere from '@/components/HeroAtmosphere';
+import HeroParticles from '@/components/HeroParticles';
 import RealmSpotlights from '@/components/RealmSpotlights';
 import { withCharacterLore, type CharacterWithLore } from '@/lib/characterLore';
 
@@ -24,6 +25,7 @@ export default async function Home() {
     <div className="min-h-screen bg-grid-overlay">
       <section className="relative py-12 md:py-16 cp-hero-warp overflow-hidden cp-grid-soft">
         <Aurora />
+        <HeroParticles />
         <HeroAtmosphere />
         <div className="cp-vignette" />
         <div className="cp-container">

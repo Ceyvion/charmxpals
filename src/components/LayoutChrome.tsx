@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import AppNav from "@/components/AppNav";
+import InteractionEffects from "@/components/InteractionEffects";
 
 export default function LayoutChrome({ children }: { children: React.ReactNode }) {
   // Keep a consistent frame across routes to feel connected
@@ -29,6 +30,7 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
   };
   return (
     <div className="min-h-screen flex flex-col">
+      <InteractionEffects />
       <header className="cp-header bg-gray-900/60 backdrop-blur supports-[backdrop-filter]:bg-gray-900/50 border-b border-white/10 text-white">
         <div className="cp-container">
           <div className="flex justify-between h-16">
@@ -40,10 +42,25 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
             </div>
             <AppNav />
             <div className="flex items-center gap-2">
-              <button onClick={toggleAppearance} aria-label="Toggle theme" className="px-3 py-2 rounded-lg border border-white/10 bg-white/10 text-white text-sm font-bold hover:bg-white/20 transition">
+              <button
+                onClick={toggleAppearance}
+                aria-label="Toggle theme"
+                className="px-3 py-2 rounded-lg border border-white/10 bg-white/10 text-white text-sm font-bold hover:bg-white/20 transition"
+                data-magnetic="chrome"
+                data-magnetic-color="mint"
+                data-ripple
+              >
                 {appearance === 'light' ? '☀️' : '🌙'}
               </button>
-              <a href="/login" className="px-4 py-2 rounded-lg bg-white text-gray-900 text-sm font-bold hover:bg-gray-100 transition">Sign in</a>
+              <a
+                href="/login"
+                className="px-4 py-2 rounded-lg bg-white text-gray-900 text-sm font-bold hover:bg-gray-100 transition"
+                data-magnetic="chrome"
+                data-magnetic-color="sunrise"
+                data-ripple
+              >
+                Sign in
+              </a>
             </div>
           </div>
         </div>

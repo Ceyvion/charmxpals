@@ -106,7 +106,15 @@ export default function HeroDeck({ items }: { items: Item[] }) {
                 <div className="cp-muted text-sm line-clamp-2 mt-2">{c.description}</div>
               ) : null}
               <div className="mt-3">
-                <button onClick={(e) => onCardClick(e, c)} className="px-3 py-2 bg-white text-gray-900 rounded-lg text-xs font-bold">Open</button>
+                <button
+                  onClick={(e) => onCardClick(e, c)}
+                  className="px-3 py-2 bg-white text-gray-900 rounded-lg text-xs font-bold"
+                  data-magnetic="hero-card"
+                  data-magnetic-color="volt"
+                  data-ripple
+                >
+                  Open
+                </button>
               </div>
             </div>
           </div>

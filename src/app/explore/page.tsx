@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { getRepo } from '@/lib/repo';
-import CharacterCard from '@/components/CharacterCard';
 import ExploreClient from './ExploreClient';
 import { cookies } from 'next/headers';
 import { withCharacterLore, type CharacterWithLore } from '@/lib/characterLore';

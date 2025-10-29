@@ -29,26 +29,50 @@ export default function HeroHeader() {
   return (
     <div ref={rootRef} className="relative z-20 text-center max-w-4xl mx-auto">
       <div className="inline-flex items-center gap-2 mb-4">
-        <span className="cp-chip">Connected Toy Drop • Open Beta</span>
+        <span className="cp-chip">Connected Toy Drop • Beta Live</span>
       </div>
       <h1 className="font-display font-extrabold leading-tight text-5xl sm:text-6xl md:text-8xl" data-hero-title>
-        <span>Scan Your Charm.</span>
+        <span>Flash Your Charm.</span>
         <br />
-        <span>Command the Arena.</span>
+        <span>Rule the Grid.</span>
       </h1>
       <p className="mt-3 cp-muted text-base sm:text-lg md:text-xl" data-hero-sub>
-        Turn every CharmXPal collectible into a browser-playable champion in under five seconds. {worldTagline} Pair physical hype with instant dance battles—no downloads, no wallets, just rhythm.
+        Blink your CharmXPal and it boots up as a battle idol in five heartbeats. {worldTagline} Tangible collectible, instant flex, zero friction.
       </p>
       <div className="mt-5 flex items-center justify-center" data-hero-cta>
         <div className="cp-cta">
-          <Link href="/claim" className="inline-flex cp-hero-cta-primary">Unlock Now</Link>
-          <Link href="/explore" className="hidden md:inline-flex cp-hero-cta-secondary">Preview the Crew</Link>
-          <Link href="/play" className="inline-flex cp-hero-cta-secondary">Start a Demo Match</Link>
+          <Link
+            href="/claim"
+            className="inline-flex cp-hero-cta-primary"
+            data-magnetic="cta"
+            data-magnetic-color="sunrise"
+            data-ripple
+          >
+            Claim Your Flex
+          </Link>
+          <Link
+            href="/explore"
+            className="hidden md:inline-flex cp-hero-cta-secondary"
+            data-magnetic="cta"
+            data-magnetic-color="aqua"
+            data-ripple
+          >
+            Meet the Crew
+          </Link>
+          <Link
+            href="/play"
+            className="inline-flex cp-hero-cta-secondary"
+            data-magnetic="cta"
+            data-magnetic-color="volt"
+            data-ripple
+          >
+            Drop Into Demo
+          </Link>
         </div>
       </div>
       <div className="mt-5 flex items-center justify-center gap-3 text-sm text-white/80" data-hero-proof>
-        <span className="cp-pill">Onboarding &lt;5s • Zero installs • Secure single-use codes</span>
-        <span className="cp-chip hidden sm:inline-flex">No App Required</span>
+        <span className="cp-pill">Boot-Up &lt;5s • No downloads • One-shot codes</span>
+        <span className="cp-chip hidden sm:inline-flex">No App. No Wallet.</span>
         <span className="cp-chip hidden md:inline-flex">Dance MMO Alpha</span>
       </div>
     </div>
