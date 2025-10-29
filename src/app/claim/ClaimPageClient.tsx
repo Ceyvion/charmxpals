@@ -274,18 +274,15 @@ export default function ClaimPageClient() {
   };
 
   return (
-    <div className="min-h-screen relative py-12 px-4 overflow-hidden">
-      {/* NYC-style animated background */}
-      <div className="fixed inset-0 -z-20">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-gray-900 to-black" />
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cdefs%3E%3Cpattern%20id%3D%22grid%22%20width%3D%2260%22%20height%3D%2260%22%20patternUnits%3D%22userSpaceOnUse%22%3E%3Cpath%20d%3D%22M%2060%200%20L%200%200%200%2060%22%20fill%3D%22none%22%20stroke%3D%22rgba(255%2C255%2C255%2C0.03)%22%20stroke-width%3D%221%22%2F%3E%3C%2Fpattern%3E%3C%2Fdefs%3E%3Crect%20width%3D%22100%25%22%20height%3D%22100%25%22%20fill%3D%22url(%23grid)%22%2F%3E%3C%2Fsvg%3E')]" />
-      </div>
+    <div className="cp-claim-page min-h-screen relative py-12 px-4 overflow-hidden">
+      <div className="cp-claim-backdrop" aria-hidden />
+      <div className="cp-claim-grid" aria-hidden />
 
       {/* Animated orbs */}
-      <div className="fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute -top-40 -left-40 w-80 h-80 bg-purple-500/30 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute -bottom-40 -right-40 w-80 h-80 bg-cyan-500/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '4s' }} />
+      <div className="cp-claim-orbs" aria-hidden>
+        <div className="cp-claim-orb cp-claim-orb-a" />
+        <div className="cp-claim-orb cp-claim-orb-b" />
+        <div className="cp-claim-orb cp-claim-orb-c" />
       </div>
 
       <div className="max-w-2xl w-full mx-auto relative">
@@ -300,11 +297,10 @@ export default function ClaimPageClient() {
         )}
 
         {/* Main card with glass morphism */}
-        <div className="relative group">
-          {/* Glow effect on hover */}
-          <div className="absolute -inset-1 bg-gradient-to-r from-pink-600 to-purple-600 rounded-3xl blur opacity-0 group-hover:opacity-30 transition duration-1000"></div>
-          
-          <div className="relative bg-black/40 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
+        <div className="relative group cp-claim-card-shell">
+          <div className="cp-claim-card-glow" aria-hidden />
+
+          <div className="cp-claim-panel relative overflow-hidden">
             {/* Animated header */}
             <div className="relative border-b border-white/10 p-8 text-center overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-cyan-600/20 animate-gradient" />
