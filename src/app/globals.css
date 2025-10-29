@@ -1572,3 +1572,118 @@ html:not([data-appearance="light"]) .cp-realms .cp-muted { color: rgba(226, 228,
   0%, 100% { transform: scale(0.9); opacity: 0.15; }
   50% { transform: scale(1.3); opacity: 0.45; }
 }
+
+/* Character page enhancements */
+.cp-character-page {
+  --skin-primary: #8B6DFF;
+  --skin-secondary: #FF7CE3;
+  --skin-accent: #52E1FF;
+}
+
+/* Skin preview cards */
+.cp-skin-card {
+  position: relative;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.cp-skin-card::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: var(--skin-gradient);
+  border-radius: 1rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.cp-skin-card:hover::before {
+  opacity: 0.5;
+}
+
+.cp-skin-card.active {
+  transform: scale(1.02);
+}
+
+.cp-skin-card.active::before {
+  opacity: 1;
+}
+
+/* Rarity gradients for skins */
+.cp-skin-common {
+  --skin-gradient: linear-gradient(135deg, #9CA3AF, #6B7280);
+  --skin-glow: rgba(156, 163, 175, 0.4);
+}
+
+.cp-skin-rare {
+  --skin-gradient: linear-gradient(135deg, #60A5FA, #3B82F6);
+  --skin-glow: rgba(59, 130, 246, 0.5);
+}
+
+.cp-skin-epic {
+  --skin-gradient: linear-gradient(135deg, #A78BFA, #8B5CF6);
+  --skin-glow: rgba(139, 92, 246, 0.6);
+}
+
+.cp-skin-legendary {
+  --skin-gradient: linear-gradient(135deg, #FCD34D, #F59E0B);
+  --skin-glow: rgba(245, 158, 11, 0.7);
+}
+
+.cp-skin-mythic {
+  --skin-gradient: linear-gradient(135deg, #F472B6, #A78BFA, #60A5FA);
+  --skin-glow: rgba(244, 114, 182, 0.8);
+  animation: cpMythicShimmer 3s ease-in-out infinite;
+}
+
+@keyframes cpMythicShimmer {
+  0%, 100% { filter: hue-rotate(0deg); }
+  50% { filter: hue-rotate(30deg); }
+}
+
+/* 3D viewer enhancements */
+.cp-model-viewer {
+  position: relative;
+  border-radius: 1.5rem;
+  overflow: hidden;
+}
+
+.cp-model-viewer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, transparent 40%, rgba(0, 0, 0, 0.3) 100%);
+}
+
+/* Stat bars with gradient fills */
+.cp-stat-bar {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.cp-stat-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cp-grad-1), var(--cp-grad-2));
+  border-radius: 999px;
+  position: relative;
+  overflow: hidden;
+}
+
+.cp-stat-bar-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: cpStatShine 2s ease-in-out infinite;
+}
+
+@keyframes cpStatShine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+EOF < /dev/null

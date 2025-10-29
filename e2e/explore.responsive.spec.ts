@@ -1,40 +1,39 @@
 import { test, expect } from '@playwright/test';
 
-async function firstRowCount(page) {
-  const cards = page.locator('.cp-explore-grid > *');
-  const n = await cards.count();
-  if (n === 0) return 0;
-  const top0 = (await cards.nth(0).boundingBox())!.y;
-  let count = 0;
-  for (let i = 0; i < n; i++) {
-    const box = await cards.nth(i).boundingBox();
-    if (!box) break;
-    if (Math.abs(box.y - top0) < 2) count++;
-    else break;
-  }
-  return count;
-}
-
-test.describe('Explore grid responsiveness', () => {
-  test('portrait phone → 1 col', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
+test.describe('Explore roster experience', () => {
+  test('spotlight mirrors the first roster item by default', async ({ page }) => {
     await page.goto('/explore');
-    const count = await firstRowCount(page);
-    expect(count).toBe(1);
+
+    const firstRosterName = await page.locator('[data-roster-item] [data-roster-name]').first().innerText();
+    await expect(page.locator('[data-spotlight-name]')).toHaveText(firstRosterName);
   });
 
-  test('phone landscape → 2 cols', async ({ page }) => {
-    await page.setViewportSize({ width: 844, height: 390 });
+  test('selecting another roster entry updates the spotlight', async ({ page }) => {
     await page.goto('/explore');
-    const count = await firstRowCount(page);
-    expect(count).toBeGreaterThanOrEqual(2);
+
+    const second = page.locator('[data-roster-item]').nth(1);
+    await second.scrollIntoViewIfNeeded();
+    const secondName = await second.locator('[data-roster-name]').innerText();
+    await second.click();
+
+    await expect(page.locator('[data-spotlight-name]')).toHaveText(secondName);
+    await expect(second).toHaveAttribute('data-active', 'true');
   });
 
-  test('desktop → 3+ cols', async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
+  test('filtering to rare characters only shows the rare roster', async ({ page }) => {
     await page.goto('/explore');
-    const count = await firstRowCount(page);
-    expect(count).toBeGreaterThanOrEqual(3);
+
+    await page.locator('[data-filter="rare"]').click();
+
+    const rareRows = page.locator('[data-roster-item][data-rarity="rare"]');
+    const rareCount = await rareRows.count();
+    expect(rareCount).toBeGreaterThan(0);
+
+    await expect(page.locator('[data-roster-item][data-rarity="legendary"]')).toHaveCount(0);
+    await expect(page.locator('[data-roster-item][data-rarity="epic"]')).toHaveCount(0);
+
+    const spotlightName = await page.locator('[data-spotlight-name]').innerText();
+    const firstRareName = await rareRows.first().locator('[data-roster-name]').innerText();
+    expect(spotlightName).toBe(firstRareName);
   });
 });
-
