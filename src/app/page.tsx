@@ -6,7 +6,6 @@ import Aurora from '@/components/Aurora';
 import HeroHeader from '@/components/HeroHeader';
 import HeroAtmosphere from '@/components/HeroAtmosphere';
 import HeroParticles from '@/components/HeroParticles';
-import RealmSpotlights from '@/components/RealmSpotlights';
 import { withCharacterLore, type CharacterWithLore } from '@/lib/characterLore';
 import { authOptions } from '@/lib/auth';
 
@@ -51,8 +50,6 @@ export default async function Home() {
           </div>
         </div>
       </section>
-
-      <RealmSpotlights items={enriched.slice(0, 3)} />
     </div>
   );
 }
