@@ -15,7 +15,7 @@ export default function CharacterStats({ stats }: { stats: Record<string, number
     const to = entries.map(([_, v]) => Math.max(0, Math.min(100, Number(v))));
     anime({
       targets: bars,
-      width: to.map((v) => `${v}%`),
+      width: (_el, index) => `${to[index] ?? 0}%`,
       delay: anime.stagger(60),
       duration: 800,
       easing: 'easeOutCubic',
