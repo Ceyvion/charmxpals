@@ -36,6 +36,7 @@
      npm run import:cxp -- --file data/beta_wave1_codes.csv --set "Beta Wave 1" --dry-run
      ```
      *(No dry-run flag exists today; instead, re-running the command will report codes as “skipped” if they already live in Redis.)*
+   - After sign-in, testers land on `/me` where the “Beta Test Checklist” widget tracks their local progress. Ask them to work through every item before sending feedback.
    - Visit the deployed `/login`, sign in with a tester email + the beta access code, then redeem the assigned claim code at `/claim` to ensure ownership flows through to `/me`.
 
 4. **Communicate**
@@ -43,4 +44,3 @@
    - Remind them to log out via `/logout` (now part of the header) if they share devices.
 
 Update this file (or add `WAVE2.md`) as more testers go live.
-

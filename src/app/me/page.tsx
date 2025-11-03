@@ -6,6 +6,7 @@ import { getRepo } from '@/lib/repo';
 import { getModelUrl } from '@/data/characterModels';
 import Cosmetics from '@/app/character/[id]/Cosmetics';
 import { authOptions } from '@/lib/auth';
+import BetaChecklist from '@/components/BetaChecklist';
 
 const CharacterViewer3D = dynamic(() => import('@/components/CharacterViewer3D'), { ssr: false });
 
@@ -45,6 +46,9 @@ export default async function MePage() {
             <Link href="/claim" className="px-4 py-2 bg-white text-gray-900 rounded-lg font-semibold">Claim</Link>
             <Link href="/play" className="px-4 py-2 border border-white/20 text-white rounded-lg font-semibold hover:bg-white/5">Play</Link>
           </div>
+        </div>
+        <div className="mb-10">
+          <BetaChecklist userId={userId} />
         </div>
 
         {characters.length > 0 ? (
