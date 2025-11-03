@@ -169,19 +169,19 @@ export default function BetaChecklist({ userId, initialProgress, onProgressUpdat
         <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/70">
-              Beta missions
+              Mission tracker
             </div>
             <h2 className="text-3xl font-display font-extrabold text-white leading-tight">
-              Help us ship the glow-up
+              Core missions, zero fluff
             </h2>
             <p className="max-w-xl text-sm text-white/70">
-              Work through each mission and capture notes as you go. We sync progress across devices once you’re signed in.
+              Beta Progress: {percent}% ({completedCount}/{betaChecklistTasks.length} complete). Work through each target and log issues as you go—we sync progress across devices when you’re signed in.
             </p>
           </div>
           <div className="shrink-0 rounded-2xl border border-white/10 bg-white/6 px-5 py-4 text-right shadow-inner shadow-black/20">
-            <div className="text-sm font-semibold uppercase tracking-wide text-white/60">Progress</div>
+            <div className="text-sm font-semibold uppercase tracking-wide text-white/60">Mission tracker</div>
             <div className="mt-1 text-3xl font-display font-extrabold text-white">{percent}%</div>
-            <div className="text-xs text-white/50">{completedCount} of {betaChecklistTasks.length} missions</div>
+            <div className="text-xs text-white/50">{completedCount} of {betaChecklistTasks.length} complete</div>
             <div className="mt-2 text-[11px] uppercase tracking-[0.28em] text-white/40">
               {formattedUpdatedAt ? `Synced ${formattedUpdatedAt}` : isLoading ? 'Syncing…' : 'Not synced yet'}
             </div>
@@ -288,8 +288,8 @@ export default function BetaChecklist({ userId, initialProgress, onProgressUpdat
           <div className="flex items-center gap-3 text-white/70">
             {isSaving ? <span className="text-[10px] uppercase tracking-[0.3em] text-white/50">Syncing…</span> : null}
             <span>
-              Snap screenshots, capture vibes, and reply to your invite email or{' '}
-              <a href="mailto:beta@charmxpals.com" className="text-white/80 hover:text-white">beta@charmxpals.com</a>.
+              Snap screenshots, clips, and repro steps—send them to{' '}
+              <a href="mailto:charmxpals.contact@gmail.com" className="text-white/80 hover:text-white">charmxpals.contact@gmail.com</a>.
             </span>
           </div>
         </div>
@@ -329,10 +329,14 @@ function readLocalStorageFallback(key: string): ChecklistSnapshot | null {
 function getCtaLabel(task: BetaChecklistTask, checked: boolean) {
   if (checked) {
     switch (task.id) {
+      case 'explore':
+        return 'Review Explore';
       case 'claim':
-        return 'Review claim flow';
+        return 'Run claim again';
+      case 'viewer':
+        return 'Re-check viewer';
       case 'mini-game':
-        return 'Run another lap';
+        return 'Another runner lap';
       case 'feedback':
         return 'Send more notes';
       default:
@@ -340,14 +344,16 @@ function getCtaLabel(task: BetaChecklistTask, checked: boolean) {
     }
   }
   switch (task.id) {
+    case 'explore':
+      return 'Open Explore';
     case 'claim':
-      return 'Redeem now';
+      return 'Start test';
+    case 'viewer':
+      return 'Test viewer';
     case 'mini-game':
       return 'Launch runner';
-    case 'viewer':
-      return 'Open viewer';
     case 'feedback':
-      return 'Share feedback';
+      return 'Drop feedback';
     default:
       return 'Jump in';
   }

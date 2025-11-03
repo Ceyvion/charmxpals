@@ -8,13 +8,22 @@ type BetaWelcomeProps = {
   lastClaimAtIso?: string | null;
   newestPalName?: string | null;
   checklistProgressPercent?: number | null;
-  checklistUpdatedAtIso?: string | null;
 };
 
 const content = getBetaDashboardContent();
 
 function isExternal(href: string) {
-  return /^https?:\/\//i.test(href);
+  return /^https?:\/\//i.test(href) || href.startsWith('mailto:');
+}
+
+function formatAbsolute(fromIso?: string | null, withTime = false) {
+  if (!fromIso) return null;
+  const date = new Date(fromIso);
+  if (Number.isNaN(date.getTime())) return null;
+  const options: Intl.DateTimeFormatOptions = withTime
+    ? { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }
+    : { month: 'short', day: 'numeric', year: 'numeric' };
+  return date.toLocaleString(undefined, options);
 }
 
 function formatRelative(fromIso?: string | null) {
@@ -39,209 +48,170 @@ function formatRelative(fromIso?: string | null) {
   return `${diffYears}+ yr${diffYears === 1 ? '' : 's'} ago`;
 }
 
-function formatAbsolute(fromIso?: string | null, withTime = false) {
-  if (!fromIso) return null;
-  const date = new Date(fromIso);
-  if (Number.isNaN(date.getTime())) return null;
-  const options: Intl.DateTimeFormatOptions = withTime
-    ? { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }
-    : { month: 'short', day: 'numeric', year: 'numeric' };
-  return date.toLocaleString(undefined, options);
-}
-
 export default function BetaWelcome({
   userName,
   ownedCount,
   lastClaimAtIso,
   newestPalName,
   checklistProgressPercent,
-  checklistUpdatedAtIso,
 }: BetaWelcomeProps) {
-  const firstName = userName?.split(/\s+/)[0] ?? 'Crew';
-  const ownedPlural = ownedCount === 1 ? 'pal' : 'pals';
-  const lastClaimRelative = formatRelative(lastClaimAtIso);
-  const lastClaimAbsolute = formatAbsolute(lastClaimAtIso, true);
-  const checklistUpdated = formatAbsolute(checklistUpdatedAtIso, true);
-  const patchPublished = formatAbsolute(content.patch.publishedAt);
+  const displayName = userName ?? 'Tester';
+  const patchVersion = content.patch.codename
+    ? `${content.patch.version} — ${content.patch.codename}`
+    : content.patch.version;
+  const patchDate = formatAbsolute(content.patch.publishedAt);
+
+  const rosterTitle =
+    ownedCount > 0 ? `${ownedCount} ${ownedCount === 1 ? 'pal' : 'pals'} synced` : '0 pals synced';
+  const rosterDescription =
+    ownedCount > 0
+      ? 'Keep codes coming. Track cosmetics, stats, and loadouts here.'
+      : 'No codes redeemed yet.';
+
+  const lastSyncPrimary = lastClaimAtIso ? formatAbsolute(lastClaimAtIso, true) : '--';
+  const lastSyncSecondary = lastClaimAtIso
+    ? `Last sync ${formatRelative(lastClaimAtIso)}. Keep timing the flow.`
+    : 'Redeem your first code to start tracking.';
+
+  const newestPalPrimary = newestPalName ?? '--';
+  const newestPalSecondary = newestPalName
+    ? 'Spin the viewer, equip cosmetics, and log anything glitchy.'
+    : 'Waiting for first claim.';
+
+  const missions = content.highlights;
+  const quickActions = content.resources;
 
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-br from-[#160732] via-[#12062a] to-[#050112] px-8 py-10 shadow-[0_34px_120px_rgba(60,10,120,0.35)]">
+    <section className="relative overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-br from-[#160732] via-[#12062a] to-[#050112] px-8 py-10 shadow-[0_34px_120px_rgba(60,10,120,0.35)] text-white">
       <div className="pointer-events-none absolute -top-24 -left-20 h-64 w-64 rounded-full bg-gradient-to-br from-pink-500/35 to-sky-500/20 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-28 right-16 h-60 w-60 rounded-full bg-gradient-to-br from-purple-500/30 to-amber-400/15 blur-3xl" />
-      <div className="relative z-10 space-y-10 text-white">
-        <header className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-4 max-w-2xl">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-white/80">
-              {content.waveLabel}
+
+      <div className="relative z-10 space-y-10">
+        <header className="space-y-4">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.28em] text-white/80">
+            {content.waveLabel}
+          </span>
+          <h2 className="font-display text-4xl md:text-5xl font-extrabold leading-tight">
+            Welcome back, {displayName}.{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-300 via-fuchsia-200 to-sky-200">
+              Let&apos;s break things.
             </span>
-            <h2 className="font-display text-4xl md:text-5xl font-extrabold leading-tight">
-              Welcome back, {firstName}. <br className="hidden sm:block" /> Ready to push the grid?
-            </h2>
-            <p className="text-sm md:text-base text-white/75">
-              {content.missionStatement}
-            </p>
-            <div className="flex flex-wrap items-center gap-3 text-xs text-white/60">
-              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-400/10 px-3 py-1 font-semibold uppercase tracking-wide text-emerald-200">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 shadow-[0_0_8px_rgba(110,231,183,0.8)]" />
-                {content.velocityGoal}
-              </span>
-              <span>{content.weeklyFocus}</span>
+          </h2>
+          <p className="max-w-2xl text-sm md:text-base text-white/75">
+            {content.missionStatement}
+          </p>
+          {typeof checklistProgressPercent === 'number' ? (
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-white/65">
+              Beta progress: {Math.round(checklistProgressPercent)}%
             </div>
-          </div>
-          <div className="shrink-0 rounded-2xl border border-white/10 bg-white/8 px-6 py-5 text-sm text-white/70 shadow-inner shadow-black/30 max-w-sm">
-            <div className="uppercase tracking-[0.24em] text-[11px] font-semibold text-white/60">Latest patch</div>
-            <div className="mt-3 space-y-2">
-              <div className="text-lg font-semibold text-white">
-                {content.patch.version}
-                {content.patch.codename ? <span className="ml-2 text-white/60">— {content.patch.codename}</span> : null}
-              </div>
-              <p className="text-sm text-white/70 leading-relaxed">{content.patch.summary}</p>
-              <div className="text-[11px] uppercase tracking-[0.28em] text-white/45">
-                Published {patchPublished ?? 'recently'}
-              </div>
-            </div>
-            {isExternal(content.patch.href) ? (
-              <a
-                href={content.patch.href}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.25em] text-white/80 hover:border-white/30 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
-              >
-                Read notes ↗
-              </a>
-            ) : (
-              <Link
-                href={content.patch.href}
-                className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.25em] text-white/80 hover:border-white/30 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
-              >
-                Read notes ⇢
-              </Link>
-            )}
-          </div>
+          ) : null}
         </header>
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-white/15 bg-white/8 px-5 py-5">
-            <div className="text-xs uppercase tracking-[0.28em] text-white/45">Synced roster</div>
-            <div className="mt-2 flex items-end gap-2">
-              <span className="text-4xl font-display font-extrabold text-white">{ownedCount}</span>
-              <span className="text-sm text-white/60 mb-1">{ownedPlural}</span>
-            </div>
-            <p className="mt-3 text-sm text-white/70 leading-relaxed">
-              Claim new codes to unlock cosmetics and mini-game loadouts sooner.
-            </p>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-2xl border border-white/12 bg-white/6 px-5 py-6 shadow-inner shadow-black/20">
+            <div className="text-[11px] uppercase tracking-[0.28em] text-white/55">Latest Patch</div>
+            <div className="mt-2 text-xl font-semibold text-white">{patchVersion}</div>
+            <p className="mt-3 text-sm leading-relaxed text-white/70">{content.patch.summary}</p>
+            <Link
+              href={content.patch.href}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-4 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.28em] text-white/80 hover:text-white"
+            >
+              {patchDate ?? 'Patch notes'} | Patch Notes ↗
+            </Link>
           </div>
 
-          <div className="rounded-2xl border border-white/15 bg-white/8 px-5 py-5">
-            <div className="text-xs uppercase tracking-[0.28em] text-white/45">Last sync</div>
-            <div className="mt-2 text-2xl font-semibold text-white">
-              {lastClaimRelative ?? 'Not yet claimed'}
-            </div>
-            <p className="mt-3 text-sm text-white/70 leading-relaxed">
-              {lastClaimAbsolute ? `Finalized on ${lastClaimAbsolute}. Keep timing the flow and call out spikes.` : 'Redeem your first code to start the telemetry trail.'}
-            </p>
+          <div className="rounded-2xl border border-white/12 bg-white/6 px-5 py-6 shadow-inner shadow-black/20">
+            <div className="text-[11px] uppercase tracking-[0.28em] text-white/55">Roster</div>
+            <div className="mt-2 text-xl font-semibold text-white">{rosterTitle}</div>
+            <p className="mt-3 text-sm leading-relaxed text-white/70">{rosterDescription}</p>
           </div>
 
-          <div className="rounded-2xl border border-white/15 bg-white/8 px-5 py-5">
-            <div className="text-xs uppercase tracking-[0.28em] text-white/45">Newest pal</div>
-            <div className="mt-2 text-2xl font-semibold text-white">
-              {newestPalName ?? 'TBD'}
-            </div>
-            <p className="mt-3 text-sm text-white/70 leading-relaxed">
-              Spin the 3D viewer, test cosmetics, and attach notes or clips for anything that feels off.
-            </p>
+          <div className="rounded-2xl border border-white/12 bg-white/6 px-5 py-6 shadow-inner shadow-black/20">
+            <div className="text-[11px] uppercase tracking-[0.28em] text-white/55">Last Sync</div>
+            <div className="mt-2 text-xl font-semibold text-white">{lastSyncPrimary}</div>
+            <p className="mt-3 text-sm leading-relaxed text-white/70">{lastSyncSecondary}</p>
+          </div>
+
+          <div className="rounded-2xl border border-white/12 bg-white/6 px-5 py-6 shadow-inner shadow-black/20">
+            <div className="text-[11px] uppercase tracking-[0.28em] text-white/55">Newest Pal</div>
+            <div className="mt-2 text-xl font-semibold text-white">{newestPalPrimary}</div>
+            <p className="mt-3 text-sm leading-relaxed text-white/70">{newestPalSecondary}</p>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 px-6 py-6">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-4">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>
-              <div className="text-xs uppercase tracking-[0.28em] text-white/50">Beta missions</div>
-              <div className="mt-1 text-lg font-semibold text-white">Keep momentum high</div>
-            </div>
-            {typeof checklistProgressPercent === 'number' ? (
-              <div className="text-right text-sm text-white/70">
-                <div className="text-3xl font-display font-extrabold text-white">{Math.round(checklistProgressPercent)}%</div>
-                <div className="text-[11px] uppercase tracking-[0.28em] text-white/45">
-                  {checklistUpdated ? `Updated ${checklistUpdated}` : 'Not synced yet'}
-                </div>
-              </div>
-            ) : (
-              <div className="text-sm text-white/70">
-                Progress saves per account once you tick off missions below.
-              </div>
-            )}
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {content.focusAreas.map((focus) => (
-              <div key={focus.id} className="rounded-xl border border-white/15 bg-white/8 px-4 py-3 text-sm text-white/75">
-                <div className="font-semibold text-white">{focus.title}</div>
-                <div className="mt-1 text-xs text-white/60 leading-relaxed">{focus.detail}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          {content.highlights.map((item) => {
-            const card = (
-              <div className="h-full rounded-2xl border border-white/12 bg-white/6 px-5 py-6 transition hover:border-white/30 hover:bg-white/12">
-                <span className="text-[11px] uppercase tracking-[0.28em] text-white/50">{item.label}</span>
-                <h3 className="mt-2 text-lg font-semibold text-white">{item.title}</h3>
-                <p className="mt-2 text-sm text-white/70 leading-relaxed">{item.description}</p>
-                <span className="mt-4 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-white/80">
-                  {item.external ? 'Open link ↗' : 'Jump in ⇢'}
-                </span>
-              </div>
-            );
-            return item.external ? (
-              <a
-                key={item.id}
-                href={item.href}
-                target="_blank"
-                rel="noreferrer"
-                className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-2xl"
-              >
-                {card}
-              </a>
-            ) : (
-              <Link
-                key={item.id}
-                href={item.href}
-                className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-2xl"
-              >
-                {card}
-              </Link>
-            );
-          })}
-        </div>
-
-        <div className="rounded-2xl border border-white/10 bg-white/5 px-6 py-6">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <div className="text-xs uppercase tracking-[0.28em] text-white/50">Resources</div>
-              <div className="mt-1 text-lg font-semibold text-white">Where to drop notes & find context</div>
-            </div>
-            <div className="text-xs text-white/60">
-              Need direct help? Email <a href="mailto:beta@charmxpals.com" className="text-white/85 hover:text-white">beta@charmxpals.com</a>.
+              <div className="text-[11px] uppercase tracking-[0.28em] text-white/55">Core Missions</div>
+              <div className="text-lg font-semibold text-white">Focus these first</div>
             </div>
           </div>
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {content.resources.map((resource) => {
-              const resourceExternal = resource.external ?? isExternal(resource.href);
-              const body = (
-                <div className="h-full rounded-xl border border-white/12 bg-white/6 px-5 py-5 transition hover:border-white/30 hover:bg-white/12">
-                  <div className="text-sm font-semibold text-white">{resource.title}</div>
-                  <p className="mt-2 text-xs text-white/65 leading-relaxed">{resource.description}</p>
-                  <span className="mt-4 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-white/75">
-                    {resourceExternal ? 'Open link ↗' : 'View details ⇢'}
+          <div className="grid gap-4 md:grid-cols-3">
+            {missions.map((mission) => {
+              const card = (
+                <div className="h-full rounded-2xl border border-white/12 bg-white/6 px-5 py-6 transition hover:border-white/30 hover:bg-white/12">
+                  <span className="text-[11px] uppercase tracking-[0.28em] text-white/55">{mission.label}</span>
+                  {mission.tagline ? (
+                    <p className="mt-1 text-xs font-semibold uppercase tracking-[0.2em] text-white/65">
+                      {mission.tagline}
+                    </p>
+                  ) : null}
+                  <h3 className="mt-3 text-xl font-semibold text-white">{mission.title}</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-white/70">{mission.description}</p>
+                  <span className="mt-4 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.25em] text-white/80">
+                    {mission.cta ?? (mission.external ? 'Open link ↗' : 'Jump in ⇢')}
                   </span>
                 </div>
               );
-              return resourceExternal ? (
+
+              return isExternal(mission.href) ? (
                 <a
-                  key={resource.id}
-                  href={resource.href}
+                  key={mission.id}
+                  href={mission.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-2xl"
+                >
+                  {card}
+                </a>
+              ) : (
+                <Link
+                  key={mission.id}
+                  href={mission.href}
+                  className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-2xl"
+                >
+                  {card}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/5 px-6 py-6">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="text-[11px] uppercase tracking-[0.28em] text-white/55">Quick Actions</div>
+              <div className="mt-1 text-lg font-semibold text-white">Jump straight to tests</div>
+            </div>
+          </div>
+          <div className="mt-5 grid gap-4 sm:grid-cols-3">
+            {quickActions.map((action) => {
+              const actionExternal = action.external ?? isExternal(action.href);
+              const body = (
+                <div className="h-full rounded-xl border border-white/12 bg-white/6 px-5 py-5 transition hover:border-white/30 hover:bg-white/12">
+                  <div className="text-sm font-semibold text-white">{action.title}</div>
+                  <p className="mt-2 text-xs text-white/65 leading-relaxed">{action.description}</p>
+                  <span className="mt-4 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.25em] text-white/75">
+                    {actionExternal ? 'Open link ↗' : 'Go now ⇢'}
+                  </span>
+                </div>
+              );
+              return actionExternal ? (
+                <a
+                  key={action.id}
+                  href={action.href}
                   target="_blank"
                   rel="noreferrer"
                   className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-2xl"
@@ -250,8 +220,8 @@ export default function BetaWelcome({
                 </a>
               ) : (
                 <Link
-                  key={resource.id}
-                  href={resource.href}
+                  key={action.id}
+                  href={action.href}
                   className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-2xl"
                 >
                   {body}
@@ -261,17 +231,12 @@ export default function BetaWelcome({
           </div>
         </div>
 
-        <footer className="flex flex-col gap-3 text-xs text-white/65 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 font-semibold uppercase tracking-[0.22em] text-white/70">
-              Need backup?
-            </span>
-            <span>
-              DM the beta Discord or loop us in at <a href="mailto:beta@charmxpals.com" className="text-white/85 hover:text-white">beta@charmxpals.com</a>.
-            </span>
+        <footer className="flex flex-col gap-2 text-xs text-white/65 md:flex-row md:items-center md:justify-between">
+          <div>
+            Bug reports: <a href="mailto:charmxpals.contact@gmail.com" className="text-white/85 hover:text-white">charmxpals.contact@gmail.com</a>
           </div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 font-semibold uppercase tracking-[0.22em] text-white/75">
-            Squad pulse stays updated as we ship new waves.
+          <div>
+            Issues? <a href="mailto:charmxpals.contact@gmail.com" className="text-white/85 hover:text-white">charmxpals.contact@gmail.com</a>
           </div>
         </footer>
       </div>

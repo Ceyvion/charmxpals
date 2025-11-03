@@ -5,6 +5,8 @@ export type BetaHighlight = {
   href: string;
   label: string;
   external?: boolean;
+  tagline?: string;
+  cta?: string;
 };
 
 export type BetaPulse = {
@@ -47,91 +49,72 @@ export type BetaDashboardContent = {
 };
 
 const config: BetaDashboardContent = {
-  waveLabel: 'Wave 1 beta',
+  waveLabel: 'Wave 1 Beta',
   missionStatement:
-    "We're pressure-testing claim latency, mini-game feel, and the first cosmetics sync. Thank you for flying recon with us.",
-  velocityGoal: 'Keep friction under 60s from code entry to sync.',
-  weeklyFocus: 'Runner difficulty curve, cosmetics equip latency.',
+    'Testing: Claim speeds, runner mechanics, cosmetic sync. Your data shapes launch.',
+  velocityGoal: 'Code → Inventory under 60 seconds.',
+  weeklyFocus: 'Stress runner collisions, verify cosmetics sync.',
   highlights: [
     {
-      id: 'claim',
-      title: 'Redeem & Sync',
-      description: 'Claim your collectible at /claim and confirm it appears in My Pals within a minute.',
+      id: 'claim-test',
+      title: 'Claim Test',
+      tagline: 'Code → Inventory in <60s',
+      description: 'Submit code at /claim and verify it syncs to My Pals.',
       href: '/claim',
-      label: 'Claim flow',
+      label: 'Core mission',
+      cta: 'Start Test →',
     },
     {
-      id: 'runner',
-      title: 'Stress the Runner',
-      description: 'Finish a full runner session, capture any spikes or unfair collisions, and log device specs.',
+      id: 'runner-stress',
+      title: 'Runner Stress Test',
+      tagline: 'Break the mechanics',
+      description: 'Finish a session, log collisions, and note device specs.',
       href: '/play/runner',
-      label: 'Play test',
+      label: 'Core mission',
+      cta: 'Launch Runner →',
     },
     {
-      id: 'feedback',
-      title: 'Drop Notes Fast',
-      description: 'Screenshots, clips, repro steps—send it all so we can sharpen launch polish.',
-      href: 'mailto:beta@charmxpals.com?subject=Beta%20feedback',
-      label: 'Feedback',
-      external: true,
+      id: 'cosmetic-sync',
+      title: 'Cosmetic Sync',
+      tagline: 'Equip → Verify across views',
+      description: 'Confirm changes on /character mirror to /me and runner.',
+      href: '/explore',
+      label: 'Core mission',
+      cta: 'Test Sync →',
     },
   ],
   pulses: [
     { title: 'Beta window', detail: 'Nov 4 → Dec 2 (rolling releases)' },
     { title: 'Next patch', detail: 'Wave 1.2 — cosmetics pass & latency logs' },
-    { title: 'Support line', detail: 'beta@charmxpals.com (1 business day SLA)' },
+    { title: 'Support line', detail: 'charmxpals.contact@gmail.com (1 business day SLA)' },
   ],
-  focusAreas: [
-    {
-      id: 'latency',
-      title: 'Claim latency',
-      detail: 'Measure time from code submit to inventory sync. Call out spikes >60s.',
-    },
-    {
-      id: 'runner-feel',
-      title: 'Runner feel',
-      detail: 'Watch for unfair hits or camera wobble when rotating fast.',
-    },
-    {
-      id: 'cosmetics-sync',
-      title: 'Cosmetics sync',
-      detail: 'Equip cosmetics on /character and confirm they mirror into /me + runner loadout.',
-    },
-  ],
+  focusAreas: [],
   patch: {
     version: 'Wave 1.1',
     codename: 'Neon Pulse',
-    summary: 'Runner balancing tweaks, cosmetics equip preview, fix for duplicate claim toasts.',
+    summary: 'Runner balance, cosmetic preview, duplicate claim fix.',
     publishedAt: '2024-11-08T17:00:00.000Z',
     href: 'https://github.com/Ceyvion/charmxpals/blob/main/docs/beta/WAVE1.md#patch-wave-11-neon-pulse',
   },
   resources: [
     {
-      id: 'dashboard-notes',
-      title: 'Beta dashboard notes',
-      description: 'Screenshots, copy blocks, and how to update the welcome/checklist experience.',
-      href: 'https://github.com/Ceyvion/charmxpals/blob/main/docs/beta/dashboard.md',
-      external: true,
+      id: 'claim-action',
+      title: 'Claim Code',
+      description: 'Redeem at /claim',
+      href: '/claim',
     },
     {
-      id: 'playbook',
-      title: 'Tester playbook',
-      description: 'Full onboarding, tester etiquette, and escalation paths for urgent bugs.',
-      href: 'https://github.com/Ceyvion/charmxpals/blob/main/docs/beta/WAVE1.md',
-      external: true,
+      id: 'runner-action',
+      title: 'Play Runner',
+      description: 'Stress test mechanics',
+      href: '/play/runner',
     },
     {
-      id: 'latency-log',
-      title: 'Latency logging template',
-      description: 'Suggested spreadsheet headers for timing the claim flow with your squad.',
-      href: 'https://github.com/Ceyvion/charmxpals/blob/main/docs/beta/latency-log-template.md',
+      id: 'feedback-action',
+      title: 'Drop Feedback',
+      description: 'Screenshots, clips, repro steps',
+      href: 'mailto:charmxpals.contact@gmail.com?subject=Beta%20feedback',
       external: true,
-    },
-    {
-      id: 'roadmap',
-      title: 'Roadmap snapshot',
-      description: 'Check current priorities and what feedback feeds the next patch.',
-      href: '/orchestrator',
     },
   ],
 };

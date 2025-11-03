@@ -60,11 +60,15 @@ export default function MeDashboard({
 
   return (
     <>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-extrabold text-white font-display">My Pals</h1>
-        <div className="flex gap-2">
-          <Link href="/claim" className="px-4 py-2 bg-white text-gray-900 rounded-lg font-semibold">Claim</Link>
-          <Link href="/play" className="px-4 py-2 border border-white/20 text-white rounded-lg font-semibold hover:bg-white/5">Play</Link>
+      <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-extrabold text-white font-display">My Pals Dashboard</h1>
+          <p className="text-sm uppercase tracking-[0.3em] text-white/60">Wave 1 Beta</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/claim" className="px-4 py-2 bg-white text-gray-900 rounded-lg font-semibold">Claim Code</Link>
+          <Link href="/play" className="px-4 py-2 border border-white/20 text-white rounded-lg font-semibold hover:bg-white/5">Play Runner</Link>
+          <a href="mailto:charmxpals.contact@gmail.com" className="px-4 py-2 border border-white/20 text-white rounded-lg font-semibold hover:bg-white/5">Drop Feedback</a>
         </div>
       </div>
       <div className="space-y-10 mb-10">
@@ -74,7 +78,6 @@ export default function MeDashboard({
           lastClaimAtIso={lastClaimAtIso}
           newestPalName={newestPalName}
           checklistProgressPercent={checklistPercent}
-          checklistUpdatedAtIso={checklistSnapshot.updatedAtIso}
         />
         <BetaChecklist
           userId={userId}
