@@ -1420,130 +1420,38 @@ html:not([data-appearance="light"]) .cp-realms .cp-muted { color: rgba(226, 228,
   position: fixed;
   inset: 0;
   z-index: -20;
-  background: radial-gradient(ellipse 140% 90% at 40% 10%, rgba(86, 24, 160, 0.42), rgba(8, 4, 26, 0.92)),
-    linear-gradient(190deg, rgba(6, 0, 24, 0.96) 0%, rgba(18, 8, 44, 0.9) 55%, rgba(10, 4, 26, 0.94) 100%);
+  background: radial-gradient(ellipse 120% 100% at 50% 0%, rgba(118, 62, 209, 0.32), rgba(6, 2, 18, 0.92)),
+    linear-gradient(180deg, rgba(6, 2, 18, 0.92) 0%, rgba(12, 6, 32, 0.94) 55%, rgba(8, 4, 26, 0.96) 100%);
 }
 .cp-claim-grid {
   position: fixed;
   inset: 0;
   z-index: -19;
-  background-image: url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cdefs%3E%3Cpattern%20id%3D%22grid%22%20width%3D%2260%22%20height%3D%2260%22%20patternUnits%3D%22userSpaceOnUse%22%3E%3Cpath%20d%3D%22M%2060%200%20L%200%200%200%2060%22%20fill%3D%22none%22%20stroke%3D%22rgba(255%2C255%2C255%2C0.04)%22%20stroke-width%3D%221%22%2F%3E%3C%2Fpattern%3E%3C%2Fdefs%3E%3Crect%20width%3D%22100%25%22%20height%3D%22100%25%22%20fill%3D%22url(%23grid)%22%2F%3E%3C%2Fsvg%3E');
-  opacity: 0.65;
-}
-.cp-claim-orbs {
-  position: fixed;
-  inset: 0;
-  z-index: -10;
-  overflow: hidden;
-}
-.cp-claim-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(110px);
-  animation: cpClaimOrb 14s ease-in-out infinite;
-  opacity: 0.55;
-}
-.cp-claim-orb-a {
-  top: -12rem;
-  left: -12rem;
-  width: 22rem;
-  height: 22rem;
-  background: radial-gradient(circle, rgba(136, 92, 255, 0.35), rgba(136, 92, 255, 0));
-}
-.cp-claim-orb-b {
-  bottom: -14rem;
-  right: -14rem;
-  width: 22rem;
-  height: 22rem;
-  background: radial-gradient(circle, rgba(92, 212, 255, 0.35), rgba(92, 212, 255, 0));
-  animation-delay: 2.4s;
-}
-.cp-claim-orb-c {
-  top: 45%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 26rem;
-  height: 26rem;
-  background: radial-gradient(circle, rgba(255, 140, 216, 0.28), rgba(255, 140, 216, 0));
-  animation-delay: 4.2s;
-}
-@keyframes cpClaimOrb {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.55; }
-  50% { transform: translate3d(1.5rem, -1.5rem, 0) scale(1.08); opacity: 0.7; }
-}
-.cp-claim-card-shell {
-  border-radius: 2.5rem;
-}
-.cp-claim-card-glow {
-  position: absolute;
-  inset: -1px;
-  border-radius: 2.5rem;
-  background: linear-gradient(120deg, rgba(255, 120, 220, 0.25), rgba(126, 92, 255, 0.18));
-  filter: blur(28px);
-  opacity: 0;
-  transition: opacity .8s ease;
-}
-.cp-claim-card-shell:hover .cp-claim-card-glow {
-  opacity: 0.6;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+  opacity: 0.22;
 }
 .cp-claim-panel {
-  background: linear-gradient(170deg, rgba(14, 6, 34, 0.92), rgba(6, 0, 20, 0.9));
+  border-radius: 1.75rem;
+  background: rgba(16, 8, 36, 0.86);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 2.4rem;
-  box-shadow: 0 32px 80px rgba(6, 0, 26, 0.6);
-  backdrop-filter: blur(32px) saturate(1.15);
+  box-shadow: 0 28px 72px rgba(6, 0, 26, 0.55);
+  backdrop-filter: blur(26px) saturate(1.08);
+  color: var(--cp-text-high);
 }
 [data-appearance="light"] .cp-claim-backdrop {
-  background: radial-gradient(ellipse 140% 90% at 42% 12%, rgba(255, 210, 255, 0.75), rgba(255, 255, 255, 0.8)),
-    linear-gradient(185deg, rgba(255, 255, 255, 0.96) 0%, rgba(244, 240, 255, 0.92) 60%, rgba(236, 240, 255, 0.88) 100%);
+  background: radial-gradient(ellipse 120% 100% at 50% 0%, rgba(212, 184, 255, 0.45), rgba(244, 240, 255, 0.96)),
+    linear-gradient(185deg, rgba(255, 255, 255, 0.96) 0%, rgba(244, 240, 255, 0.92) 60%, rgba(236, 240, 255, 0.9) 100%);
 }
 [data-appearance="light"] .cp-claim-grid {
-  opacity: 0.4;
-  filter: hue-rotate(-12deg) saturate(0.85);
-}
-[data-appearance="light"] .cp-claim-orb {
-  filter: blur(90px);
-  opacity: 0.45;
-}
-[data-appearance="light"] .cp-claim-orb-a {
-  background: radial-gradient(circle, rgba(198, 165, 255, 0.48), rgba(198, 165, 255, 0));
-}
-[data-appearance="light"] .cp-claim-orb-b {
-  background: radial-gradient(circle, rgba(160, 228, 255, 0.42), rgba(160, 228, 255, 0));
-}
-[data-appearance="light"] .cp-claim-orb-c {
-  background: radial-gradient(circle, rgba(255, 200, 230, 0.38), rgba(255, 200, 230, 0));
+  opacity: 0.18;
+  background-image: linear-gradient(rgba(198, 165, 255, 0.28) 1px, transparent 1px), linear-gradient(90deg, rgba(198, 165, 255, 0.28) 1px, transparent 1px);
 }
 [data-appearance="light"] .cp-claim-panel {
-  background: linear-gradient(170deg, rgba(255, 255, 255, 0.96), rgba(242, 236, 255, 0.92));
-  border-color: rgba(198, 165, 255, 0.35);
-  box-shadow: 0 28px 72px rgba(198, 165, 255, 0.24);
-  color: rgba(46, 16, 72, 0.9);
-}
-[data-appearance="light"] .cp-claim-panel h1,
-[data-appearance="light"] .cp-claim-panel p {
-  color: inherit;
-}
-[data-appearance="light"] .cp-claim-panel .text-gray-300 {
-  color: rgba(46, 16, 72, 0.7);
-}
-[data-appearance="light"] .cp-claim-panel .text-gray-400 {
-  color: rgba(64, 24, 96, 0.6);
-}
-[data-appearance="light"] .cp-claim-panel .bg-black {
-  background: rgba(255, 255, 255, 0.92);
-  color: rgba(46, 16, 72, 0.9);
-}
-[data-appearance="light"] .cp-claim-panel input {
-  background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(198, 165, 255, 0.35);
-  color: rgba(46, 16, 72, 0.95);
-}
-[data-appearance="light"] .cp-claim-panel input::placeholder {
-  color: rgba(64, 34, 96, 0.45);
-}
-[data-appearance="light"] .cp-claim-card-glow {
-  background: linear-gradient(120deg, rgba(198, 165, 255, 0.35), rgba(255, 210, 255, 0.25));
+  background: rgba(255, 255, 255, 0.94);
+  border-color: rgba(198, 165, 255, 0.28);
+  box-shadow: 0 22px 60px rgba(198, 165, 255, 0.26);
+  color: rgba(46, 16, 72, 0.92);
 }
 
 @keyframes cpAuroraDrift {

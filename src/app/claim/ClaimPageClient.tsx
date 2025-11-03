@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { signIn, useSession } from 'next-auth/react';
@@ -125,7 +125,6 @@ export default function ClaimPageClient() {
   const [unitStatus, setUnitStatus] = useState<VerifyStatus | null>(null);
   const [claimedCharacterId, setClaimedCharacterId] = useState<string | null>(null);
   const [claimedAt, setClaimedAt] = useState<string | null>(null);
-  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { data: session, status } = useSession();
@@ -155,7 +154,7 @@ export default function ClaimPageClient() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!codeNormalized) {
-      setMessage({ kind: 'error', text: 'Drop a code to proceed.' });
+      setMessage({ kind: 'error', text: 'Enter a code to continue.' });
       return;
     }
 
@@ -203,15 +202,15 @@ export default function ClaimPageClient() {
         throw new Error('Code not recognized. Double-check and retry.');
       }
       if (verifyJson.status === 'claimed') {
-        setMessage({ kind: 'error', text: 'Already tagged! This champion belongs to someone else.' });
+        setMessage({ kind: 'error', text: 'Already tagged. This pal belongs to another collector.' });
         return;
       }
       if (verifyJson.status === 'blocked') {
-        setMessage({ kind: 'error', text: 'Code locked. Hit up support@charmxpals.com' });
+        setMessage({ kind: 'error', text: 'Code locked. Email support@charmxpals.com for help.' });
         return;
       }
       if (!preview) {
-        throw new Error('Champion data missing. Alert the crew.');
+        throw new Error('Character data missing. Please contact support.');
       }
 
       const startRes = await fetch('/api/claim/start', {
@@ -256,16 +255,12 @@ export default function ClaimPageClient() {
       setClaimedCharacterId(completeJson.characterId);
       setClaimedAt(completeJson.claimedAt ?? null);
       setUnitStatus('claimed');
-      setShowSuccessAnimation(true);
 
       const heroName = preview.name || 'CharmXPal';
       setMessage({
         kind: 'success',
-        text: `🔥 ${heroName} just hit the floor! Welcome to the crew.`,
+        text: `${heroName} is now bound to your roster.`,
       });
-
-      // Reset animation after 3 seconds
-      setTimeout(() => setShowSuccessAnimation(false), 3000);
     } catch (error) {
       const text = error instanceof Error ? error.message : 'System glitch. Reload and retry.';
       setMessage({ kind: 'error', text });
@@ -275,74 +270,114 @@ export default function ClaimPageClient() {
   };
 
   return (
-    <div className="cp-claim-page min-h-screen relative py-12 px-4 overflow-hidden">
+    <div className="cp-claim-page relative min-h-screen overflow-hidden px-4 py-16">
       <div className="cp-claim-backdrop" aria-hidden />
       <div className="cp-claim-grid" aria-hidden />
 
-      {/* Animated orbs */}
-      <div className="cp-claim-orbs" aria-hidden>
-        <div className="cp-claim-orb cp-claim-orb-a" />
-        <div className="cp-claim-orb cp-claim-orb-b" />
-        <div className="cp-claim-orb cp-claim-orb-c" />
-      </div>
-
-      <div className="max-w-2xl w-full mx-auto relative">
-        {/* Success animation overlay */}
-        {showSuccessAnimation && (
-          <div className="fixed inset-0 z-50 pointer-events-none">
-            <div className="absolute inset-0 bg-white/10 animate-ping" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-              <div className="text-8xl animate-bounce">⚡</div>
-            </div>
-          </div>
-        )}
-
-        {/* Main card with glass morphism */}
-        <div className="relative group cp-claim-card-shell">
-          <div className="cp-claim-card-glow" aria-hidden />
-
-          <div className="cp-claim-panel relative overflow-hidden">
-            {/* Animated header */}
-            <div className="relative border-b border-white/10 p-8 text-center overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-cyan-600/20 animate-gradient" />
-              <div className="relative z-10">
-                <div className="inline-flex items-center gap-2 mb-4">
-                  <span className="px-4 py-1.5 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold uppercase tracking-wider animate-pulse">
-                    Live Drop Zone
-                  </span>
-                </div>
-                <h1 className="text-5xl md:text-6xl font-display font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-white animate-gradient-text">
-                  Tag Your Territory
-                </h1>
-                <p className="text-lg md:text-xl text-gray-300 mt-4 max-w-md mx-auto font-medium">
-                  One scan. One champion. Forever yours. <br className="hidden sm:block" />
-                  <span className="text-purple-400">No wallets. No BS. Just vibes.</span>
+      <div className="cp-container relative">
+        <div className="grid items-start gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(340px,420px)]">
+          <section className="space-y-10">
+            <div className="space-y-4">
+              <span className="inline-flex w-max items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white/60">
+                <span
+                  aria-hidden
+                  className={`h-2 w-2 rounded-full ${isAuthenticated ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse`}
+                />
+                {isAuthenticated ? 'Ready to claim' : 'Sign in required'}
+              </span>
+              <h1 className="font-display text-4xl font-semibold leading-tight text-white md:text-5xl">
+                Claim your CharmXPal
+              </h1>
+              <p className="max-w-xl text-lg text-white/70">
+                Drop the code from your collectible to secure it to your account. We’ll verify authenticity before locking it in.
+              </p>
+              {isAuthenticated && session?.user?.name && (
+                <p className="text-sm text-white/55">
+                  Signed in as <span className="font-semibold text-white">{session.user.name}</span>
                 </p>
+              )}
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4">
+                <div className="flex gap-3">
+                  <span className="text-lg" aria-hidden>
+                    ①
+                  </span>
+                  <div className="space-y-1">
+                    <h2 className="text-sm font-semibold uppercase tracking-wide text-white/70">Enter or scan</h2>
+                    <p className="text-sm text-white/60">CXP codes work from text, QR, or even pasted links.</p>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4">
+                <div className="flex gap-3">
+                  <span className="text-lg" aria-hidden>
+                    ②
+                  </span>
+                  <div className="space-y-1">
+                    <h2 className="text-sm font-semibold uppercase tracking-wide text-white/70">We check the drop</h2>
+                    <p className="text-sm text-white/60">Instant validation against the CharmXPal vault.</p>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4 sm:col-span-2">
+                <div className="flex gap-3">
+                  <span className="text-lg" aria-hidden>
+                    ③
+                  </span>
+                  <div className="space-y-1">
+                    <h2 className="text-sm font-semibold uppercase tracking-wide text-white/70">Claim and flex</h2>
+                    <p className="text-sm text-white/60">Successful claims unlock the pal across every supported experience.</p>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <form className="p-8 space-y-6" onSubmit={handleSubmit}>
+            <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-sm text-white/65">
+              <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-white/50">Need a hand?</h2>
+              <p>
+                Stuck on a code or seeing an error? Email{' '}
+                <Link className="font-semibold text-white transition-colors hover:text-purple-200" href="mailto:support@charmxpals.com">
+                  support@charmxpals.com
+                </Link>{' '}
+                with a photo of the collectible and we’ll get you unstuck fast.
+              </p>
+              <p className="text-xs text-white/40">Tip: good lighting helps the scanner lock on instantly.</p>
+            </div>
+          </section>
+
+          <div className="cp-panel cp-claim-panel space-y-8 p-8 lg:p-10">
+            <header className="space-y-2">
+              <h2 className="font-display text-2xl font-semibold text-white">Redeem code</h2>
+              <p className="text-sm text-white/60">Secure handshake on submit; duplicate claims are rejected automatically.</p>
+            </header>
+
+            <form className="space-y-6" onSubmit={handleSubmit}>
               {!isAuthenticated && (
-                <div className="rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-amber-100">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <span className="text-sm font-semibold tracking-wide uppercase">Sign in to finish your claim.</span>
+                <div className="flex items-start gap-3 rounded-xl border border-amber-400/40 bg-amber-400/10 px-4 py-3 text-amber-100">
+                  <span className="mt-1 text-lg" aria-hidden>
+                    ⚠️
+                  </span>
+                  <div className="space-y-2">
+                    <p className="text-sm font-semibold uppercase tracking-wide">Sign in to finish your claim</p>
                     <button
                       type="button"
                       onClick={promptSignIn}
-                      className="inline-flex items-center justify-center rounded-lg bg-white/90 px-4 py-2 text-sm font-bold text-gray-900 shadow hover:bg-white"
+                      className="inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-xs font-bold text-gray-900 shadow-sm transition hover:bg-white/90"
                     >
-                      Sign in
+                      Launch sign in
                     </button>
                   </div>
                 </div>
               )}
+
               <div className="space-y-3">
-                <label htmlFor="code" className="block text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 uppercase tracking-wider">
-                  Drop Code
+                <label htmlFor="code" className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">
+                  Claim code
                 </label>
-                <div className="relative group">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur opacity-30 group-hover:opacity-60 transition duration-300"></div>
-                  <div className="relative flex gap-2">
+                <div className="space-y-2">
+                  <div className="flex flex-col gap-2 sm:flex-row">
                     <input
                       ref={inputRef}
                       id="code"
@@ -357,129 +392,110 @@ export default function ClaimPageClient() {
                       autoCorrect="off"
                       spellCheck={false}
                       enterKeyHint="go"
-                      className="flex-1 px-6 py-4 rounded-xl bg-black/60 backdrop-blur-sm text-white text-lg font-mono placeholder-white/40 border border-white/20 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 transition-all duration-300"
                       placeholder="CXP-XXXX-XXXX..."
+                      className="flex-1 rounded-xl border border-white/15 bg-white/[0.07] px-5 py-4 font-mono text-base tracking-[0.2em] text-white placeholder:text-white/30 focus:border-purple-400/70 focus:outline-none focus:ring-2 focus:ring-purple-400/40"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setScanOpen(true)}
-                      disabled={loading}
-                      className="px-6 py-4 rounded-xl bg-gradient-to-r from-purple-600/80 to-pink-600/80 backdrop-blur-sm text-white font-bold hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 transition-all duration-300 hover:scale-105"
-                    >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        try {
-                          const text = await navigator.clipboard.readText();
-                          if (text) {
-                            const parsed = extractClaimCode(String(text));
-                            if (parsed) {
-                              setCode(parsed);
-                              setMessage(null);
-                              setCharacter(null);
-                              setUnitStatus(null);
-                              setClaimedCharacterId(null);
-                              setClaimedAt(null);
-                              // Add paste animation
-                              inputRef.current?.classList.add('animate-pulse');
-                              setTimeout(() => inputRef.current?.classList.remove('animate-pulse'), 1000);
-                            } else {
-                              setMessage({ kind: 'error', text: 'No valid code in clipboard.' });
+                    <div className="flex gap-2 sm:w-36 sm:flex-col">
+                      <button
+                        type="button"
+                        onClick={() => setScanOpen(true)}
+                        disabled={loading}
+                        className="flex-1 rounded-xl border border-white/15 bg-black/40 px-4 py-3 text-sm font-semibold text-white transition hover:border-purple-400/50 hover:text-purple-100 disabled:opacity-50"
+                      >
+                        Scan
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const text = await navigator.clipboard.readText();
+                            if (text) {
+                              const parsed = extractClaimCode(String(text));
+                              if (parsed) {
+                                setCode(parsed);
+                                setMessage(null);
+                                setCharacter(null);
+                                setUnitStatus(null);
+                                setClaimedCharacterId(null);
+                                setClaimedAt(null);
+                                inputRef.current?.classList.add('animate-pulse');
+                                setTimeout(() => inputRef.current?.classList.remove('animate-pulse'), 600);
+                              } else {
+                                setMessage({ kind: 'error', text: 'No valid code in clipboard.' });
+                              }
                             }
+                          } catch {
+                            setMessage({ kind: 'error', text: 'Clipboard access blocked. Paste manually.' });
                           }
-                        } catch {}
-                      }}
-                      disabled={loading}
-                      className="px-6 py-4 rounded-xl bg-white/10 backdrop-blur-sm text-white font-bold hover:bg-white/20 disabled:opacity-50 transition-all duration-300 hover:scale-105 border border-white/20"
-                    >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                      </svg>
-                    </button>
+                        }}
+                        disabled={loading}
+                        className="flex-1 rounded-xl border border-white/15 bg-black/40 px-4 py-3 text-sm font-semibold text-white transition hover:border-purple-400/50 hover:text-purple-100 disabled:opacity-50"
+                      >
+                        Paste
+                      </button>
+                    </div>
                   </div>
+                  <p className="text-xs text-white/50">Paste a link, QR payload, or the raw code — we’ll tidy it for you.</p>
                 </div>
               </div>
 
               {message && (
-                <div className={`relative overflow-hidden rounded-xl p-4 ${
-                  message.kind === 'success'
-                    ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/50 text-green-300'
-                    : 'bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-500/50 text-red-300'
-                } backdrop-blur-sm`}>
-                  <div className="relative z-10 font-medium flex items-center gap-2">
-                    {message.kind === 'success' ? (
-                      <span className="text-2xl">⚡</span>
-                    ) : (
-                      <span className="text-2xl">⚠️</span>
-                    )}
-                    {message.text}
-                  </div>
+                <div
+                  className={`flex items-start gap-3 rounded-xl border px-4 py-3 text-sm ${
+                    message.kind === 'success'
+                      ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-100'
+                      : 'border-red-400/50 bg-red-500/10 text-red-100'
+                  }`}
+                >
+                  <span className="text-lg" aria-hidden>
+                    {message.kind === 'success' ? '✨' : '⚠️'}
+                  </span>
+                  <span className="leading-snug">{message.text}</span>
                 </div>
               )}
 
-              <div className="flex items-center justify-between pt-2">
-                <span className="text-sm text-gray-400">
-                  Need backup? <Link className="text-purple-400 hover:text-purple-300 font-semibold transition-colors" href="mailto:support@charmxpals.com">Hit the crew</Link>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <span className="text-xs text-white/50">
+                  Having trouble?{' '}
+                  <Link className="font-semibold text-white transition-colors hover:text-purple-200" href="mailto:support@charmxpals.com">
+                    Contact support
+                  </Link>
                 </span>
                 <button
                   type="submit"
                   disabled={loading || !codeNormalized}
-                  className="relative group inline-flex items-center gap-3 px-8 py-4 rounded-xl font-black text-lg disabled:opacity-50 transition-all duration-300 hover:scale-105"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-500/30 transition hover:from-purple-400 hover:to-pink-400 disabled:opacity-60"
                 >
-                  <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl blur opacity-70 group-hover:opacity-100 transition duration-300"></div>
-                  <div className="relative flex items-center gap-3 px-8 py-4 rounded-xl bg-black text-white">
-                    {loading && <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />}
-                    {loading ? 'CLAIMING...' : 'DROP IN'}
-                  </div>
+                  {loading && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />}
+                  {loading ? 'Claiming...' : 'Claim now'}
                 </button>
               </div>
             </form>
 
             {character && (
-              <div className="border-t border-white/10 p-8 space-y-6">
-                <div className={`relative overflow-hidden rounded-2xl p-6 ${
-                  hasUnlocked
-                    ? 'bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/50'
+              <div className="space-y-4 border-t border-white/10 pt-6">
+                <div
+                  className={`rounded-xl border px-4 py-3 text-sm ${
+                    hasUnlocked
+                      ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-100'
+                      : unitStatus === 'available'
+                        ? 'border-purple-400/40 bg-purple-500/10 text-purple-100'
+                        : 'border-amber-400/40 bg-amber-500/10 text-amber-100'
+                  }`}
+                >
+                  {hasUnlocked
+                    ? `${character.name} is now bound to your roster.`
                     : unitStatus === 'available'
-                      ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/50'
-                      : 'bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/50'
-                } backdrop-blur-sm`}>
-                  <div className="flex items-center gap-4">
-                    <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm text-2xl font-black">
-                      {hasUnlocked ? '✓' : unitStatus === 'available' ? '⚡' : '!'}
-                    </span>
-                    <div className="text-white">
-                      <div className="font-black text-xl">
-                        {hasUnlocked
-                          ? `${character.name} is locked in!`
-                          : unitStatus === 'available'
-                            ? `${character.name} ready to roll.`
-                            : 'Status updated.'}
-                      </div>
-                      {hasUnlocked && (
-                        <div className="text-sm opacity-80 mt-1">
-                          Welcome to the underground.
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                      ? `${character.name} is clear to claim — finish the handshake.`
+                      : 'Status updated. Try a different code or reach out to support.'}
                 </div>
 
-                <div className="relative group">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-300"></div>
-                  <div className="relative">
-                    <CharacterCard c={character} owned={Boolean(hasUnlocked)} />
-                  </div>
+                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+                  <CharacterCard c={character} owned={Boolean(hasUnlocked)} />
                 </div>
 
                 {claimedAt && (
-                  <div className="text-center text-sm text-gray-400">
-                    <span className="text-purple-400 font-semibold">Tagged:</span> {new Date(claimedAt).toLocaleString()}
-                  </div>
+                  <p className="text-center text-xs text-white/50">Claimed {new Date(claimedAt).toLocaleString()}</p>
                 )}
               </div>
             )}
@@ -505,35 +521,16 @@ export default function ClaimPageClient() {
           </div>
         </div>
 
-        <div className="text-center mt-8">
-          <Link href="/" className="inline-flex items-center gap-2 text-gray-400 hover:text-white font-bold transition-colors group">
-            <span className="group-hover:-translate-x-1 transition-transform">←</span>
-            Back to Base
+        <div className="mt-12 flex justify-center">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-white/70 transition hover:text-white"
+          >
+            <span aria-hidden>←</span>
+            Back to home
           </Link>
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes gradient {
-          0%, 100% { transform: translateX(0%); }
-          50% { transform: translateX(-100%); }
-        }
-        
-        @keyframes gradient-text {
-          0%, 100% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-        }
-        
-        .animate-gradient {
-          animation: gradient 6s ease infinite;
-          background-size: 200% 200%;
-        }
-        
-        .animate-gradient-text {
-          animation: gradient-text 3s ease infinite;
-          background-size: 200% auto;
-        }
-      `}</style>
     </div>
   );
 }
