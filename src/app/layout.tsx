@@ -2,6 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Inter, Teko } from 'next/font/google';
 import LayoutChrome from '@/components/LayoutChrome';
+import AuthSessionProvider from '@/components/AuthSessionProvider';
 import { getTheme } from '@/lib/theme';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -22,7 +23,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${teko.variable} font-sans bg-hero-radial bg-fixed`} data-theme={theme}>
-        <LayoutChrome>{children}</LayoutChrome>
+        <AuthSessionProvider>
+          <LayoutChrome>{children}</LayoutChrome>
+        </AuthSessionProvider>
       </body>
     </html>
   );

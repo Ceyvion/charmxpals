@@ -33,8 +33,7 @@ Welcome to CharmPals, a platform that links physical collectibles to digital exp
    - Optional: set `USE_MEMORY_DB=1` to run entirely in-memory without touching Redis.
 4. Start the app: `npm run dev`.
    - Use `CHARM-XPAL-001`, `CHARM-XPAL-002`, etc. on `/claim` to test the flow.
-   - Visiting `/claim` or hitting `/api/dev/user` will set a `cp_user` cookie to simulate a profile; your inventory appears at `/me` and owned badges show in listings.
-   - Dev login: go to `/login` and sign in with username `admin` / password `admin` (configurable via `DEV_AUTH_USER` / `DEV_AUTH_PASS`, only enable in production if you understand the risk).
+   - Sign in at `/login` using the beta access code you configure (`BETA_ACCESS_SECRET`). Sessions are backed by NextAuth, so owned pals surface automatically at `/me`.
    - Import additional claim codes from CSVs with `npm run import:cxp -- --file path/to/codes.csv --set "Wave Name"` (requires valid Upstash credentials and `CODE_HASH_SECRET`).
 
 ## Orchestrator (Project Plan)
@@ -49,7 +48,7 @@ Update statuses in `orchestrator/plan.json` after each meaningful change to keep
 
 - Docs: see `docs/mmo/FEATURE_SPEC.md` and `docs/mmo/TECH_RFC.md` for scope and architecture.
 - Token API: `GET /api/mmo/token` mints a short-lived WebSocket token for the real-time server.
-  - Requires a dev user (`/api/dev/user`) or real ownership in production.
+  - Requires an authenticated session (NextAuth) and at least one owned character in production.
   - Env: set `MMO_WS_SECRET` in `.env`.
 - Dev server:
   - Install deps (ws): `npm install`
@@ -71,7 +70,7 @@ Update statuses in `orchestrator/plan.json` after each meaningful change to keep
 
 - Unified header/footer across routes for a more connected feel.
 - Added `/me` inventory page ("My Pals").
-- Dev user endpoint now sets a lightweight `cp_user` cookie (no real auth yet).
+- Added secure beta login via NextAuth (email + access code) in place of the temporary dev cookie.
 - Explore/Home surfaces ownership badges on cards when available.
 - Character pages and My Pals now include an inline 3D viewer (client-only, no extra deps).
 - Added dev login (`/login`) and profile pages (`/u/[handle]`), plus `/logout` for convenience.

@@ -38,6 +38,7 @@ export type ClaimChallenge = {
   timestamp: string;
   challengeDigest: string;
   expiresAt: Date;
+  userId: string | null;
   consumed: boolean;
 };
 

@@ -352,95 +352,116 @@ export default function CharacterPageClient({ character, modelUrl }: { character
                     </div>
 
                     <div className="space-y-3">
-                      {SKINS.map((skin) => (
-                        <div
-                          key={skin.id}
-                          className={`relative group/skin cursor-pointer transition-all ${
-                            selectedSkin === skin.id ? 'scale-[1.02]' : ''
-                          }`}
-                          onClick={() => !skin.locked && handleSkinSelect(skin.id)}
-                          onMouseEnter={() => setShowSkinDetails(skin.id)}
-                          onMouseLeave={() => setShowSkinDetails(null)}
-                        >
-                          <div className={`relative overflow-hidden rounded-2xl border transition-all ${
-                            selectedSkin === skin.id 
-                              ? 'border-purple-500 bg-purple-500/10' 
-                              : 'border-white/10 bg-white/5 hover:bg-white/10'
-                          } ${skin.locked ? 'opacity-60' : ''}`}>
-                            <div className="p-4 flex items-center gap-4">
-                              {/* Skin preview */}
-                              <div 
-                                className="relative w-20 h-24 rounded-xl overflow-hidden flex-shrink-0"
-                                style={{
-                                  background: `linear-gradient(135deg, ${skin.colors.primary}, ${skin.colors.secondary}, ${skin.colors.accent})`,
-                                  boxShadow: `0 4px 20px ${rarityConfig[skin.rarity].glow}`
-                                }}
-                              >
-                                {selectedSkin === skin.id && (
-                                  <div className="absolute inset-0 bg-white/20 animate-pulse" />
-                                )}
-                                {skin.locked && (
-                                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                    </svg>
-                                  </div>
-                                )}
-                              </div>
+                      {SKINS.map((skin) => {
+                        const effects = skin.effects ?? [];
 
-                              {/* Skin info */}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <h3 className="font-bold text-white truncate">{skin.name}</h3>
-                                  <span className={`px-2 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r ${rarityConfig[skin.rarity].gradient} text-white`}>
-                                    {skin.rarity}
-                                  </span>
+                        return (
+                          <div
+                            key={skin.id}
+                            className={`relative group/skin cursor-pointer transition-all ${
+                              selectedSkin === skin.id ? 'scale-[1.02]' : ''
+                            }`}
+                            onClick={() => !skin.locked && handleSkinSelect(skin.id)}
+                            onMouseEnter={() => setShowSkinDetails(skin.id)}
+                            onMouseLeave={() => setShowSkinDetails(null)}
+                          >
+                            <div
+                              className={`relative overflow-hidden rounded-2xl border transition-all ${
+                                selectedSkin === skin.id
+                                  ? 'border-purple-500 bg-purple-500/10'
+                                  : 'border-white/10 bg-white/5 hover:bg-white/10'
+                              } ${skin.locked ? 'opacity-60' : ''}`}
+                            >
+                              <div className="p-4 flex items-center gap-4">
+                                {/* Skin preview */}
+                                <div
+                                  className="relative w-20 h-24 rounded-xl overflow-hidden flex-shrink-0"
+                                  style={{
+                                    background: `linear-gradient(135deg, ${skin.colors.primary}, ${skin.colors.secondary}, ${skin.colors.accent})`,
+                                    boxShadow: `0 4px 20px ${rarityConfig[skin.rarity].glow}`,
+                                  }}
+                                >
+                                  {selectedSkin === skin.id && (
+                                    <div className="absolute inset-0 bg-white/20 animate-pulse" />
+                                  )}
+                                  {skin.locked && (
+                                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                      <svg
+                                        className="w-6 h-6 text-white"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                        />
+                                      </svg>
+                                    </div>
+                                  )}
                                 </div>
-                                {skin.effects && skin.effects.length > 0 && (
-                                  <div className="flex flex-wrap gap-1">
-                                    {skin.effects.slice(0, 3).map((effect, i) => (
-                                      <span key={i} className="text-xs text-purple-400">
-                                        {effect}{i < Math.min(2, skin.effects.length - 1) && ' •'}
-                                      </span>
-                                    ))}
-                                    {skin.effects.length > 3 && (
-                                      <span className="text-xs text-purple-400">+{skin.effects.length - 3}</span>
-                                    )}
+
+                                {/* Skin info */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <h3 className="font-bold text-white truncate">{skin.name}</h3>
+                                    <span
+                                      className={`px-2 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r ${rarityConfig[skin.rarity].gradient} text-white`}
+                                    >
+                                      {skin.rarity}
+                                    </span>
                                   </div>
-                                )}
+                                  {effects.length > 0 && (
+                                    <div className="flex flex-wrap gap-1">
+                                      {effects.slice(0, 3).map((effect, i) => (
+                                        <span key={i} className="text-xs text-purple-400">
+                                          {effect}
+                                          {i < Math.min(2, effects.length - 1) && ' •'}
+                                        </span>
+                                      ))}
+                                      {effects.length > 3 && (
+                                        <span className="text-xs text-purple-400">+{effects.length - 3}</span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Price/Status */}
+                                <div className="text-right">
+                                  {skin.locked ? (
+                                    <div className="text-sm">
+                                      <div className="text-yellow-400 font-bold">{skin.price} 💎</div>
+                                      <div className="text-xs text-gray-400">Locked</div>
+                                    </div>
+                                  ) : selectedSkin === skin.id ? (
+                                    <span className="text-sm text-green-400 font-bold">Equipped</span>
+                                  ) : (
+                                    <span className="text-sm text-gray-400">Owned</span>
+                                  )}
+                                </div>
                               </div>
 
-                              {/* Price/Status */}
-                              <div className="text-right">
-                                {skin.locked ? (
-                                  <div className="text-sm">
-                                    <div className="text-yellow-400 font-bold">{skin.price} 💎</div>
-                                    <div className="text-xs text-gray-400">Locked</div>
+                              {/* Hover details */}
+                              {showSkinDetails === skin.id && effects.length > 0 && (
+                                <div className="absolute -top-2 left-0 right-0 transform -translate-y-full z-10">
+                                  <div className="bg-black/90 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+                                    <p className="text-xs font-bold text-purple-400 mb-1">Visual Effects:</p>
+                                    <div className="space-y-0.5">
+                                      {effects.map((effect, i) => (
+                                        <p key={i} className="text-xs text-gray-300">
+                                          • {effect}
+                                        </p>
+                                      ))}
+                                    </div>
                                   </div>
-                                ) : selectedSkin === skin.id ? (
-                                  <span className="text-sm text-green-400 font-bold">Equipped</span>
-                                ) : (
-                                  <span className="text-sm text-gray-400">Owned</span>
-                                )}
-                              </div>
+                                </div>
+                              )}
                             </div>
-
-                            {/* Hover details */}
-                            {showSkinDetails === skin.id && skin.effects && skin.effects.length > 0 && (
-                              <div className="absolute -top-2 left-0 right-0 transform -translate-y-full z-10">
-                                <div className="bg-black/90 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                                  <p className="text-xs font-bold text-purple-400 mb-1">Visual Effects:</p>
-                                  <div className="space-y-0.5">
-                                    {skin.effects.map((effect, i) => (
-                                      <p key={i} className="text-xs text-gray-300">• {effect}</p>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-                            )}
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
 
                     <div className="mt-6 pt-6 border-t border-white/10">

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { signIn, useSession } from 'next-auth/react';
 
 import CharacterCard, { type CharacterBasic } from '@/components/CharacterCard';
 import { hmacSHA256Hex } from '@/lib/webcrypto';
@@ -97,8 +98,6 @@ type StartError = { success: false; error: string };
 type CompleteSuccess = { success: true; characterId: string; claimedAt: string; message: string };
 type CompleteError = { success: false; error: string };
 
-type DevUser = { id: string; email: string; handle: string | null };
-
 function toCharacterPreview(api: ApiCharacterPayload | null): CharacterPreview | null {
   if (!api) return null;
   return {
@@ -126,9 +125,14 @@ export default function ClaimPageClient() {
   const [unitStatus, setUnitStatus] = useState<VerifyStatus | null>(null);
   const [claimedCharacterId, setClaimedCharacterId] = useState<string | null>(null);
   const [claimedAt, setClaimedAt] = useState<string | null>(null);
-  const [user, setUser] = useState<DevUser | null>(null);
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === 'authenticated' && Boolean(session?.user?.id);
+  const promptSignIn = useCallback(() => {
+    signIn(undefined, { callbackUrl: '/claim' }).catch(() => {});
+  }, []);
 
   const QrScanner = useMemo(() => dynamic(QrScannerDynamic, { ssr: false }), []);
 
@@ -147,24 +151,6 @@ export default function ClaimPageClient() {
       if (code) localStorage.setItem('cp:last_redeem_code', code);
     } catch {}
   }, [code]);
-
-  const ensureUser = useCallback(async (): Promise<DevUser> => {
-    if (user) return user;
-    const res = await fetch('/api/dev/user', { method: 'GET', credentials: 'include', cache: 'no-store' });
-    if (!res.ok) {
-      throw new Error('Failed to load your dev profile. Refresh and try again.');
-    }
-    const json = (await res.json().catch(() => ({}))) as { success?: boolean; user?: DevUser; error?: string };
-    if (!json.success || !json.user) {
-      throw new Error(json.error || 'Failed to load your dev profile. Refresh and try again.');
-    }
-    setUser(json.user);
-    return json.user;
-  }, [user]);
-
-  useEffect(() => {
-    ensureUser().catch(() => {});
-  }, [ensureUser]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -192,7 +178,12 @@ export default function ClaimPageClient() {
     if (sanitized !== code) setCode(sanitized);
 
     try {
-      const currentUser = await ensureUser();
+      if (!isAuthenticated) {
+        setMessage({ kind: 'error', text: 'Sign in to claim your CharmXPal.' });
+        promptSignIn();
+        setLoading(false);
+        return;
+      }
 
       const verifyRes = await fetch('/api/claim/verify', {
         method: 'POST',
@@ -229,6 +220,13 @@ export default function ClaimPageClient() {
         body: JSON.stringify({ code: sanitized }),
         cache: 'no-store',
       });
+      if (startRes.status === 401) {
+        promptSignIn();
+        throw new Error('Please sign in to start a claim.');
+      }
+      if (startRes.status === 403) {
+        throw new Error('This challenge is locked to another session. Refresh and try again.');
+      }
       const startJson: StartSuccess | StartError = await startRes.json();
       if (!startRes.ok || !startJson.success) {
         throw new Error((startJson as StartError).error || 'Claim sequence failed.');
@@ -243,10 +241,13 @@ export default function ClaimPageClient() {
           code: sanitized,
           challengeId: startJson.challengeId,
           signature,
-          userId: currentUser.id,
         }),
         cache: 'no-store',
       });
+      if (completeRes.status === 401) {
+        promptSignIn();
+        throw new Error('Session expired. Sign in again.');
+      }
       const completeJson: CompleteSuccess | CompleteError = await completeRes.json();
       if (!completeRes.ok || !completeJson.success) {
         throw new Error((completeJson as CompleteError).error || 'Final sync failed.');
@@ -321,6 +322,20 @@ export default function ClaimPageClient() {
             </div>
 
             <form className="p-8 space-y-6" onSubmit={handleSubmit}>
+              {!isAuthenticated && (
+                <div className="rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-amber-100">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <span className="text-sm font-semibold tracking-wide uppercase">Sign in to finish your claim.</span>
+                    <button
+                      type="button"
+                      onClick={promptSignIn}
+                      className="inline-flex items-center justify-center rounded-lg bg-white/90 px-4 py-2 text-sm font-bold text-gray-900 shadow hover:bg-white"
+                    >
+                      Sign in
+                    </button>
+                  </div>
+                </div>
+              )}
               <div className="space-y-3">
                 <label htmlFor="code" className="block text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 uppercase tracking-wider">
                   Drop Code

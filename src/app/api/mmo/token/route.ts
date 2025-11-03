@@ -1,23 +1,25 @@
+import { randomUUID } from 'crypto';
+import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
+
 import { getRepo } from '@/lib/repo';
 import { rateLimitCheck } from '@/lib/rateLimit';
-import { randomUUID } from 'crypto';
 import { signToken, type MmoSessionClaims } from '@/lib/mmo/token';
+import { authOptions } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   // Simple rate limit
   const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'local';
-  const rl = rateLimitCheck(`mmo-token:${ip}`, { windowMs: 15_000, max: 10, prefix: 'mmo' });
+  const rl = await rateLimitCheck(`mmo-token:${ip}`, { windowMs: 15_000, max: 10, prefix: 'mmo' });
   if (!rl.allowed) {
     return NextResponse.json({ ok: false, error: 'rate_limited' }, { status: 429, headers: { 'Retry-After': Math.max(0, Math.ceil((rl.resetAt - Date.now()) / 1000)).toString() } });
   }
 
   const repo = await getRepo();
-  const url = new URL(request.url);
   const devAllow = process.env.NODE_ENV !== 'production';
 
-  // Identify user (dev cookie in non-prod; replace with real auth later)
-  const userId = request.cookies.get('cp_user')?.value || null;
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id;
   if (!userId) {
     return NextResponse.json({ ok: false, error: 'unauthenticated' }, { status: 401 });
   }

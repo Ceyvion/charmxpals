@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { signIn } from 'next-auth/react';
+
 import type { PlayerState, S2C } from '@/lib/mmo/messages';
 
 type PlazaClientProps = { height?: number };
@@ -27,9 +29,10 @@ export default function PlazaClient({ height = 420 }: PlazaClientProps) {
         setStatus('connecting');
         let res = await fetch('/api/mmo/token', { cache: 'no-store' });
         if (res.status === 401) {
-          // try dev user in non-prod
-          await fetch('/api/dev/user', { cache: 'no-store' });
-          res = await fetch('/api/mmo/token', { cache: 'no-store' });
+          setStatus('error');
+          setInfo('Sign in to join the plaza.');
+          signIn(undefined, { callbackUrl: '/plaza' }).catch(() => {});
+          return;
         }
         if (!res.ok) throw new Error('token fetch failed');
         const body = await res.json();

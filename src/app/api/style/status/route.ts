@@ -3,6 +3,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 export async function GET() {
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_STYLE_STATUS !== '1') {
+    return NextResponse.json({ ok: false }, { status: 404 });
+  }
   const status: any = { ok: true };
   try {
     // Check presence of the Tailwind v4 PostCSS plugin by probing package.json directly

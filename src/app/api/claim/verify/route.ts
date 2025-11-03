@@ -7,7 +7,7 @@ import { getClientIp } from '@/lib/ip';
 export async function POST(request: NextRequest) {
   try {
     const ip = getClientIp(request.url, request.headers);
-    const rl = rateLimitCheck(`${ip}:claim-verify`, { windowMs: 60_000, max: 30, prefix: 'claim' });
+    const rl = await rateLimitCheck(`${ip}:claim-verify`, { windowMs: 60_000, max: 30, prefix: 'claim' });
     if (!rl.allowed) {
       return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), {
         status: 429,
@@ -18,8 +18,15 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const { code } = await request.json();
-    if (!code || typeof code !== 'string') {
+    let payload: any;
+    try {
+      payload = await request.json();
+    } catch {
+      return Response.json({ error: 'Invalid payload' }, { status: 400 });
+    }
+
+    const code = typeof payload?.code === 'string' ? payload.code : '';
+    if (!code) {
       return Response.json({ error: 'Missing code' }, { status: 400 });
     }
 

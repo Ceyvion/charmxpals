@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import { v4 as uuid } from 'uuid';
 import { hashClaimCode } from './crypto';
 import type { Repo, User, Character, PhysicalUnit, ClaimChallenge } from './repo';
@@ -53,7 +54,6 @@ if (!memorySecret) {
     };
   });
 
-  const secureSalt = 'super-secret-salt';
   const sampleUnits = [
     { code: 'CHARM-XPAL-001', series: 'Red Dash' },
     { code: 'CHARM-XPAL-002', series: 'Blue Dash' },
@@ -66,7 +66,7 @@ if (!memorySecret) {
       id: uuid(),
       characterId: character.id,
       codeHash: hashClaimCode(code, memorySecret!),
-      secureSalt,
+      secureSalt: randomBytes(32).toString('hex'),
       status: 'available',
       claimedBy: null,
       claimedAt: null,
@@ -108,7 +108,7 @@ export const memoryRepo: Repo = {
     return data.users.find((u) => (u.handle || '').toLowerCase() === (handle || '').toLowerCase()) || null;
   },
 
-  async createChallenge({ codeHash, nonce, timestamp, challengeDigest, expiresAt }) {
+  async createChallenge({ codeHash, nonce, timestamp, challengeDigest, expiresAt, userId }) {
     const c: ClaimChallenge = {
       id: uuid(),
       codeHash,
@@ -116,6 +116,7 @@ export const memoryRepo: Repo = {
       timestamp,
       challengeDigest,
       expiresAt: new Date(expiresAt),
+      userId: userId ?? null,
       consumed: false,
     };
     data.challenges.push(c);

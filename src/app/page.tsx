@@ -1,5 +1,6 @@
+import { getServerSession } from 'next-auth';
+
 import { getRepo } from '@/lib/repo';
-import { cookies } from 'next/headers';
 import HeroDeck from '@/components/HeroDeck';
 import Aurora from '@/components/Aurora';
 import HeroHeader from '@/components/HeroHeader';
@@ -7,6 +8,7 @@ import HeroAtmosphere from '@/components/HeroAtmosphere';
 import HeroParticles from '@/components/HeroParticles';
 import RealmSpotlights from '@/components/RealmSpotlights';
 import { withCharacterLore, type CharacterWithLore } from '@/lib/characterLore';
+import { authOptions } from '@/lib/auth';
 
 export default async function Home() {
   const repo = await getRepo();
@@ -14,7 +16,8 @@ export default async function Home() {
   const enriched = characters
     .map((character) => withCharacterLore(character))
     .filter((value): value is CharacterWithLore => Boolean(value));
-  const userId = cookies().get('cp_user')?.value || null;
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id ?? null;
   const ownedIds = new Set<string>();
   if (userId) {
     const ownerships = await repo.listOwnershipsByUser(userId);

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { signOut, useSession } from "next-auth/react";
 import AppNav from "@/components/AppNav";
 import InteractionEffects from "@/components/InteractionEffects";
 
@@ -10,6 +11,9 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
   // Keep a consistent frame across routes to feel connected
   usePathname();
   const [appearance, setAppearance] = useState<'light' | 'dark'>(() => 'dark');
+  const { data: session, status } = useSession();
+  const authenticated = status === 'authenticated';
+  const displayName = session?.user?.name || session?.user?.email || 'You';
 
   useEffect(() => {
     const stored = typeof window !== 'undefined' ? localStorage.getItem('cp:appearance') : null;
@@ -27,6 +31,9 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
     setAppearance(next);
     if (typeof document !== 'undefined') document.documentElement.setAttribute('data-appearance', next);
     if (typeof window !== 'undefined') localStorage.setItem('cp:appearance', next);
+  };
+  const handleSignOut = () => {
+    signOut({ callbackUrl: '/' }).catch(() => {});
   };
   return (
     <div className="min-h-screen flex flex-col">
@@ -52,15 +59,32 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
               >
                 {appearance === 'light' ? '☀️' : '🌙'}
               </button>
-              <a
-                href="/login"
-                className="px-4 py-2 rounded-lg bg-white text-gray-900 text-sm font-bold hover:bg-gray-100 transition"
-                data-magnetic="chrome"
-                data-magnetic-color="sunrise"
-                data-ripple
-              >
-                Sign in
-              </a>
+              {authenticated ? (
+                <>
+                  <span className="hidden sm:inline-flex items-center rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white/80">
+                    {displayName}
+                  </span>
+                  <button
+                    onClick={handleSignOut}
+                    className="px-4 py-2 rounded-lg bg-white text-gray-900 text-sm font-bold hover:bg-gray-100 transition"
+                    data-magnetic="chrome"
+                    data-magnetic-color="sunrise"
+                    data-ripple
+                  >
+                    Sign out
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  className="px-4 py-2 rounded-lg bg-white text-gray-900 text-sm font-bold hover:bg-gray-100 transition"
+                  data-magnetic="chrome"
+                  data-magnetic-color="sunrise"
+                  data-ripple
+                >
+                  Sign in
+                </Link>
+              )}
             </div>
           </div>
         </div>

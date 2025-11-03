@@ -1,15 +1,17 @@
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { cookies } from 'next/headers';
+import { getServerSession } from 'next-auth';
+
 import { getRepo } from '@/lib/repo';
 import { getModelUrl } from '@/data/characterModels';
 import Cosmetics from '@/app/character/[id]/Cosmetics';
+import { authOptions } from '@/lib/auth';
 
 const CharacterViewer3D = dynamic(() => import('@/components/CharacterViewer3D'), { ssr: false });
 
 export default async function MePage() {
-  const cookieStore = cookies();
-  const userId = cookieStore.get('cp_user')?.value || null;
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id ?? null;
 
   if (!userId) {
     return (
@@ -17,9 +19,9 @@ export default async function MePage() {
         <div className="cp-container max-w-2xl">
           <div className="cp-panel p-8 text-center">
             <h1 className="text-3xl font-extrabold text-white font-display mb-2">Your Pals</h1>
-            <p className="cp-muted">You don’t have a profile yet. Start by claiming your first pal — we’ll create a dev profile automatically.</p>
+            <p className="cp-muted">Sign in to view your roster, claim new pals, and sync cosmetics across experiences.</p>
             <div className="mt-6 flex justify-center gap-3">
-              <Link href="/claim" className="px-6 py-3 bg-white text-gray-900 rounded-lg font-bold">Claim a Pal</Link>
+              <Link href="/login" className="px-6 py-3 bg-white text-gray-900 rounded-lg font-bold">Sign in</Link>
               <Link href="/explore" className="px-6 py-3 border border-white/20 text-white rounded-lg font-bold hover:bg-white/5">Explore</Link>
             </div>
           </div>

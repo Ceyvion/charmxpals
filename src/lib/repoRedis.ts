@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import { v4 as uuid } from 'uuid';
 import type { Redis } from '@upstash/redis';
 
@@ -87,7 +88,6 @@ async function seedIfNeeded(client: Redis): Promise<void> {
     };
   });
 
-  const secureSalt = 'super-secret-salt';
   const sampleUnits = [
     { code: 'CHARM-XPAL-001', series: 'Red Dash' },
     { code: 'CHARM-XPAL-002', series: 'Blue Dash' },
@@ -101,7 +101,7 @@ async function seedIfNeeded(client: Redis): Promise<void> {
       id: uuid(),
       characterId: characterEntry.data.id,
       codeHash: hashClaimCode(code, secret),
-      secureSalt,
+      secureSalt: randomBytes(32).toString('hex'),
       status: 'available',
       claimedBy: null,
       claimedAt: null,
@@ -181,6 +181,7 @@ function parseChallenge(raw: unknown): ClaimChallenge | null {
     timestamp: stored.timestamp,
     challengeDigest: stored.challengeDigest,
     expiresAt: new Date(stored.expiresAt),
+    userId: stored.userId ?? null,
     consumed: stored.consumed,
   };
 }
@@ -276,7 +277,7 @@ export const repoRedis: Repo = {
     return readUser(userId);
   },
 
-  async createChallenge({ codeHash, nonce, timestamp, challengeDigest, expiresAt }) {
+  async createChallenge({ codeHash, nonce, timestamp, challengeDigest, expiresAt, userId }) {
     await ensureReady();
     const id = uuid();
     const stored: StoredChallenge = {
@@ -288,6 +289,7 @@ export const repoRedis: Repo = {
       expiresAt: expiresAt.toISOString(),
       consumed: false,
       createdAt: new Date().toISOString(),
+      userId: userId ?? null,
     };
     await redis.hset(KEYS.challenges, { [id]: JSON.stringify(stored) });
     return {
@@ -297,6 +299,7 @@ export const repoRedis: Repo = {
       timestamp,
       challengeDigest,
       expiresAt,
+      userId: stored.userId ?? null,
       consumed: false,
     } satisfies ClaimChallenge;
   },

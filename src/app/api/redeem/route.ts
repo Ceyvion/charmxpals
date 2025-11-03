@@ -16,6 +16,24 @@ async function getAndDelete(key: string): Promise<string | null> {
     const value = (await maybeClient.getdel(key)) as string | null;
     return value;
   }
+  try {
+    const lua = `
+      local value = redis.call("GET", KEYS[1])
+      if value then
+        redis.call("DEL", KEYS[1])
+      end
+      return value
+    `;
+    const value = (await redis.eval(lua, [key], [])) as unknown;
+    if (value != null && typeof value === 'string') {
+      return value;
+    }
+    if (value != null) {
+      return String(value);
+    }
+  } catch (error) {
+    console.warn('[redeem] Falling back to non-atomic get/del', error);
+  }
   const value = (await redis.get(key)) as string | null;
   if (!value) return null;
   await redis.del(key);
@@ -25,7 +43,7 @@ async function getAndDelete(key: string): Promise<string | null> {
 export async function POST(request: NextRequest) {
   try {
     const ip = getClientIp(request.url, request.headers);
-    const rl = rateLimitCheck(`${ip}:redeem`, { windowMs: 60_000, max: 15, prefix: 'redeem' });
+    const rl = await rateLimitCheck(`${ip}:redeem`, { windowMs: 60_000, max: 15, prefix: 'redeem' });
     if (!rl.allowed) {
       return NextResponse.json(
         { success: false, error: 'Rate limit exceeded' },

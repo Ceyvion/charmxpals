@@ -1,13 +1,16 @@
 import { NextRequest } from 'next/server';
-import { getRepo } from '@/lib/repo';
+import { getServerSession } from 'next-auth';
+
 import { computeChallengeDigest, generateNonce, hashClaimCode } from '@/lib/crypto';
+import { getRepo } from '@/lib/repo';
 import { rateLimitCheck } from '@/lib/rateLimit';
 import { getClientIp } from '@/lib/ip';
+import { authOptions } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
     const ip = getClientIp(request.url, request.headers);
-    const rl = rateLimitCheck(`${ip}:claim-start`, { windowMs: 60_000, max: 10, prefix: 'claim' });
+    const rl = await rateLimitCheck(`${ip}:claim-start`, { windowMs: 60_000, max: 10, prefix: 'claim' });
     if (!rl.allowed) {
       return new Response(JSON.stringify({ success: false, error: 'Rate limit exceeded' }), {
         status: 429,
@@ -18,7 +21,19 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const { code } = await request.json();
+    const session = await getServerSession(authOptions);
+    const userId = session?.user?.id;
+    if (!userId) {
+      return Response.json({ success: false, error: 'Not authenticated' }, { status: 401 });
+    }
+
+    let payload: unknown;
+    try {
+      payload = await request.json();
+    } catch {
+      return Response.json({ success: false, error: 'Invalid payload' }, { status: 400 });
+    }
+    const code = typeof (payload as { code?: unknown })?.code === 'string' ? (payload as { code?: string }).code : null;
     if (!code || typeof code !== 'string') {
       return Response.json({ success: false, error: 'Missing code' }, { status: 400 });
     }
@@ -47,7 +62,7 @@ export async function POST(request: NextRequest) {
 
     // Persist the challenge with TTL (5 minutes)
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
-    const challenge = await repo.createChallenge({ codeHash, nonce, timestamp, challengeDigest, expiresAt });
+    const challenge = await repo.createChallenge({ codeHash, nonce, timestamp, challengeDigest, expiresAt, userId });
 
     return Response.json({
       success: true,
