@@ -140,15 +140,15 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
 
       <div className="sticky top-16 z-10">
         <div className="cp-panel flex flex-wrap items-center gap-2 p-3">
-          <div className="cp-graffiti-toggle-set">
+          <div className="cp-rarity-filter-set">
             <button
               type="button"
               data-filter="all"
               data-active={filter === 'all' ? 'true' : 'false'}
-              className="cp-graffiti-toggle"
+              data-tone="aqua"
+              className="cp-rarity-filter"
               data-magnetic="toggle"
               data-magnetic-color="aqua"
-              data-ripple
               onMouseEnter={playHover}
               onFocus={playHover}
               onClick={() => {
@@ -156,17 +156,16 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
                 playClick();
               }}
             >
-              <span>All</span>
+              <span>All Pals</span>
             </button>
             <button
               type="button"
               data-filter="legendary"
               data-active={filter === 'legendary' ? 'true' : 'false'}
-              className="cp-graffiti-toggle"
-              data-ink="legendary"
+              data-tone="sunrise"
+              className="cp-rarity-filter"
               data-magnetic="toggle"
               data-magnetic-color="sunrise"
-              data-ripple
               onMouseEnter={playHover}
               onFocus={playHover}
               onClick={() => {
@@ -180,11 +179,10 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
               type="button"
               data-filter="epic"
               data-active={filter === 'epic' ? 'true' : 'false'}
-              className="cp-graffiti-toggle"
-              data-ink="epic"
+              data-tone="violet"
+              className="cp-rarity-filter"
               data-magnetic="toggle"
               data-magnetic-color="violet"
-              data-ripple
               onMouseEnter={playHover}
               onFocus={playHover}
               onClick={() => {
@@ -198,11 +196,10 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
               type="button"
               data-filter="rare"
               data-active={filter === 'rare' ? 'true' : 'false'}
-              className="cp-graffiti-toggle"
-              data-ink="rare"
+              data-tone="mint"
+              className="cp-rarity-filter"
               data-magnetic="toggle"
               data-magnetic-color="mint"
-              data-ripple
               onMouseEnter={playHover}
               onFocus={playHover}
               onClick={() => {
@@ -213,7 +210,7 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
               <span>Rare</span>
             </button>
           </div>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex flex-wrap items-center gap-2">
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
