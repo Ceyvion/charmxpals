@@ -731,6 +731,7 @@ html:not([data-appearance="light"]) .cp-hero-warp .text-white\/60 { color: rgba(
 .cp-graffiti-toggle {
   position: relative;
   display: inline-flex;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
   border: none;
@@ -741,6 +742,9 @@ html:not([data-appearance="light"]) .cp-hero-warp .text-white\/60 { color: rgba(
   font-size: 0.72rem;
   padding: 0.65rem 1.35rem;
   border-radius: 1.3rem 1.9rem 1rem 1.4rem;
+  width: auto;
+  min-width: 0;
+  white-space: nowrap;
   color: rgba(244, 244, 255, 0.92);
   background: transparent;
   transition: transform .18s ease, filter .2s ease;
@@ -750,6 +754,7 @@ html:not([data-appearance="light"]) .cp-hero-warp .text-white\/60 { color: rgba(
   content: "";
   position: absolute;
   inset: -32% -26%;
+  border-radius: inherit;
   background: radial-gradient(ellipse 60% 60% at 45% 40%, rgba(132, 176, 255, 0.6), rgba(76, 224, 255, 0.35), rgba(255, 120, 220, 0.32), rgba(0, 0, 0, 0));
   filter: blur(8px);
   opacity: 0.55;
