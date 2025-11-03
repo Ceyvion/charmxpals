@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { signOut, useSession } from "next-auth/react";
 import AppNav from "@/components/AppNav";
 import InteractionEffects from "@/components/InteractionEffects";
@@ -10,28 +10,15 @@ import InteractionEffects from "@/components/InteractionEffects";
 export default function LayoutChrome({ children }: { children: React.ReactNode }) {
   // Keep a consistent frame across routes to feel connected
   usePathname();
-  const [appearance, setAppearance] = useState<'light' | 'dark'>(() => 'dark');
   const { data: session, status } = useSession();
   const authenticated = status === 'authenticated';
   const displayName = session?.user?.name || session?.user?.email || 'You';
 
   useEffect(() => {
-    const stored = typeof window !== 'undefined' ? localStorage.getItem('cp:appearance') : null;
-    let initial: 'light' | 'dark' = 'dark';
-    if (stored === 'light' || stored === 'dark') initial = stored;
-    else if (typeof window !== 'undefined' && window.matchMedia) {
-      initial = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-    }
-    setAppearance(initial);
-    if (typeof document !== 'undefined') document.documentElement.setAttribute('data-appearance', initial);
+    if (typeof document !== 'undefined') document.documentElement.setAttribute('data-appearance', 'dark');
+    if (typeof window !== 'undefined') window.localStorage.removeItem('cp:appearance');
   }, []);
 
-  const toggleAppearance = () => {
-    const next = appearance === 'light' ? 'dark' : 'light';
-    setAppearance(next);
-    if (typeof document !== 'undefined') document.documentElement.setAttribute('data-appearance', next);
-    if (typeof window !== 'undefined') localStorage.setItem('cp:appearance', next);
-  };
   const handleSignOut = () => {
     signOut({ callbackUrl: '/' }).catch(() => {});
   };
@@ -49,16 +36,6 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
             </div>
             <AppNav />
             <div className="flex items-center gap-2">
-              <button
-                onClick={toggleAppearance}
-                aria-label="Toggle theme"
-                className="px-3 py-2 rounded-lg border border-white/10 bg-white/10 text-white text-sm font-bold hover:bg-white/20 transition"
-                data-magnetic="chrome"
-                data-magnetic-color="mint"
-                data-ripple
-              >
-                {appearance === 'light' ? '☀️' : '🌙'}
-              </button>
               {authenticated ? (
                 <>
                   <span className="hidden sm:inline-flex items-center rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white/80">
