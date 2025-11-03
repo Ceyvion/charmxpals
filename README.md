@@ -75,6 +75,11 @@ Update statuses in `orchestrator/plan.json` after each meaningful change to keep
 - Character pages and My Pals now include an inline 3D viewer (client-only, no extra deps).
 - Added dev login (`/login`) and profile pages (`/u/[handle]`), plus `/logout` for convenience.
 
+## Beta Access
+
+- Configure `BETA_ACCESS_SECRET`, `NEXTAUTH_SECRET`, and comma-separated `BETA_TESTERS` in your environment (Vercel → Settings → Environment Variables).
+- Wave-specific tester details and claim codes live in `docs/beta/WAVE1.md`; use `npm run import:cxp -- --file data/beta_wave1_codes.csv --set "Beta Wave 1"` to seed their codes into Upstash.
+
 ## MVP Features
 
 1. Claim flow (QR/NFC)

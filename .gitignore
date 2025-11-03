@@ -50,3 +50,4 @@ test-results/
 *.ndjson
 *.csv
 ops/
+!data/beta_wave1_codes.csv
