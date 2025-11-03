@@ -54,12 +54,20 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
               ) : (
                 <Link
                   href="/login"
-                  className="px-4 py-2 rounded-lg bg-white text-gray-900 text-sm font-bold hover:bg-gray-100 transition"
+                  className="group relative inline-flex items-center justify-center overflow-hidden rounded-full px-5 py-2.5 text-sm font-semibold uppercase tracking-wide text-white transition-transform duration-200 hover:translate-y-[-1px]"
                   data-magnetic="chrome"
                   data-magnetic-color="sunrise"
                   data-ripple
                 >
-                  Sign in
+                  <span className="absolute inset-0 rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-sky-500 opacity-90 transition-opacity duration-200 group-hover:opacity-100" />
+                  <span className="absolute inset-0 rounded-full blur-xl bg-gradient-to-r from-pink-500/50 via-purple-500/40 to-sky-500/50 opacity-70 group-hover:opacity-90" aria-hidden />
+                  <span className="relative inline-flex items-center gap-2">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-7.5A2.25 2.25 0 003.75 5.25v13.5A2.25 2.25 0 006 21h7.5a2.25 2.25 0 002.25-2.25V15" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9l3-3m0 0l3 3m-3-3v12" />
+                    </svg>
+                    <span>Sign in</span>
+                  </span>
                 </Link>
               )}
             </div>

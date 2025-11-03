@@ -1,0 +1,22 @@
+# Beta Onboarding Page Copy
+
+- CharmXPals Beta
+- Early Build. Real Testing. Your Input Matters.
+- Limited beta access. Test core mechanics, preview the plaza, and help us ship something worth playing.
+- What's Live
+- Claim Beta Rewards
+- Grab your early-access collectible and test cosmetic systems.
+- Explore the Roster
+- Limited character pool available. More dropping each phase.
+- Test the Plaza
+- Core mechanics only. Expect bugs. Report everything.
+- Full roster, ranked modes, and trading coming at launch.
+- Found something broken? Good. Report it: charmxpals.contact@gmail.com
+- Beta Build v0.X
+- Access Code Required.
+- Warning: Active development build. Progress may reset. Features may break.
+- Email
+- Access code
+- Enter Beta
+- Signing in…
+- Issues? charmxpals.contact@gmail.com

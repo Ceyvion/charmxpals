@@ -67,29 +67,33 @@ export default function LoginPage() {
                 CharmXPals Beta
               </span>
               <h1 className="mt-6 text-5xl font-extrabold text-white font-display leading-tight">
-                Your portal to the <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-fuchsia-300 to-sky-300">CharmXPals</span> universe
+                Early Build. Real Testing. <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-fuchsia-300 to-sky-300">Your Input Matters.</span>
               </h1>
               <p className="mt-4 max-w-xl text-base leading-relaxed text-white/80">
-                Sign in with the invite-only access code to unlock your pals, test drive the plaza, and help shape the launch.
+                Limited beta access. Test core mechanics, preview the plaza, and help us ship something worth playing.
               </p>
-              <dl className="mt-10 grid gap-6 md:grid-cols-3">
-                {[
-                  { label: 'Claim Rewards', detail: 'Redeem your collectible and preview cosmetics.' },
-                  { label: 'Explore Lore', detail: 'Dive into the dimensional roster inside /me.' },
-                  { label: 'Drop Feedback', detail: 'Tell us what sings—or what needs remixing.' },
-                ].map((item) => (
-                  <div key={item.label} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-5">
-                    <dt className="text-xs font-semibold uppercase tracking-wide text-white/60">{item.label}</dt>
-                    <dd className="mt-2 text-sm text-white/85">{item.detail}</dd>
-                  </div>
-                ))}
-              </dl>
-              <div className="mt-10 flex flex-wrap items-center gap-3 text-xs text-white/60">
-                <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.85)]" />
-                  Sessions secure via NextAuth
-                </span>
-                <span>Need help? <a href="mailto:beta@charmxpals.com" className="font-semibold text-white/80 hover:text-white">beta@charmxpals.com</a></span>
+              <div className="mt-10 space-y-8">
+                <div>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-white/50 mb-3">What's Live</h3>
+                  <dl className="grid gap-6 md:grid-cols-3">
+                    {[
+                      { label: 'Claim Beta Rewards', detail: 'Grab your early-access collectible and test cosmetic systems.' },
+                      { label: 'Explore the Roster', detail: 'Limited character pool available. More dropping each phase.' },
+                      { label: 'Test the Plaza', detail: 'Core mechanics only. Expect bugs. Report everything.' },
+                    ].map((item) => (
+                      <div key={item.label} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-5">
+                        <dt className="text-xs font-semibold uppercase tracking-wide text-white/60">{item.label}</dt>
+                        <dd className="mt-2 text-sm text-white/85">{item.detail}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+                <div className="rounded-2xl border border-dashed border-white/20 bg-white/5 px-4 py-5 text-sm text-white/75">
+                  Full roster, ranked modes, and trading coming at launch.
+                </div>
+              </div>
+              <div className="mt-10 text-sm text-white/70">
+                Found something broken? Good. Report it: <a href="mailto:charmxpals.contact@gmail.com" className="font-semibold text-white hover:text-white/90">charmxpals.contact@gmail.com</a>
               </div>
             </section>
 
@@ -97,9 +101,10 @@ export default function LoginPage() {
               <div className="absolute -top-12 right-12 h-32 w-32 rounded-full bg-gradient-to-br from-pink-400/40 to-purple-500/20 blur-2xl" />
               <div className="relative z-10 space-y-6">
                 <header className="space-y-3">
-                  <h2 className="text-3xl font-display font-extrabold text-white">Beta Access</h2>
-                  <p className="text-sm text-white/70">
-                    Use the email you registered with and the secure beta code from your welcome note.
+                  <h2 className="text-3xl font-display font-extrabold text-white">Beta Build v0.X</h2>
+                  <p className="text-sm text-white/70">Access Code Required.</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-amber-300">
+                    Warning: Active development build. Progress may reset. Features may break.
                   </p>
                 </header>
                 <form onSubmit={onSubmit} className="space-y-5">
@@ -143,8 +148,8 @@ export default function LoginPage() {
                     {loading ? 'Signing in…' : 'Enter Beta'}
                   </button>
                 </form>
-                <footer className="pt-4 text-xs text-white/50">
-                  By continuing you agree to help us test pre-release features. Capture bugs or delight and send it to the beta squad.
+                <footer className="pt-4 text-xs text-white/60">
+                  Issues? <a href="mailto:charmxpals.contact@gmail.com" className="font-semibold text-white hover:text-white/90">charmxpals.contact@gmail.com</a>
                 </footer>
               </div>
             </section>
