@@ -5,8 +5,15 @@ import { EventEmitter } from 'events';
 import WebSocket, { WebSocketServer } from 'ws';
 
 import type { MmoSessionClaims } from '../../src/lib/mmo/token';
+import { filterProfanity } from '../../src/lib/profanity';
 
 type Vec2 = { x: number; y: number };
+
+type HandshakeInfo = {
+  build?: string;
+  device?: string;
+  locale?: string;
+};
 
 type ClientState = {
   ws: WebSocket;
@@ -19,6 +26,13 @@ type ClientState = {
   axes: Vec2;
   lastInputSeq: number;
   cosmetics: Record<string, unknown>;
+  joined: boolean;
+  claims: MmoSessionClaims;
+  handshake: HandshakeInfo;
+  chatHistory: number[];
+  emoteHistory: number[];
+  handshakeTimer: NodeJS.Timeout | null;
+  createdAt: number;
 };
 
 export type PlazaServerOptions = {
@@ -49,6 +63,14 @@ const defaultOptions = {
   snapshotMs: 100,
 };
 
+const HANDSHAKE_TIMEOUT_MS = 5_000;
+const CHAT_WINDOW_MS = 10_000;
+const CHAT_MAX = 5;
+const EMOTE_WINDOW_MS = 4_000;
+const EMOTE_MAX = 6;
+const INSTANCE_ID = 'plaza-1';
+const MOTD = 'Signal Plaza is live — drop in and vibe.';
+
 function decodeBase64Url(input: string) {
   let normalized = input.replace(/-/g, '+').replace(/_/g, '/');
   const pad = normalized.length % 4;
@@ -72,27 +94,52 @@ function verifyToken(token: string, secret: string): MmoSessionClaims | null {
   }
 }
 
+function consumeRateLimit(history: number[], windowMs: number, max: number) {
+  const now = Date.now();
+  while (history.length && now - history[0] > windowMs) history.shift();
+  if (history.length >= max) return false;
+  history.push(now);
+  return true;
+}
+
+function sanitizeDisplayName(userId: string) {
+  const base = (userId || '').split('@')[0];
+  const compact = base.replace(/[^a-zA-Z0-9]/g, '');
+  if (!compact) return 'pal';
+  return compact.slice(0, 12);
+}
+
+const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
+
 export async function startPlazaServer(options: PlazaServerOptions = {}): Promise<PlazaServer> {
   const opts = { ...defaultOptions, ...options };
   const httpServer: HttpServer = createServer();
   const wss = new WebSocketServer({ server: httpServer });
   const clients = new Map<string, ClientState>();
+  const sockets = new Map<WebSocket, ClientState>();
   const events = new EventEmitter();
   const tickMs = opts.tickMs ?? defaultOptions.tickMs;
   const snapshotMs = opts.snapshotMs ?? defaultOptions.snapshotMs;
   const log = opts.logger || console.log;
 
-  const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
+  const safeSend = (ws: WebSocket, payload: unknown) => {
+    if (ws.readyState !== WebSocket.OPEN) return;
+    try {
+      ws.send(JSON.stringify(payload));
+    } catch {
+      /* noop */
+    }
+  };
 
-  const broadcast = (obj: unknown, excludeId?: string) => {
-    const msg = JSON.stringify(obj);
+  const broadcast = (payload: unknown, excludeId?: string) => {
+    const serialized = JSON.stringify(payload);
     clients.forEach((client, id) => {
       if (excludeId && id === excludeId) return;
-      if (client.ws.readyState === 1) {
+      if (client.ws.readyState === WebSocket.OPEN) {
         try {
-          client.ws.send(msg);
+          client.ws.send(serialized);
         } catch {
-          // ignore send errors (socket will close eventually)
+          /* noop */
         }
       }
     });
@@ -112,90 +159,170 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
     cosmetics: client.cosmetics,
   });
 
-  wss.on('connection', (ws, req) => {
-    if (clients.size >= (opts.maxClients ?? defaultOptions.maxClients)) {
-      ws.close(1013, 'server_full');
-      return;
+  const finalizeJoin = (client: ClientState) => {
+    if (client.joined) return;
+    client.joined = true;
+    if (client.handshakeTimer) {
+      clearTimeout(client.handshakeTimer);
+      client.handshakeTimer = null;
     }
 
+    clients.set(client.sessionId, client);
+    emitPlayerCount();
+    const you = toPlayerState(client.sessionId, client);
+    const others = Array.from(clients.entries())
+      .filter(([id]) => id !== client.sessionId)
+      .map(([id, ctx]) => toPlayerState(id, ctx));
+
+    safeSend(client.ws, { type: 'auth_ok', sessionId: client.sessionId });
+    safeSend(client.ws, { type: 'joined', you, others });
+
+    events.emit('join', you);
+    broadcast({ type: 'event', event: 'join', data: { player: you } }, client.sessionId);
+  };
+
+  const handleEmote = (client: ClientState, emote: string) => {
+    if (!emote) return;
+    if (!consumeRateLimit(client.emoteHistory, EMOTE_WINDOW_MS, EMOTE_MAX)) {
+      safeSend(client.ws, { type: 'event', event: 'system', data: { message: 'emote_rate_limited' } });
+      return;
+    }
+    broadcast({ type: 'event', event: 'emote', data: { id: client.sessionId, emote } });
+  };
+
+  wss.on('connection', (ws, req) => {
     const { query } = parse(req.url || '', true);
     const token = typeof query.token === 'string' ? query.token : null;
     const verified = token ? verifyToken(token, opts.secret as string) : null;
+
     if (!verified) {
-      try {
-        ws.send(JSON.stringify({ type: 'auth_error', reason: 'invalid_token' }));
-      } catch {
-        // ignore
-      }
+      safeSend(ws, { type: 'auth_error', reason: 'invalid_token' });
       ws.close(1008, 'invalid_token');
+      return;
+    }
+
+    if (clients.size >= (opts.maxClients ?? defaultOptions.maxClients)) {
+      safeSend(ws, { type: 'kick', reason: 'server_full' });
+      ws.close(1013, 'server_full');
       return;
     }
 
     const sessionId = verified.sid || randomUUID();
     const userId = verified.sub || 'user';
-    const id = sessionId;
-    const displayName = (userId || '').slice(0, 12) || 'pal';
+    const displayName = sanitizeDisplayName(userId);
+    const ownedChars = Array.isArray(verified.owned) ? verified.owned : [];
 
     const client: ClientState = {
       ws,
       userId,
       sessionId,
       displayName,
-      characterId: Array.isArray(verified.owned) && verified.owned.length ? verified.owned[0] : 'demo',
+      characterId: ownedChars[0] || 'demo',
       pos: { x: Math.random() * 8 - 4, y: Math.random() * 4 - 2 },
       rot: 0,
       axes: { x: 0, y: 0 },
       lastInputSeq: 0,
       cosmetics: { badgeIds: [] },
+      joined: false,
+      claims: verified,
+      handshake: {},
+      chatHistory: [],
+      emoteHistory: [],
+      handshakeTimer: null,
+      createdAt: Date.now(),
     };
 
-    clients.set(id, client);
-    emitPlayerCount();
-    events.emit('join', toPlayerState(id, client));
+    client.handshakeTimer = setTimeout(() => {
+      if (!client.joined) {
+        safeSend(ws, { type: 'auth_error', reason: 'handshake_timeout' });
+        ws.close(1008, 'handshake_timeout');
+      }
+    }, HANDSHAKE_TIMEOUT_MS);
 
-    const you = toPlayerState(id, client);
-    const others = Array.from(clients)
-      .filter(([pid]) => pid !== id)
-      .map(([pid, other]) => toPlayerState(pid, other));
+    sockets.set(ws, client);
 
-    ws.send(JSON.stringify({ type: 'welcome', instanceId: 'plaza-1', snapshotInterval: snapshotMs }));
-    ws.send(JSON.stringify({ type: 'auth_ok', sessionId }));
-    ws.send(JSON.stringify({ type: 'joined', you, others }));
+    safeSend(ws, { type: 'welcome', motd: MOTD, instanceId: INSTANCE_ID, snapshotInterval: snapshotMs });
 
-    broadcast({ type: 'event', event: 'join', data: { player: you } }, id);
+    ws.on('message', (raw: WebSocket.RawData) => {
+      const context = sockets.get(ws);
+      if (!context) return;
 
-    ws.on('message', (raw: unknown) => {
       let msg: any;
       try {
         msg = JSON.parse(String(raw));
-      } catch (err) {
+      } catch {
         return;
       }
 
       switch (msg.type) {
-        case 'select_avatar':
-          client.characterId = String(msg.characterId || 'demo');
-          client.cosmetics = typeof msg.cosmetics === 'object' && msg.cosmetics ? msg.cosmetics : client.cosmetics;
+        case 'hello':
+          context.handshake = {
+            build: typeof msg.build === 'string' ? msg.build : undefined,
+            device: typeof msg.device === 'string' ? msg.device : undefined,
+            locale: typeof msg.locale === 'string' ? msg.locale : undefined,
+          };
           break;
+        case 'auth': {
+          if (context.joined) break;
+          const tokenMessage = typeof msg.token === 'string' ? msg.token : null;
+          if (tokenMessage) {
+            const reverified = verifyToken(tokenMessage, opts.secret as string);
+            if (!reverified || reverified.sid !== context.sessionId) {
+              safeSend(ws, { type: 'auth_error', reason: 'invalid_token' });
+              ws.close(1008, 'invalid_token_reauth');
+              return;
+            }
+            context.claims = reverified;
+          }
+          const scope = Array.isArray(context.claims.scope) ? context.claims.scope : [];
+          if (scope.length > 0 && !scope.includes('plaza:join')) {
+            safeSend(ws, { type: 'auth_error', reason: 'insufficient_scope' });
+            ws.close(1008, 'insufficient_scope');
+            return;
+          }
+          finalizeJoin(context);
+          break;
+        }
+        case 'select_avatar': {
+          const selected = typeof msg.characterId === 'string' ? msg.characterId : '';
+          const owned = Array.isArray(context.claims.owned) ? context.claims.owned : [];
+          if (selected && (owned.length === 0 || owned.includes(selected))) {
+            context.characterId = selected;
+          }
+          if (typeof msg.cosmetics === 'object' && msg.cosmetics) {
+            context.cosmetics = msg.cosmetics;
+          }
+          break;
+        }
         case 'input': {
+          if (!context.joined) break;
           const axes = msg.axes || { x: 0, y: 0 };
-          client.axes.x = clamp(Number(axes.x) || 0, -1, 1);
-          client.axes.y = clamp(Number(axes.y) || 0, -1, 1);
-          client.lastInputSeq = Number(msg.seq) || client.lastInputSeq;
-          if (msg.emote && typeof msg.emote === 'string') {
-            broadcast({ type: 'event', event: 'emote', data: { id, emote: msg.emote } });
+          context.axes.x = clamp(Number(axes.x) || 0, -1, 1);
+          context.axes.y = clamp(Number(axes.y) || 0, -1, 1);
+          context.lastInputSeq = Number(msg.seq) || context.lastInputSeq;
+          if (typeof msg.emote === 'string' && msg.emote) {
+            handleEmote(context, msg.emote);
           }
           break;
         }
         case 'chat': {
-          const text = String(msg.text || '').slice(0, 200);
-          if (text) broadcast({ type: 'event', event: 'chat', data: { id, text } });
+          if (!context.joined) break;
+          const text = typeof msg.text === 'string' ? msg.text.trim().slice(0, 240) : '';
+          if (!text) break;
+          if (!consumeRateLimit(context.chatHistory, CHAT_WINDOW_MS, CHAT_MAX)) {
+            safeSend(ws, { type: 'event', event: 'system', data: { message: 'chat_rate_limited' } });
+            break;
+          }
+          const { clean, flagged } = filterProfanity(text);
+          broadcast({
+            type: 'event',
+            event: 'chat',
+            data: { id: context.sessionId, displayName: context.displayName, text: clean, flagged },
+          });
           break;
         }
         case 'ping':
-          try {
-            ws.send(JSON.stringify({ type: 'pong', ts: msg.ts }));
-          } catch {/* noop */}
+          safeSend(ws, { type: 'pong', ts: msg.ts });
           break;
         default:
           break;
@@ -203,11 +330,17 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
     });
 
     ws.on('close', () => {
-      const existed = clients.delete(id);
-      if (existed) {
+      const context = sockets.get(ws);
+      if (!context) return;
+      sockets.delete(ws);
+      if (context.handshakeTimer) {
+        clearTimeout(context.handshakeTimer);
+        context.handshakeTimer = null;
+      }
+      if (context.joined && clients.delete(context.sessionId)) {
         emitPlayerCount();
-        events.emit('leave', id);
-        broadcast({ type: 'event', event: 'leave', data: { id } });
+        events.emit('leave', context.sessionId);
+        broadcast({ type: 'event', event: 'leave', data: { id: context.sessionId } });
       }
     });
 
@@ -234,7 +367,11 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
 
     if (now - lastSnapshot >= snapshotMs) {
       lastSnapshot = now;
-      const players = Array.from(clients).map(([id, c]) => ({ id, pos: { ...c.pos }, rot: c.rot }));
+      const players = Array.from(clients.entries()).map(([id, ctx]) => ({
+        id,
+        pos: { ...ctx.pos },
+        rot: ctx.rot,
+      }));
       broadcast({ type: 'state', t: now, seqAck: 0, players });
     }
   }, tickMs);
@@ -259,7 +396,11 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
     clearInterval(tickHandle);
 
     await new Promise<void>((resolve) => {
-      clients.forEach((client) => {
+      sockets.forEach((client) => {
+        if (client.handshakeTimer) {
+          clearTimeout(client.handshakeTimer);
+          client.handshakeTimer = null;
+        }
         try {
           client.ws.close(1001, 'server_shutdown');
         } catch {
@@ -276,7 +417,9 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
     await new Promise<void>((resolve) => {
       httpServer.close(() => resolve());
     });
+
     clients.clear();
+    sockets.clear();
   };
 
   return {

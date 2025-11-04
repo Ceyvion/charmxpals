@@ -9,6 +9,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
+    exclude: ['node_modules', 'node_modules/**', 'node_modules_old_*', 'node_modules_old_*/**'],
   },
   resolve: {
     alias: {
@@ -16,4 +17,3 @@ export default defineConfig({
     },
   },
 });
-

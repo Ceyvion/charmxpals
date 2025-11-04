@@ -11,6 +11,21 @@ type TestClient = {
   events: Array<{ type: string; payload: any }>;
 };
 
+async function waitForExpect(fn: () => void, timeout = 1_000, interval = 20) {
+  const start = Date.now();
+  while (true) {
+    try {
+      fn();
+      return;
+    } catch (err) {
+      if (Date.now() - start >= timeout) {
+        throw err;
+      }
+    }
+    await new Promise((resolve) => setTimeout(resolve, interval));
+  }
+}
+
 async function openClient(server: PlazaServer, userId: string, sessionId: string): Promise<TestClient> {
   const exp = Math.floor(Date.now() / 1000) + 60;
   const token = signToken(
@@ -26,6 +41,12 @@ async function openClient(server: PlazaServer, userId: string, sessionId: string
   );
   const ws = new WebSocket(`${server.url}?token=${encodeURIComponent(token)}`);
   const events: Array<{ type: string; payload: any }> = [];
+
+  ws.on('open', () => {
+    ws.send(JSON.stringify({ type: 'hello', build: 'test' }));
+    ws.send(JSON.stringify({ type: 'auth', token }));
+    ws.send(JSON.stringify({ type: 'select_avatar', characterId: 'demo' }));
+  });
 
   await new Promise<void>((resolve, reject) => {
     const timeout = setTimeout(() => reject(new Error('timeout waiting for join')), 2_000);
@@ -74,10 +95,10 @@ describe('plaza server', () => {
     server.events.on('player-count', (count: number) => counts.push(count));
 
     const c1 = await openClient(server, 'user-1', 'session-1');
-    await expect.poll(() => server.getPlayerCount()).toBe(1);
+    await waitForExpect(() => expect(server.getPlayerCount()).toBe(1));
 
     const c2 = await openClient(server, 'user-2', 'session-2');
-    await expect.poll(() => server.getPlayerCount()).toBe(2);
+    await waitForExpect(() => expect(server.getPlayerCount()).toBe(2));
 
     expect(counts).toContain(1);
     expect(counts).toContain(2);
@@ -85,7 +106,7 @@ describe('plaza server', () => {
     c1.ws.close();
     c2.ws.close();
 
-    await expect.poll(() => server.getPlayerCount()).toBe(0);
+    await waitForExpect(() => expect(server.getPlayerCount()).toBe(0));
     expect(counts).toContain(0);
   });
 
@@ -100,7 +121,7 @@ describe('plaza server', () => {
   it('enforces max client limit', async () => {
     const localServer = await startPlazaServer({ port: 0, secret: TEST_SECRET, maxClients: 1, logger: () => {} });
     const client = await openClient(localServer, 'user-a', 'session-a');
-    await expect.poll(() => localServer.getPlayerCount()).toBe(1);
+    await waitForExpect(() => expect(localServer.getPlayerCount()).toBe(1));
 
     const token = signToken(
       {
@@ -122,8 +143,7 @@ describe('plaza server', () => {
     expect(localServer.getPlayerCount()).toBe(1);
 
     client.ws.close();
-    await expect.poll(() => localServer.getPlayerCount()).toBe(0);
+    await waitForExpect(() => expect(localServer.getPlayerCount()).toBe(0));
     await localServer.dispose();
   });
 });
-

@@ -169,7 +169,7 @@
       "id": "B0-MM0-5",
       "title": "MMO: Prototype room",
       "detail": "Spin up a small WS server (Colyseus or ws) with 3-player movement replication.",
-      "status": "todo",
+      "status": "done",
       "area": "gameplay"
     },
     {

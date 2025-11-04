@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getRepo } from '@/lib/repo';
 import { rateLimitCheck } from '@/lib/rateLimit';
 import { signToken, type MmoSessionClaims } from '@/lib/mmo/token';
+import { ensurePlazaServer } from '@/lib/mmo/serverRuntime';
 import { authOptions } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
@@ -33,6 +34,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'no_ownership' }, { status: 403 });
   }
 
+  const shouldAutoStart = !process.env.NEXT_PUBLIC_MMO_WS_URL && process.env.MMO_AUTO_START !== '0';
+  if (shouldAutoStart) {
+    try {
+      await ensurePlazaServer();
+    } catch (err) {
+      console.error('[mmo] failed to auto-start plaza server', err);
+      return NextResponse.json({ ok: false, error: 'plaza_unavailable' }, { status: 503 });
+    }
+  }
+
   // Mint short-lived session token
   const sessionId = randomUUID();
   const now = Math.floor(Date.now() / 1000);
@@ -52,3 +63,4 @@ export async function GET(request: NextRequest) {
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+export const runtime = 'nodejs';
