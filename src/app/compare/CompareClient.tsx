@@ -68,22 +68,24 @@ export default function CompareClient({ characters }: CompareClientProps) {
     <div className="space-y-10">
       <HeroSection primary={primary} secondary={secondary} />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,360px),minmax(0,1fr),minmax(0,360px)]">
-        <SelectorPanel
-          label="Primary"
-          characters={roster}
-          selectedId={primary?.id ?? null}
-          otherSelectedId={secondary?.id ?? null}
-          onSelect={handleSelectPrimary}
-        />
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
+        <div className="space-y-6">
+          <SelectorPanel
+            label="Primary"
+            characters={roster}
+            selectedId={primary?.id ?? null}
+            otherSelectedId={secondary?.id ?? null}
+            onSelect={handleSelectPrimary}
+          />
+          <SelectorPanel
+            label="Rival"
+            characters={roster}
+            selectedId={secondary?.id ?? null}
+            otherSelectedId={primary?.id ?? null}
+            onSelect={handleSelectSecondary}
+          />
+        </div>
         <FocusPanel primary={primary} secondary={secondary} insights={insights} />
-        <SelectorPanel
-          label="Rival"
-          characters={roster}
-          selectedId={secondary?.id ?? null}
-          otherSelectedId={primary?.id ?? null}
-          onSelect={handleSelectSecondary}
-        />
       </div>
 
       <StatsPanel comparison={statsComparison} primary={primary} secondary={secondary} />
@@ -127,6 +129,7 @@ function SelectorPanel({
   onSelect: (id: string) => void;
 }) {
   const [query, setQuery] = useState("");
+  const [showAll, setShowAll] = useState(false);
   const { playClick, playHover } = useSfx();
 
   const filtered = useMemo(() => {
@@ -137,6 +140,12 @@ function SelectorPanel({
       return haystack.includes(q);
     });
   }, [characters, query]);
+
+  const DEFAULT_VISIBLE = 6;
+  const visibleCharacters = useMemo(() => {
+    if (showAll) return filtered;
+    return filtered.slice(0, DEFAULT_VISIBLE);
+  }, [filtered, showAll]);
 
   return (
     <section className="cp-panel flex h-full flex-col overflow-hidden">
@@ -156,9 +165,9 @@ function SelectorPanel({
           />
         </label>
       </div>
-      <div className="min-h-[260px] flex-1 overflow-y-auto px-4 pb-4 pt-3 sm:px-6 sm:pb-6">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-1">
-          {filtered.map((character) => {
+      <div className="max-h-[420px] flex-1 overflow-hidden px-4 pb-4 pt-3 sm:px-6 sm:pb-6">
+        <div className="grid grid-cols-2 gap-3 overflow-y-auto pr-1 sm:grid-cols-1">
+          {visibleCharacters.map((character) => {
             const isSelected = character.id === selectedId;
             const isLocked = character.id === otherSelectedId && !isSelected;
             return (
@@ -194,6 +203,22 @@ function SelectorPanel({
             </div>
           )}
         </div>
+        {filtered.length > DEFAULT_VISIBLE && (
+          <div className="mt-4 flex justify-center">
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-1.5 text-sm font-semibold text-white transition hover:border-white/35 hover:bg-white/10"
+              onClick={() => {
+                setShowAll((value) => !value);
+                playClick();
+              }}
+              onMouseEnter={playHover}
+              onFocus={playHover}
+            >
+              {showAll ? "Show fewer pals" : `Show all (${filtered.length})`}
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );
