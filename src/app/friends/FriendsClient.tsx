@@ -46,41 +46,48 @@ export default function FriendsClient({ userLabel, isAuthenticated, friends, pen
   return (
     <div className="min-h-screen bg-grid-overlay px-4 py-12">
       <div className="cp-container space-y-8 sm:space-y-10 lg:space-y-12">
-        <header className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-500/25 via-purple-500/15 to-emerald-500/25 p-8 sm:p-10">
+        <header className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-500/25 via-purple-500/15 to-emerald-500/25 p-7 sm:p-9 lg:p-10">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.25),_transparent_55%)]" />
-          <div className="relative flex flex-col gap-8 text-white lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-xl space-y-5">
+          <div className="relative grid gap-6 text-white lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:items-end">
+            <div className="space-y-5">
               <p className="text-sm uppercase tracking-[0.4em] text-white/60">Charm Crew Deck</p>
-              <div>
-                <h1 className="font-display text-4xl font-bold sm:text-5xl">Friends &amp; Dance Partners</h1>
-                <p className="mt-3 text-base text-white/70 sm:leading-relaxed">
+              <div className="space-y-3">
+                <h1 className="font-display text-4xl font-bold leading-tight sm:text-5xl">Friends &amp; Dance Partners</h1>
+                <p className="text-base text-white/75 sm:leading-relaxed">
                   {isAuthenticated
                     ? `Hey ${userLabel.split(' ')[0] ?? userLabel}, your roster is ready to light up the MotionXChange Arena.`
                     : 'Sign in to light up your roster and watch your dancers take the stage.'}
                 </p>
               </div>
-              <p className="text-sm text-white/65 sm:max-w-md">
+              <p className="text-sm text-white/65 sm:max-w-lg">
                 {isAuthenticated
                   ? 'Share boost links, sync routines, and keep your plaza status glowing.'
                   : 'Claim a pal and invite a friend to unlock boost links and shared routines.'}
               </p>
             </div>
             {spotlight ? (
-              <div className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-black/25 p-6 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between lg:max-w-sm">
-                <div className="space-y-2">
-                  <p className="text-xs uppercase tracking-[0.3em] text-white/60">Spotlight</p>
-                  <div className="mt-2 text-lg font-semibold">{spotlight.name}</div>
-                  <p className="text-sm text-white/70 sm:max-w-xs">{spotlight.status}</p>
-                </div>
-                <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap">
-                  <div className="rounded-full bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white/80">
-                    {spotlight.energy} Energy
+              <article className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-black/25 p-6 backdrop-blur-sm">
+                <header className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.3em] text-white/60">Spotlight</p>
+                    <h2 className="mt-2 text-lg font-semibold">{spotlight.name}</h2>
+                    <p className="text-sm text-white/70">{spotlight.dancerTitle}</p>
                   </div>
-                  <button className="flex-1 rounded-lg bg-white px-5 py-2 text-sm font-semibold text-gray-900 transition hover:bg-gray-100 sm:flex-none">
+                  <span className="rounded-full bg-white/10 px-3 py-[6px] text-[11px] font-bold uppercase tracking-[0.24em] text-white/80">
+                    {spotlight.energy}
+                  </span>
+                </header>
+                <p className="text-sm text-white/70 sm:max-w-xs">{spotlight.status}</p>
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-2 rounded-full border border-white/20 bg-black/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white/75">
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: spotlight.accent }} />
+                    Sync Ready
+                  </div>
+                  <button className="inline-flex items-center justify-center rounded-full bg-white px-6 py-2 text-sm font-semibold text-gray-900 transition hover:bg-gray-100">
                     Send Hype
                   </button>
                 </div>
-              </div>
+              </article>
             ) : (
               <div className="rounded-2xl border border-white/10 bg-black/25 p-6 text-sm text-white/70 lg:max-w-sm">
                 {isAuthenticated
@@ -96,7 +103,7 @@ export default function FriendsClient({ userLabel, isAuthenticated, friends, pen
           <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(147,197,253,0.08),rgba(244,114,182,0.06)_45%,rgba(167,139,250,0.09))]" />
           <div className="relative grid gap-8 text-white lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:items-start">
             <div className="space-y-6">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-[0.35em] text-white/60">Crew Stage</p>
                   <h2 className="font-display text-3xl font-semibold sm:text-[34px]">Live Showcase</h2>
@@ -106,9 +113,14 @@ export default function FriendsClient({ userLabel, isAuthenticated, friends, pen
                   </p>
                 </div>
                 {hasFriends && (
-                  <button className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/20 sm:self-end">
-                    Start Crew Session
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button className="inline-flex items-center justify-center rounded-full border border-white/25 bg-black/30 px-5 py-2 text-sm font-semibold text-white/85 transition hover:bg-black/40">
+                      Invite Boost
+                    </button>
+                    <button className="inline-flex items-center justify-center rounded-full bg-white px-6 py-2 text-sm font-semibold text-gray-900 transition hover:bg-gray-100 sm:self-end">
+                      Start Crew Session
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -147,7 +159,7 @@ export default function FriendsClient({ userLabel, isAuthenticated, friends, pen
               {friends.length ? (
                 <div className="flex snap-x gap-3 overflow-x-auto pb-2 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible lg:grid-cols-1">
                   {friends.map((friend) => (
-                    <div
+                    <article
                       key={friend.id}
                       className="group relative min-w-[220px] snap-center overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 transition hover:border-white/20 hover:bg-white/10"
                     >
@@ -165,16 +177,16 @@ export default function FriendsClient({ userLabel, isAuthenticated, friends, pen
                           <span className="h-2 w-2 rounded-full" style={{ backgroundColor: friend.accent }} />
                           <span className="truncate">{friend.vibe}</span>
                         </div>
-                        <div className="flex gap-2">
-                          <button className="flex-1 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-gray-900 transition hover:bg-gray-100">
+                        <div className="flex flex-wrap gap-2">
+                          <button className="inline-flex min-w-[96px] flex-1 items-center justify-center rounded-full bg-white px-4 py-2 text-xs font-semibold text-gray-900 transition hover:bg-gray-100">
                             Challenge
                           </button>
-                          <button className="flex-1 rounded-lg border border-white/30 bg-white/5 px-3 py-2 text-xs font-semibold text-white/80 hover:border-white/50">
+                          <button className="inline-flex min-w-[96px] flex-1 items-center justify-center rounded-full border border-white/30 bg-white/5 px-4 py-2 text-xs font-semibold text-white/80 transition hover:border-white/50">
                             Crew Pass
                           </button>
                         </div>
                       </div>
-                    </div>
+                    </article>
                   ))}
                 </div>
               ) : (
@@ -256,10 +268,10 @@ export default function FriendsClient({ userLabel, isAuthenticated, friends, pen
                         <p className="text-xs text-white/60">{invite.sentAt}</p>
                       </div>
                       <div className="flex gap-2">
-                        <button className="rounded-lg bg-white px-3 py-2 text-xs font-semibold text-gray-900 hover:bg-gray-100">
+                        <button className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-gray-900 hover:bg-gray-100">
                           Nudge
                         </button>
-                        <button className="rounded-lg border border-white/30 bg-white/5 px-3 py-2 text-xs font-semibold text-white/80 hover:border-white/50">
+                        <button className="rounded-full border border-white/30 bg-white/5 px-4 py-2 text-xs font-semibold text-white/80 hover:border-white/50">
                           Cancel
                         </button>
                       </div>
@@ -293,7 +305,7 @@ export default function FriendsClient({ userLabel, isAuthenticated, friends, pen
                         <p className="text-sm font-semibold text-white">{friend.name}</p>
                         <p className="text-xs text-white/60">{friend.status}</p>
                       </div>
-                      <button className="rounded-lg border border-white/20 px-3 py-2 text-xs font-semibold text-white/80 hover:border-white/40">
+                      <button className="rounded-full border border-white/20 px-4 py-2 text-xs font-semibold text-white/80 hover:border-white/40">
                         Join
                       </button>
                     </div>
