@@ -53,6 +53,9 @@ const KEY_BINDINGS = ['KeyF', 'KeyG', 'KeyH', 'KeyJ'];
 const KEY_LABELS = ['F', 'G', 'H', 'J'];
 
 const defaultAccuracy: Accuracy = { perfect: 0, great: 0, good: 0, miss: 0 };
+const HUD_CARD_CLASS = 'rounded-3xl border border-white/10 bg-slate-900/80 px-5 py-4 text-slate-100 shadow-[0_18px_60px_rgba(15,23,42,0.45)] backdrop-blur';
+const HUD_LABEL_CLASS = 'text-[10px] font-semibold uppercase tracking-[0.38em] text-indigo-200/80';
+const HUD_VALUE_CLASS = 'mt-1 text-2xl font-semibold leading-tight text-white';
 const hexToRgb = (hex: string): [number, number, number] | null => {
   const normalized = hex.startsWith('#') ? hex.slice(1) : hex;
   if (normalized.length !== 6) return null;
@@ -699,6 +702,18 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
     if (gameState === 'over') return 'Run complete';
     return 'Ready';
   }, [countdownKind, gameState, remainingTimeLabel]);
+  const comboHighlight = useMemo(() => {
+    if (combo >= 120) {
+      return { label: 'Hyperflow', className: 'bg-gradient-to-r from-rose-400 via-amber-300 to-amber-200 text-slate-900' };
+    }
+    if (combo >= 60) {
+      return { label: 'Overdrive', className: 'bg-gradient-to-r from-amber-300 to-amber-500 text-slate-900' };
+    }
+    if (combo >= 20) {
+      return { label: 'Groove', className: 'bg-indigo-400/80 text-white' };
+    }
+    return null;
+  }, [combo]);
 
   const trackCards = useMemo(() => pulsegridTracks, []);
 
@@ -840,40 +855,77 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 shadow-inner">
-          <div className="text-xs uppercase tracking-[0.4em] text-indigo-200">Score</div>
-          <div className="mt-1 text-lg font-semibold text-white">{score.toLocaleString()}</div>
+        <div className={HUD_CARD_CLASS} aria-live="polite">
+          <div className={HUD_LABEL_CLASS}>Score</div>
+          <div className={HUD_VALUE_CLASS}>{score.toLocaleString()}</div>
+          <div className="mt-3 text-xs text-indigo-200/70">Total points captured in this run.</div>
         </div>
-        <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 shadow-inner">
-          <div className="text-xs uppercase tracking-[0.4em] text-indigo-200">Combo</div>
-          <div className="mt-1 text-lg font-semibold text-white">{combo}<span className="ml-2 text-xs font-medium text-indigo-100">Max {maxCombo}</span></div>
+        <div className={`${HUD_CARD_CLASS} relative`} aria-live="polite">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className={HUD_LABEL_CLASS}>Combo</div>
+              <div className={HUD_VALUE_CLASS}>{combo}</div>
+            </div>
+            <span className="mt-1 inline-flex items-center rounded-full bg-slate-800/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-indigo-100/80">
+              Max {maxCombo}
+            </span>
+          </div>
+          {comboHighlight ? (
+            <div
+              className={`mt-4 inline-flex items-center rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.32em] ${comboHighlight.className}`}
+            >
+              {comboHighlight.label}
+            </div>
+          ) : (
+            <div className="mt-4 text-xs text-indigo-200/70">Land 20+ perfects to ignite the groove bonus.</div>
+          )}
         </div>
-        <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 shadow-inner">
-          <div className="text-xs uppercase tracking-[0.4em] text-indigo-200">Accuracy</div>
-          <div className="mt-1 text-lg font-semibold text-white">{accuracySummary.percent}%</div>
-          <div className="mt-1 text-xs text-indigo-100">Perfect {accuracy.perfect} • Great {accuracy.great} • Good {accuracy.good} • Miss {accuracy.miss}</div>
+        <div className={HUD_CARD_CLASS} aria-live="polite">
+          <div className={HUD_LABEL_CLASS}>Accuracy</div>
+          <div className={HUD_VALUE_CLASS}>{accuracySummary.percent}%</div>
+          <div className="mt-3 grid grid-cols-2 gap-y-1 text-[11px] text-indigo-100/80">
+            <div className="flex items-center justify-between">
+              <span className="uppercase tracking-[0.26em] text-indigo-200/60">Perfect</span>
+              <span className="font-semibold text-white">{accuracy.perfect}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="uppercase tracking-[0.26em] text-indigo-200/60">Great</span>
+              <span className="font-semibold text-white">{accuracy.great}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="uppercase tracking-[0.26em] text-indigo-200/60">Good</span>
+              <span className="font-semibold text-white">{accuracy.good}</span>
+            </div>
+            <div className="flex items-center justify-between text-rose-200/80">
+              <span className="uppercase tracking-[0.26em]">Miss</span>
+              <span className="font-semibold text-white">{accuracy.miss}</span>
+            </div>
+          </div>
         </div>
-        <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 shadow-inner">
-          <div className="flex items-center justify-between">
-            <div className="text-xs uppercase tracking-[0.4em] text-indigo-200">Progress</div>
-            <div className="text-[10px] uppercase tracking-[0.35em] text-indigo-100">
+        <div className={`${HUD_CARD_CLASS} relative`} aria-live="polite">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className={HUD_LABEL_CLASS}>Progress</div>
+              <div className={HUD_VALUE_CLASS}>{progressPercent}%</div>
+            </div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.32em] text-indigo-100/70">
               {progressStatus}
             </div>
           </div>
-          <div className="mt-1 text-lg font-semibold text-white">{progressPercent}%</div>
-          <div className="relative mt-2 h-2 w-full overflow-hidden rounded-full bg-white/12">
+          <div className="relative mt-4 h-3 w-full overflow-hidden rounded-full bg-slate-700/70">
             {progressMarkers.map((marker) => (
               <span
                 key={marker.toFixed(3)}
-                className="pointer-events-none absolute top-0 bottom-0 w-[1px] bg-white/25"
+                className="pointer-events-none absolute inset-y-0 w-[1px] bg-white/35"
                 style={{ left: `${marker * 100}%` }}
               />
             ))}
             <div
-              className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-indigo-400 via-fuchsia-400 to-sky-400 transition-[width] duration-150 ease-out"
+              className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-indigo-300 via-fuchsia-300 to-sky-300 transition-[width] duration-150 ease-out"
               style={{ width: `${progressFillWidth}%` }}
             />
           </div>
+          <div className="mt-3 text-xs text-indigo-200/70">Each marker signals a new section in the track.</div>
         </div>
       </div>
 
