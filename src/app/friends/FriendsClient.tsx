@@ -45,39 +45,44 @@ export default function FriendsClient({ userLabel, isAuthenticated, friends, pen
 
   return (
     <div className="min-h-screen bg-grid-overlay px-4 py-12">
-      <div className="cp-container space-y-10">
-        <header className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-500/30 via-purple-500/20 to-emerald-500/30 p-10">
+      <div className="cp-container space-y-8 sm:space-y-10 lg:space-y-12">
+        <header className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-500/25 via-purple-500/15 to-emerald-500/25 p-8 sm:p-10">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.25),_transparent_55%)]" />
-          <div className="relative flex flex-col gap-6 text-white">
-            <div>
+          <div className="relative flex flex-col gap-8 text-white lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-xl space-y-5">
               <p className="text-sm uppercase tracking-[0.4em] text-white/60">Charm Crew Deck</p>
-              <h1 className="mt-3 font-display text-4xl font-bold sm:text-5xl">Friends &amp; Dance Partners</h1>
-              <p className="mt-4 max-w-2xl text-base text-white/70">
+              <div>
+                <h1 className="font-display text-4xl font-bold sm:text-5xl">Friends &amp; Dance Partners</h1>
+                <p className="mt-3 text-base text-white/70 sm:leading-relaxed">
+                  {isAuthenticated
+                    ? `Hey ${userLabel.split(' ')[0] ?? userLabel}, your roster is ready to light up the MotionXChange Arena.`
+                    : 'Sign in to light up your roster and watch your dancers take the stage.'}
+                </p>
+              </div>
+              <p className="text-sm text-white/65 sm:max-w-md">
                 {isAuthenticated
-                  ? `Hey ${userLabel.split(' ')[0] ?? userLabel}, your roster is ready to light up the MotionXChange Arena.`
-                  : 'Sign in to light up your roster and watch your dancers take the stage.'}
-                {' '}
-                The shared stage updates live as friends join the show.
+                  ? 'Share boost links, sync routines, and keep your plaza status glowing.'
+                  : 'Claim a pal and invite a friend to unlock boost links and shared routines.'}
               </p>
             </div>
             {spotlight ? (
-              <div className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-black/20 p-6 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
-                <div>
+              <div className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-black/25 p-6 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between lg:max-w-sm">
+                <div className="space-y-2">
                   <p className="text-xs uppercase tracking-[0.3em] text-white/60">Spotlight</p>
                   <div className="mt-2 text-lg font-semibold">{spotlight.name}</div>
-                  <p className="text-sm text-white/70">{spotlight.status}</p>
+                  <p className="text-sm text-white/70 sm:max-w-xs">{spotlight.status}</p>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap">
                   <div className="rounded-full bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white/80">
                     {spotlight.energy} Energy
                   </div>
-                  <button className="rounded-lg bg-white px-5 py-2 text-sm font-semibold text-gray-900 transition hover:bg-gray-100">
+                  <button className="flex-1 rounded-lg bg-white px-5 py-2 text-sm font-semibold text-gray-900 transition hover:bg-gray-100 sm:flex-none">
                     Send Hype
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="rounded-2xl border border-white/10 bg-black/20 p-6 text-sm text-white/70">
+              <div className="rounded-2xl border border-white/10 bg-black/25 p-6 text-sm text-white/70 lg:max-w-sm">
                 {isAuthenticated
                   ? 'Invite a friend to claim their dancer and they will appear center stage.'
                   : 'Once you sign in and claim a pal, they will step into the spotlight.'}
@@ -86,87 +91,103 @@ export default function FriendsClient({ userLabel, isAuthenticated, friends, pen
           </div>
         </header>
 
-        <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/40 px-8 py-10 backdrop-blur-xl">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,_rgba(99,102,241,0.35),_transparent_65%)]" />
-          <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(147,197,253,0.1),rgba(244,114,182,0.08)_45%,rgba(167,139,250,0.12))]" />
-          <div className="relative flex flex-col gap-8 text-white">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.35em] text-white/60">Crew Stage</p>
-                <h2 className="font-display text-3xl font-semibold">Live Showcase</h2>
-                <p className="mt-3 max-w-xl text-sm text-white/70">
-                  This hologrid mirrors the energy of your circle. Dancers with active routines pulse brighter—stack
-                  the stage by recruiting more pals.
-                </p>
+        <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/35 px-6 py-8 sm:px-8 sm:py-10 backdrop-blur-xl">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,_rgba(99,102,241,0.28),_transparent_65%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(147,197,253,0.08),rgba(244,114,182,0.06)_45%,rgba(167,139,250,0.09))]" />
+          <div className="relative grid gap-8 text-white lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:items-start">
+            <div className="space-y-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.35em] text-white/60">Crew Stage</p>
+                  <h2 className="font-display text-3xl font-semibold sm:text-[34px]">Live Showcase</h2>
+                  <p className="mt-3 max-w-xl text-sm text-white/70 sm:leading-relaxed">
+                    The hologrid mirrors the energy of your circle. Routines pulse brighter as friends go live—keep the
+                    momentum rolling with fresh invites.
+                  </p>
+                </div>
+                {hasFriends && (
+                  <button className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/20 sm:self-end">
+                    Start Crew Session
+                  </button>
+                )}
               </div>
-              <button className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/20">
-                Start Crew Session
-              </button>
+
+              <div className="relative h-[18rem] sm:h-[22rem] lg:h-[24rem] rounded-[32px] border border-white/15 bg-gradient-to-br from-black/75 via-indigo-950/45 to-purple-950/50 shadow-[0_28px_100px_rgba(45,18,88,0.35)]">
+                <div className="absolute inset-x-1/4 bottom-6 h-2 rounded-full bg-gradient-to-r from-violet-400/30 via-sky-400/35 to-fuchsia-400/30 blur-md" />
+                <div className="absolute inset-x-[18%] bottom-16 h-20 rounded-full border border-white/10 bg-white/5 blur-lg" />
+
+                {hasFriends ? (
+                  <>
+                    <div className="absolute inset-0">
+                      {stageFriends.map((friend, idx) => (
+                        <StageBadge key={friend.id} friend={friend} style={orbitPositions[idx] || {}} />
+                      ))}
+                    </div>
+                    <div className="pointer-events-none absolute inset-0 rounded-[32px] border border-white/10" />
+                  </>
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center text-white/70">
+                    <div className="mb-6 h-20 w-20 rounded-full border border-dashed border-white/30" />
+                    <p className="text-lg font-semibold text-white/80">The stage is set, but the crowd is quiet.</p>
+                    <p className="mt-2 max-w-sm text-sm text-white/60">
+                      Invite your first friend to light up the arena. We’ll spotlight their dancer right here.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="relative h-[24rem] rounded-[40px] border border-white/20 bg-gradient-to-br from-black/70 via-indigo-950/40 to-purple-950/40 shadow-[0_40px_120px_rgba(45,18,88,0.4)]">
-              <div className="absolute inset-x-1/4 bottom-6 h-2 rounded-full bg-gradient-to-r from-violet-400/30 via-sky-400/40 to-fuchsia-400/30 blur-lg" />
-              <div className="absolute inset-x-[15%] bottom-16 h-24 rounded-full border border-white/10 bg-white/5 blur-xl" />
-
-              {hasFriends ? (
-                <>
-                  <div className="absolute inset-0">
-                    {stageFriends.map((friend, idx) => (
-                      <StageBadge key={friend.id} friend={friend} style={orbitPositions[idx] || {}} />
-                    ))}
-                  </div>
-                  <div className="absolute inset-0 animate-pulse rounded-[40px] border border-white/10" />
-                </>
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                <h3 className="text-xs uppercase tracking-[0.3em] text-white/60">Crew Pulse</h3>
+                <p className="mt-2 text-sm text-white/70">
+                  See who is fueling the flow, then jump in for co-op routines or quick duels.
+                </p>
+              </div>
+              {friends.length ? (
+                <div className="flex snap-x gap-3 overflow-x-auto pb-2 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible lg:grid-cols-1">
+                  {friends.map((friend) => (
+                    <div
+                      key={friend.id}
+                      className="group relative min-w-[220px] snap-center overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 transition hover:border-white/20 hover:bg-white/10"
+                    >
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.16),_transparent_70%)] opacity-0 transition-opacity group-hover:opacity-100" />
+                      <div className="relative space-y-3 text-white">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-sm font-semibold truncate">{friend.name}</p>
+                          <span className="rounded-full bg-white/10 px-2 py-[2px] text-[10px] font-bold uppercase tracking-widest text-white/80">
+                            {friend.energy}
+                          </span>
+                        </div>
+                        <p className="text-[11px] uppercase tracking-[0.28em] text-white/55">{friend.dancerTitle}</p>
+                        <p className="text-sm text-white/70 line-clamp-2">{friend.status}</p>
+                        <div className="flex items-center gap-2 text-xs text-white/60">
+                          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: friend.accent }} />
+                          <span className="truncate">{friend.vibe}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <button className="flex-1 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-gray-900 transition hover:bg-gray-100">
+                            Challenge
+                          </button>
+                          <button className="flex-1 rounded-lg border border-white/30 bg-white/5 px-3 py-2 text-xs font-semibold text-white/80 hover:border-white/50">
+                            Crew Pass
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white/70">
-                  <div className="mb-6 h-24 w-24 rounded-full border border-dashed border-white/30" />
-                  <p className="text-lg font-semibold text-white/80">The stage is set, but the crowd is quiet.</p>
-                  <p className="mt-2 max-w-sm text-sm text-white/60">
-                    Invite your first friend to light up the arena. We’ll spotlight their dancer right here.
-                  </p>
+                <div className="rounded-2xl border border-dashed border-white/15 bg-white/5 p-6 text-sm text-white/65">
+                  Add a friend to start tracking live energy. Once their dancer is active, they’ll pulse into this rail.
                 </div>
               )}
             </div>
-
-            {hasFriends && (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {friends.map((friend) => (
-                  <div
-                    key={friend.id}
-                    className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 transition hover:border-white/20 hover:bg-white/10"
-                  >
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.18),_transparent_70%)]" />
-                    <div className="relative space-y-3 text-white">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-semibold">{friend.name}</p>
-                        <span className="rounded-full bg-white/10 px-2 py-[2px] text-[10px] font-bold uppercase tracking-widest text-white/80">
-                          {friend.energy} Energy
-                        </span>
-                      </div>
-                      <p className="text-xs uppercase tracking-[0.28em] text-white/60">{friend.dancerTitle}</p>
-                      <p className="text-sm text-white/70">{friend.status}</p>
-                      <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: friend.accent }} />
-                        <span className="text-xs text-white/60">{friend.vibe}</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <button className="flex-1 rounded-lg bg-white px-3 py-2 text-xs font-semibold text-gray-900 transition hover:bg-gray-100">
-                          Challenge
-                        </button>
-                        <button className="flex-1 rounded-lg border border-white/30 bg-white/5 px-3 py-2 text-xs font-semibold text-white/80 hover:border-white/50">
-                          Send Crew Pass
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         </section>
 
-        <section className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-8 text-white">
+        <section className="grid gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+          <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/6 p-7 text-white sm:p-8">
             <div className="absolute inset-0 bg-[linear-gradient(140deg,rgba(255,255,255,0.08),transparent_45%)]" />
             <div className="relative space-y-6">
               <div>
@@ -217,7 +238,7 @@ export default function FriendsClient({ userLabel, isAuthenticated, friends, pen
           </div>
 
           <aside className="space-y-6">
-            <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 text-white">
+            <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/6 p-6 text-white sm:p-7">
               <div className="absolute inset-0 bg-[linear-gradient(160deg,rgba(244,114,182,0.18),transparent_55%)]" />
               <div className="relative space-y-4">
                 <div>
@@ -253,8 +274,8 @@ export default function FriendsClient({ userLabel, isAuthenticated, friends, pen
               </div>
             </div>
 
-            <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 text-white">
-              <div className="absolute inset-0 bg-[linear-gradient(140deg,rgba(56,189,248,0.18),transparent_55%)]" />
+            <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/6 p-6 text-white sm:p-7">
+              <div className="absolute inset-0 bg-[linear-gradient(150deg,rgba(56,189,248,0.18),transparent_55%)]" />
               <div className="relative space-y-3">
                 <p className="text-xs uppercase tracking-[0.35em] text-white/60">Crew Status</p>
                 <h3 className="font-display text-xl font-semibold">Who’s Live</h3>
