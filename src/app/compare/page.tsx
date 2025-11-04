@@ -1,45 +1,68 @@
-'use client';
+import Link from "next/link";
 
-import Link from 'next/link';
+import CompareClient, { type CompareCharacter } from "./CompareClient";
+import { getRepo } from "@/lib/repo";
+import { withCharacterLore, type CharacterWithLore } from "@/lib/characterLore";
 
-export default function ComparePage() {
+export default async function ComparePage() {
+  const repo = await getRepo();
+  const characters = await repo.listCharacters({ limit: 48, offset: 0 });
+  const enriched = characters
+    .map((character) => withCharacterLore(character))
+    .filter((value): value is CharacterWithLore => Boolean(value));
+
+  if (enriched.length === 0) {
+    return (
+      <div className="min-h-screen bg-grid-overlay py-12">
+        <div className="cp-container">
+          <div className="cp-panel border border-dashed border-white/15 bg-white/[0.03] p-10 text-center text-white/70">
+            <h1 className="font-display text-3xl font-bold text-white">Compare &amp; Amplify</h1>
+            <p className="cp-muted mx-auto mt-3 max-w-lg text-base">
+              We couldn&apos;t find any characters in the roster yet. Seed data or claim a pal to unlock the matchup view.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3 text-sm font-semibold">
+              <Link href="/explore" className="rounded-lg bg-white px-4 py-2 text-gray-900 shadow hover:bg-gray-100">
+                Explore roster
+              </Link>
+              <Link href="/claim" className="rounded-lg border border-white/30 px-4 py-2 text-white hover:bg-white/10">
+                Claim a pal
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const sorted = enriched
+    .map((character) => ({
+      id: character.id,
+      name: character.name,
+      slug: character.slug ?? character.lore?.slug ?? null,
+      tagline: character.tagline ?? character.lore?.tagline ?? null,
+      realm: character.realm ?? character.lore?.realm ?? null,
+      title: character.title ?? character.lore?.title ?? null,
+      vibe: character.vibe ?? character.lore?.vibe ?? null,
+      coreCharm: character.coreCharm ?? character.lore?.coreCharm ?? null,
+      danceStyle: character.danceStyle ?? character.lore?.danceStyle ?? null,
+      personality: character.personality ?? character.lore?.personality ?? null,
+      stats: Object.keys(character.stats ?? {}).length > 0 ? character.stats : character.lore?.stats ?? {},
+      rarity: character.rarity,
+      color: character.color ?? character.lore?.color ?? null,
+      art: {
+        thumbnail: character.artRefs?.thumbnail ?? null,
+        portrait: character.artRefs?.portrait ?? null,
+      },
+      order: character.lore?.order ?? Number.MAX_SAFE_INTEGER,
+    }))
+    .sort((a, b) => a.order - b.order);
+
+  const payload: CompareCharacter[] = sorted.map(({ order: _order, ...rest }) => rest);
+
   return (
-    <div className="min-h-screen py-12 px-4 bg-grid-overlay">
-      <div className="cp-container">
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold text-white font-display mb-2">Compare & Compete</h1>
-          <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-            See how your characters rank and challenge friends to battles.
-          </p>
-        </div>
-
-        <div className="cp-panel overflow-hidden">
-          <div className="p-6 border-b border-white/10">
-            <h2 className="text-2xl font-bold text-white font-display">Leaderboards</h2>
-            <p className="text-gray-300">Top players across the platform</p>
-          </div>
-          <div className="divide-y divide-white/10">
-            {[1, 2, 3, 4, 5].map((rank) => (
-              <div key={rank} className="p-4 flex items-center">
-                <div className="w-8 h-8 flex items-center justify-center rounded-full cp-chip text-white/90 border-white/20">
-                  {rank}
-                </div>
-                <div className="ml-4 flex-shrink-0 w-12 h-12 rounded-full" style={{ backgroundImage: 'var(--cp-gradient)' }} />
-                <div className="ml-4 flex-grow">
-                  <h3 className="font-bold text-white">Player {rank}</h3>
-                  <p className="text-gray-300 text-sm">Blaze the Dragon</p>
-                </div>
-                <div className="text-right mr-2">
-                  <div className="font-bold text-white">{10000 - rank * 500}</div>
-                  <div className="text-xs text-gray-400">Score</div>
-                </div>
-                <Link href="/play/battle" className="ml-2 px-4 py-2 bg-white text-gray-900 rounded-lg text-sm font-semibold hover:bg-gray-100">
-                  Challenge
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
+    <div className="min-h-screen bg-grid-overlay py-12">
+      <div className="cp-container space-y-10">
+        <CompareClient characters={payload} />
       </div>
     </div>
   );
