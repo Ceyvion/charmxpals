@@ -108,6 +108,7 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
   }, [filtered, selectedId]);
 
   const selectedMedia = useMemo(() => (selected ? pickMedia(selected.artRefs) : null), [selected]);
+  const selectedOwned = useMemo(() => (selected ? ownedSet.has(selected.id) : false), [ownedSet, selected]);
 
   const sections = useMemo(() => {
     const rarityFilter: RarityKey | null = filter === 'all' ? null : filter;
@@ -210,17 +211,17 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
               <span>Rare</span>
             </button>
           </div>
-          <div className="ml-auto flex flex-wrap items-center gap-2">
+          <div className="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by name…"
-              className="min-w-[200px] rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-white placeholder-white/70"
+              className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-white placeholder-white/70 sm:min-w-[200px] sm:flex-1"
               onFocus={playHover}
             />
             <select
               value={sortBy}
-              className="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-white"
+              className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-white sm:w-auto"
               onFocus={playHover}
               onChange={(e) => {
                 setSortBy(e.target.value as typeof sortBy);
@@ -230,7 +231,7 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
               <option value="rarity">Sort: Rarity</option>
               <option value="name">Sort: Name</option>
             </select>
-            <Link href="/claim" className="rounded-lg bg-white px-4 py-2 font-semibold text-gray-900">
+            <Link href="/claim" className="w-full rounded-lg bg-white px-4 py-2 text-center font-semibold text-gray-900 sm:w-auto">
               Scan &amp; Claim
             </Link>
           </div>
@@ -238,7 +239,7 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
       </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1.4fr),minmax(320px,1fr)]">
-        <div className="order-2 space-y-8 lg:order-1">
+        <div className="order-1 space-y-8 lg:order-1">
           {sections.map((section) => (
             <RevealOnView key={section.key}>
               <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
@@ -334,6 +335,11 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
                           </Link>
                         </div>
                       </div>
+                      {isActive && (
+                        <div className="mt-3 lg:hidden">
+                          <SpotlightCard character={character} media={media} owned={owned} variant="mobile" />
+                        </div>
+                      )}
                     </li>
                   );
                 })}
@@ -348,122 +354,136 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
           )}
         </div>
 
-        <aside className="order-1 lg:order-2 lg:sticky lg:top-28" data-roster-spotlight>
+        <aside className="order-2 hidden lg:sticky lg:top-28 lg:block" data-roster-spotlight>
           {selected ? (
-            <div className="relative overflow-hidden rounded-3xl border border-white/12 bg-white/[0.05]">
-              <div
-                className="pointer-events-none absolute -top-20 left-[-30%] h-72 w-72 rounded-full opacity-30 blur-3xl"
-                style={{ background: selected.color || 'rgba(127, 234, 255, 0.45)' }}
-              />
-              <div className="pointer-events-none absolute -bottom-12 right-[-20%] h-60 w-60 rounded-full bg-pink-400/30 opacity-40 blur-3xl" />
-              <div className="relative p-6 md:p-8">
-                <div className="flex flex-col gap-5 md:flex-row md:items-start">
-                  <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-3xl border border-white/10 bg-white/10 shadow-lg md:h-32 md:w-32">
-                    {selectedMedia ? (
-                      <img src={selectedMedia} alt={selected.name} className="h-full w-full object-cover" loading="lazy" decoding="async" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-white/10 via-white/5 to-transparent text-lg font-bold uppercase tracking-[0.2em] text-white/60">
-                        {selected.name.slice(0, 2)}
-                      </div>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    {selected.realm && <div className="cp-kicker text-white/70">{selected.realm}</div>}
-                    <h2 className="font-display text-2xl font-extrabold leading-tight text-white md:text-3xl" data-spotlight-name>
-                      {selected.name}
-                    </h2>
-                    <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-white/70">
-                      <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em]">
-                        {RARITY_META[getRarity(selected.rarity)].label}
-                      </span>
-                      {ownedSet.has(selected.id) && (
-                        <span className="rounded-full bg-emerald-400/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-100">
-                          You own this
-                        </span>
-                      )}
-                      {selected.codeSeries && (
-                        <span className="text-xs uppercase tracking-[0.24em] text-white/60">Series: {selected.codeSeries}</span>
-                      )}
-                    </div>
-                    {selected.title && <p className="mt-2 text-sm text-white/70">{selected.title}</p>}
-                  </div>
-                </div>
-
-                {(selected.tagline || selected.description) && (
-                  <p className="cp-muted mt-6 text-base leading-relaxed">{selected.tagline || selected.description}</p>
-                )}
-
-                <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
-                  {selected.coreCharm && (
-                    <div>
-                      <dt className="text-xs uppercase tracking-[0.26em] text-white/50">Core Charm</dt>
-                      <dd className="mt-1 text-white/80">{selected.coreCharm}</dd>
-                    </div>
-                  )}
-                  {selected.danceStyle && (
-                    <div>
-                      <dt className="text-xs uppercase tracking-[0.26em] text-white/50">Signature Moves</dt>
-                      <dd className="mt-1 text-white/80">{selected.danceStyle}</dd>
-                    </div>
-                  )}
-                  {selected.vibe && (
-                    <div className="sm:col-span-2">
-                      <dt className="text-xs uppercase tracking-[0.26em] text-white/50">Realm Vibe</dt>
-                      <dd className="mt-1 text-white/80">{selected.vibe}</dd>
-                    </div>
-                  )}
-                  {selected.personality && (
-                    <div className="sm:col-span-2">
-                      <dt className="text-xs uppercase tracking-[0.26em] text-white/50">Personality</dt>
-                      <dd className="mt-1 text-white/80">{selected.personality}</dd>
-                    </div>
-                  )}
-                </dl>
-
-                {Object.keys(selected.stats ?? {}).length > 0 && (
-                  <div className="mt-6">
-                    <div className="text-xs uppercase tracking-[0.28em] text-white/50">Crew Stats</div>
-                    <div className="mt-3 space-y-3">
-                      {Object.entries(selected.stats!)
-                        .sort((a, b) => b[1] - a[1])
-                        .map(([label, value]) => (
-                          <div key={label} className="flex items-center gap-3 text-sm text-white">
-                            <span className="w-28 uppercase tracking-[0.22em] text-white/60">{label}</span>
-                            <div className="h-2 flex-1 rounded-full bg-white/10">
-                              <div
-                                className="h-2 rounded-full bg-white/80"
-                                style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
-                              />
-                            </div>
-                            <span className="w-10 text-right text-white/70">{Math.round(value)}</span>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="mt-8 flex flex-wrap gap-3">
-                  <Link
-                    href={`/character/${selected.id}`}
-                    className="rounded-xl bg-white px-5 py-2 font-semibold text-gray-900 transition hover:-translate-y-0.5 hover:shadow-lg"
-                  >
-                    Open full profile
-                  </Link>
-                  <Link
-                    href="/play"
-                    className="rounded-xl border border-white/20 px-5 py-2 font-semibold text-white transition hover:bg-white/10"
-                  >
-                    Launch battle prep
-                  </Link>
-                </div>
-              </div>
-            </div>
+            <SpotlightCard character={selected} media={selectedMedia} owned={selectedOwned} variant="desktop" />
           ) : (
             <div className="cp-panel h-full min-h-[320px] p-8 text-center">
               <p className="cp-muted">Filter the roster to start building your spotlight.</p>
             </div>
           )}
         </aside>
+      </div>
+    </div>
+  );
+}
+
+type SpotlightCardProps = {
+  character: Character;
+  media: string | null;
+  owned: boolean;
+  variant: 'desktop' | 'mobile';
+};
+
+function SpotlightCard({ character, media, owned, variant }: SpotlightCardProps) {
+  return (
+    <div
+      className={`relative overflow-hidden rounded-3xl border border-white/12 bg-white/[0.05] ${
+        variant === 'mobile' ? 'shadow-lg' : ''
+      }`}
+    >
+      <div
+        className="pointer-events-none absolute -top-20 left-[-30%] h-72 w-72 rounded-full opacity-30 blur-3xl"
+        style={{ background: character.color || 'rgba(127, 234, 255, 0.45)' }}
+      />
+      <div className="pointer-events-none absolute -bottom-12 right-[-20%] h-60 w-60 rounded-full bg-pink-400/30 opacity-40 blur-3xl" />
+      <div className="relative p-6 md:p-8">
+        <div className="flex flex-col gap-5 md:flex-row md:items-start">
+          <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-3xl border border-white/10 bg-white/10 shadow-lg md:h-32 md:w-32">
+            {media ? (
+              <img src={media} alt={character.name} className="h-full w-full object-cover" loading="lazy" decoding="async" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-white/10 via-white/5 to-transparent text-lg font-bold uppercase tracking-[0.2em] text-white/60">
+                {character.name.slice(0, 2)}
+              </div>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            {character.realm && <div className="cp-kicker text-white/70">{character.realm}</div>}
+            <h2 className="font-display text-2xl font-extrabold leading-tight text-white md:text-3xl" data-spotlight-name>
+              {character.name}
+            </h2>
+            <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-white/70">
+              <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em]">
+                {RARITY_META[getRarity(character.rarity)].label}
+              </span>
+              {owned && (
+                <span className="rounded-full bg-emerald-400/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-100">
+                  You own this
+                </span>
+              )}
+              {character.codeSeries && (
+                <span className="text-xs uppercase tracking-[0.24em] text-white/60">Series: {character.codeSeries}</span>
+              )}
+            </div>
+            {character.title && <p className="mt-2 text-sm text-white/70">{character.title}</p>}
+          </div>
+        </div>
+
+        {(character.tagline || character.description) && (
+          <p className="cp-muted mt-6 text-base leading-relaxed">{character.tagline || character.description}</p>
+        )}
+
+        <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
+          {character.coreCharm && (
+            <div>
+              <dt className="text-xs uppercase tracking-[0.26em] text-white/50">Core Charm</dt>
+              <dd className="mt-1 text-white/80">{character.coreCharm}</dd>
+            </div>
+          )}
+          {character.danceStyle && (
+            <div>
+              <dt className="text-xs uppercase tracking-[0.26em] text-white/50">Signature Moves</dt>
+              <dd className="mt-1 text-white/80">{character.danceStyle}</dd>
+            </div>
+          )}
+          {character.vibe && (
+            <div className="sm:col-span-2">
+              <dt className="text-xs uppercase tracking-[0.26em] text-white/50">Realm Vibe</dt>
+              <dd className="mt-1 text-white/80">{character.vibe}</dd>
+            </div>
+          )}
+          {character.personality && (
+            <div className="sm:col-span-2">
+              <dt className="text-xs uppercase tracking-[0.26em] text-white/50">Personality</dt>
+              <dd className="mt-1 text-white/80">{character.personality}</dd>
+            </div>
+          )}
+        </dl>
+
+        {Object.keys(character.stats ?? {}).length > 0 && (
+          <div className="mt-6">
+            <div className="text-xs uppercase tracking-[0.28em] text-white/50">Crew Stats</div>
+            <div className="mt-3 space-y-3">
+              {Object.entries(character.stats!)
+                .sort((a, b) => b[1] - a[1])
+                .map(([label, value]) => (
+                  <div key={label} className="flex items-center gap-3 text-sm text-white">
+                    <span className="w-28 uppercase tracking-[0.22em] text-white/60">{label}</span>
+                    <div className="h-2 flex-1 rounded-full bg-white/10">
+                      <div className="h-2 rounded-full bg-white/80" style={{ width: `${Math.min(100, Math.max(0, value))}%` }} />
+                    </div>
+                    <span className="w-10 text-right text-white/70">{Math.round(value)}</span>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Link
+            href={`/character/${character.id}`}
+            className="w-full rounded-xl bg-white px-5 py-2 text-center font-semibold text-gray-900 transition hover:-translate-y-0.5 hover:shadow-lg md:w-auto"
+          >
+            Open full profile
+          </Link>
+          <Link
+            href="/play"
+            className="w-full rounded-xl border border-white/20 px-5 py-2 text-center font-semibold text-white transition hover:bg-white/10 md:w-auto"
+          >
+            Launch battle prep
+          </Link>
+        </div>
       </div>
     </div>
   );
