@@ -68,23 +68,14 @@ export default function CompareClient({ characters }: CompareClientProps) {
     <div className="space-y-10">
       <HeroSection primary={primary} secondary={secondary} />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
-        <div className="space-y-6">
-          <SelectorPanel
-            label="Primary"
-            characters={roster}
-            selectedId={primary?.id ?? null}
-            otherSelectedId={secondary?.id ?? null}
-            onSelect={handleSelectPrimary}
-          />
-          <SelectorPanel
-            label="Rival"
-            characters={roster}
-            selectedId={secondary?.id ?? null}
-            otherSelectedId={primary?.id ?? null}
-            onSelect={handleSelectSecondary}
-          />
-        </div>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
+        <RosterPanel
+          characters={roster}
+          primaryId={primary?.id ?? null}
+          secondaryId={secondary?.id ?? null}
+          onSelectPrimary={handleSelectPrimary}
+          onSelectSecondary={handleSelectSecondary}
+        />
         <FocusPanel primary={primary} secondary={secondary} insights={insights} />
       </div>
 
@@ -115,18 +106,18 @@ function HeroSection({ primary, secondary }: { primary: CompareCharacter | null;
   );
 }
 
-function SelectorPanel({
-  label,
+function RosterPanel({
   characters,
-  selectedId,
-  otherSelectedId,
-  onSelect,
+  primaryId,
+  secondaryId,
+  onSelectPrimary,
+  onSelectSecondary,
 }: {
-  label: string;
   characters: CompareCharacter[];
-  selectedId: string | null;
-  otherSelectedId: string | null;
-  onSelect: (id: string) => void;
+  primaryId: string | null;
+  secondaryId: string | null;
+  onSelectPrimary: (id: string) => void;
+  onSelectSecondary: (id: string) => void;
 }) {
   const [query, setQuery] = useState("");
   const [showAll, setShowAll] = useState(false);
@@ -141,65 +132,93 @@ function SelectorPanel({
     });
   }, [characters, query]);
 
-  const DEFAULT_VISIBLE = 6;
-  const visibleCharacters = useMemo(() => {
-    if (showAll) return filtered;
-    return filtered.slice(0, DEFAULT_VISIBLE);
-  }, [filtered, showAll]);
+  const DEFAULT_VISIBLE = 8;
+  const visible = useMemo(() => (showAll ? filtered : filtered.slice(0, DEFAULT_VISIBLE)), [filtered, showAll]);
 
   return (
     <section className="cp-panel flex h-full flex-col overflow-hidden">
-      <div className="border-b border-white/10 p-4 sm:p-6">
-        <div className="cp-kicker mb-2 text-xs uppercase tracking-[0.28em] text-white/60">{label}</div>
-        <h2 className="font-display text-xl font-bold text-white sm:text-2xl">Pick a pal</h2>
-        <p className="cp-muted mt-2 text-sm">
-          Search by name, realm, or flair. The opposing slot highlights who&apos;s already locked.
-        </p>
-        <label className="mt-4 block">
-          <span className="sr-only">Search characters</span>
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search roster..."
-            className="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20"
-          />
-        </label>
+      <div className="border-b border-white/10 px-5 py-5">
+        <div className="flex flex-col gap-4">
+          <div>
+            <div className="cp-kicker text-xs uppercase tracking-[0.3em] text-white/60">Roster Control</div>
+            <h2 className="font-display text-2xl font-bold text-white">Pick Your Matchup</h2>
+            <p className="cp-muted mt-2 text-sm">
+              Assign a champion to each slot. Use the quick toggles to flip sides without losing your place.
+            </p>
+          </div>
+          <label className="block">
+            <span className="sr-only">Search roster</span>
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search roster..."
+              className="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20"
+            />
+          </label>
+        </div>
       </div>
-      <div className="max-h-[420px] flex-1 overflow-hidden px-4 pb-4 pt-3 sm:px-6 sm:pb-6">
-        <div className="grid grid-cols-2 gap-3 overflow-y-auto pr-1 sm:grid-cols-1">
-          {visibleCharacters.map((character) => {
-            const isSelected = character.id === selectedId;
-            const isLocked = character.id === otherSelectedId && !isSelected;
+      <div className="flex-1 overflow-hidden px-5 pb-5 pt-4">
+        <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-white/50">
+          <span>Top candidates</span>
+          <div className="flex items-center gap-3 text-[11px]">
+            <span className="text-white/60">Primary</span>
+            <span className="text-white/30">Swap</span>
+            <span className="text-white/60">Rival</span>
+          </div>
+        </div>
+        <div className="mt-3 space-y-3 overflow-y-auto pr-1">
+          {visible.map((character) => {
+            const isPrimary = character.id === primaryId;
+            const isSecondary = character.id === secondaryId;
+            const rarity = rarityLabel(character.rarity);
+            const charmTitle = extractCharmTitle(character.coreCharm);
             return (
-              <button
+              <div
                 key={character.id}
-                type="button"
-                className={buildCharacterPillClass(isSelected, isLocked)}
-                onMouseEnter={playHover}
-                onFocus={playHover}
-                onClick={() => {
-                  onSelect(character.id);
-                  playClick();
-                }}
-                aria-pressed={isSelected}
+                className="group relative overflow-hidden rounded-2xl border border-white/12 bg-white/[0.04] px-3 py-3 transition duration-200 hover:border-white/35 hover:bg-white/[0.08]"
               >
-                <CharacterAvatar name={character.name} color={character.color} art={character.art} />
-                <div className="min-w-0 text-left">
-                  <div className="truncate text-sm font-semibold text-white">{character.name}</div>
-                  <div className="text-xs text-white/60">{character.realm ?? character.title ?? "Unknown Realm"}</div>
+                <div className="flex items-center gap-3">
+                  <CharacterAvatar name={character.name} color={character.color} art={character.art} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="truncate text-sm font-semibold text-white">{character.name}</span>
+                      {isPrimary && <RoleBadge tone="primary" label="Primary" />}
+                      {isSecondary && <RoleBadge tone="secondary" label="Rival" />}
+                      <span className="rounded-full border border-white/15 bg-white/[0.05] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.28em] text-white/70">
+                        {rarity}
+                      </span>
+                    </div>
+                    <div className="text-xs text-white/60">{character.realm ?? character.title ?? "Unknown Realm"}</div>
+                    {charmTitle && <div className="text-[10px] uppercase tracking-[0.28em] text-white/35">{charmTitle}</div>}
+                  </div>
+                  <div className="ml-auto flex shrink-0 items-center gap-2">
+                    <RosterSelectButton
+                      label="Primary"
+                      active={isPrimary}
+                      onClick={() => {
+                        onSelectPrimary(character.id);
+                        playClick();
+                      }}
+                      onHover={playHover}
+                    />
+                    <RosterSelectButton
+                      label="Rival"
+                      active={isSecondary}
+                      variant="secondary"
+                      onClick={() => {
+                        onSelectSecondary(character.id);
+                        playClick();
+                      }}
+                      onHover={playHover}
+                    />
+                  </div>
                 </div>
-                <div className="ml-auto flex shrink-0 flex-col items-end gap-1 text-right">
-                  <span className="inline-flex rounded-full border border-white/15 bg-white/[0.06] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/70">
-                    {rarityLabel(character.rarity)}
-                  </span>
-                  {isLocked && <span className="text-[10px] uppercase tracking-[0.28em] text-white/40">Other slot</span>}
-                </div>
-              </button>
+              </div>
             );
           })}
           {filtered.length === 0 && (
-            <div className="col-span-2 rounded-2xl border border-dashed border-white/15 bg-white/[0.03] p-6 text-center text-sm text-white/60 sm:col-span-1">
-              No matches yet - tweak your search.
+            <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.03] p-6 text-center text-sm text-white/60">
+              No matches yet - adjust your search.
             </div>
           )}
         </div>
@@ -224,6 +243,54 @@ function SelectorPanel({
   );
 }
 
+function RoleBadge({ tone, label }: { tone: "primary" | "secondary"; label: string }) {
+  const palette =
+    tone === "primary"
+      ? { background: "linear-gradient(135deg,#facc15,#f97316,#ec4899)", color: "#111826" }
+      : { background: "linear-gradient(135deg,#a855f7,#6366f1,#22d3ee)", color: "#0f172a" };
+  return (
+    <span
+      className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.3em]"
+      style={{ backgroundImage: palette.background, color: palette.color }}
+    >
+      {label}
+    </span>
+  );
+}
+
+function RosterSelectButton({
+  label,
+  active,
+  onClick,
+  onHover,
+  variant = "primary",
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+  onHover: () => void;
+  variant?: "primary" | "secondary";
+}) {
+  const gradient =
+    variant === "primary"
+      ? "linear-gradient(135deg,rgba(250,204,21,0.65),rgba(236,72,153,0.65))"
+      : "linear-gradient(135deg,rgba(99,102,241,0.65),rgba(56,189,248,0.65))";
+  return (
+    <button
+      type="button"
+      className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.32em] transition focus:outline-none focus:ring-2 focus:ring-white/30 ${
+        active ? "border-white/70 text-white shadow-[0_10px_30px_rgba(15,23,42,0.45)]" : "border-white/20 text-white/70 hover:border-white/35 hover:text-white"
+      }`}
+      style={active ? { backgroundImage: gradient } : undefined}
+      onClick={onClick}
+      onMouseEnter={onHover}
+      onFocus={onHover}
+    >
+      {label}
+    </button>
+  );
+}
+
 function FocusPanel({
   primary,
   secondary,
@@ -240,22 +307,33 @@ function FocusPanel({
     tone: "neutral" as const,
   };
   return (
-    <section className="cp-panel overflow-hidden border border-white/10 bg-gradient-to-br from-white/[0.06] via-white/[0.02] to-transparent">
-      <Spotlight character={primary} align="left" />
-      <div className="border-y border-white/10 bg-black/20 px-4 py-5 text-center text-xs uppercase tracking-[0.3em] text-white/60 sm:px-6">
-        {primary?.name ?? "Select primary"} <span className="text-white/40">vs</span> {secondary?.name ?? "Select rival"}
+    <section className="cp-panel flex h-full flex-col overflow-hidden">
+      <div className="border-b border-white/10 px-5 py-5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <div className="cp-kicker text-xs uppercase tracking-[0.28em] text-white/60">Matchup Overview</div>
+            <h2 className="font-display text-2xl font-bold text-white">Realm Pulse</h2>
+          </div>
+          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.32em] text-white/60">
+            <span>{primary?.name ?? "Primary slot"}</span>
+            <span className="text-white/30">vs</span>
+            <span>{secondary?.name ?? "Rival slot"}</span>
+          </div>
+        </div>
       </div>
-      <Spotlight character={secondary} align="right" />
-      <div className="border-t border-white/10 bg-white/5 px-4 py-5 sm:px-6">
-        <div className="cp-kicker mb-2 text-xs uppercase tracking-[0.25em] text-white/60">Insight Pulse</div>
-        <div className="space-y-3">
+      <div className="flex flex-1 flex-col gap-6 px-5 py-5">
+        <div className="grid gap-4 md:grid-cols-2">
+          <SpotlightCard character={primary} tone="primary" />
+          <SpotlightCard character={secondary} tone="secondary" />
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
           {(bothSelected ? insights : [fallbackInsight]).map((insight, index) => (
             <div
               key={`${insight.label}-${index}`}
-              className="rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-white shadow-[0_12px_30px_rgba(15,23,42,0.45)]"
+              className="rounded-2xl border border-white/12 bg-white/[0.05] px-4 py-3 text-sm text-white backdrop-blur-sm transition duration-200 hover:border-white/30 hover:bg-white/[0.08]"
             >
-              <div className="font-semibold tracking-wide text-white/80">{insight.label}</div>
-              {insight.difference && <div className="mt-1 text-xs uppercase tracking-[0.32em] text-white/50">{insight.difference}</div>}
+              <div className="font-semibold text-white/85">{insight.label}</div>
+              {insight.difference && <div className="mt-1 text-[10px] uppercase tracking-[0.32em] text-white/45">{insight.difference}</div>}
             </div>
           ))}
         </div>
@@ -264,45 +342,44 @@ function FocusPanel({
   );
 }
 
-function Spotlight({ character, align }: { character: CompareCharacter | null; align: "left" | "right" }) {
-  const accent = character?.color ?? FALLBACK_COLOR;
-  const gradient =
-    character != null
-      ? `linear-gradient(135deg, ${withAlpha(accent, 0.52)} 0%, rgba(15,23,42,0.65) 55%, rgba(15,23,42,0.88) 100%)`
-      : "linear-gradient(135deg, rgba(79,70,229,0.45), rgba(15,23,42,0.9))";
+function SpotlightCard({ character, tone }: { character: CompareCharacter | null; tone: "primary" | "secondary" }) {
+  const accent = character?.color ?? (tone === "primary" ? "#f97316" : "#6366f1");
+  const gradient = `linear-gradient(135deg, ${withAlpha(accent, 0.55)} 0%, rgba(15,23,42,0.78) 55%, rgba(15,23,42,0.92) 100%)`;
   const charmTitle = extractCharmTitle(character?.coreCharm ?? null);
   return (
-    <div
-      className="relative flex min-h-[170px] flex-col justify-end border-t border-white/10 px-4 py-5 text-white sm:px-6"
-      style={{ backgroundImage: gradient }}
-    >
-      {character ? (
-        <>
-          <div className="text-xs uppercase tracking-[0.35em] text-white/70">{character.realm ?? character.title ?? "Across Realms"}</div>
-          <div className="mt-1 flex items-baseline justify-between gap-3">
-            <div>
-              <div className="font-display text-2xl font-bold tracking-tight sm:text-3xl">{character.name}</div>
-              {character.tagline && <div className="mt-1 text-sm text-white/70">{character.tagline}</div>}
-            </div>
-            <span className="rounded-full border border-white/25 bg-white/[0.16] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-white">
-              {rarityLabel(character.rarity)}
-            </span>
-          </div>
-          <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-white/80">
-            {charmTitle && (
-              <span className="rounded-full border border-white/20 bg-white/15 px-2 py-1 font-semibold uppercase tracking-[0.28em] text-white">
-                {charmTitle}
+    <article className="relative overflow-hidden rounded-3xl border border-white/12 bg-white/[0.04] p-5 text-white">
+      <div className="absolute inset-0 opacity-90" style={{ backgroundImage: gradient }} aria-hidden />
+      <div className="relative flex min-h-[160px] flex-col justify-between gap-3">
+        {character ? (
+          <>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.35em] text-white/70">{character.realm ?? character.title ?? "Across Realms"}</div>
+                <h3 className="mt-1 text-2xl font-display font-semibold leading-tight">{character.name}</h3>
+              </div>
+              <span className="rounded-full border border-white/30 bg-white/20 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-white">
+                {rarityLabel(character.rarity)}
               </span>
-            )}
-            {character.danceStyle && (
-              <span className="rounded-full border border-white/15 bg-black/20 px-2 py-1 font-medium text-white/80">{character.danceStyle}</span>
-            )}
+            </div>
+            {character.tagline && <p className="text-sm text-white/80">{character.tagline}</p>}
+            <div className="flex flex-wrap gap-2 text-[11px] text-white/85">
+              {charmTitle && (
+                <span className="rounded-full border border-white/20 bg-white/15 px-2 py-1 font-semibold uppercase tracking-[0.28em] text-white">
+                  {charmTitle}
+                </span>
+              )}
+              {character.danceStyle && (
+                <span className="rounded-full border border-white/20 bg-black/25 px-2 py-1 font-medium text-white/80">{character.danceStyle}</span>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="py-6 text-sm text-white/70">
+            {tone === "primary" ? "Choose a primary pal to compare." : "Pick a rival to complete the matchup."}
           </div>
-        </>
-      ) : (
-        <div className="text-sm text-white/70">{align === "left" ? "Choose your anchor champion." : "Pick a rival to compare."}</div>
-      )}
-    </div>
+        )}
+      </div>
+    </article>
   );
 }
 
@@ -591,18 +668,6 @@ function withAlpha(color: string, alpha: number) {
     });
   }
   return `rgba(99,102,241,${alpha})`;
-}
-
-function buildCharacterPillClass(selected: boolean, locked: boolean) {
-  const base =
-    "group flex items-center gap-3 rounded-2xl border px-3 py-3 transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30";
-  if (selected) {
-    return `${base} border-white/45 bg-white/[0.15] text-white shadow-[0_16px_45px_rgba(99,102,241,0.35)]`;
-  }
-  if (locked) {
-    return `${base} border-white/15 bg-white/[0.04] text-white/65`;
-  }
-  return `${base} border-white/10 bg-white/[0.05] text-white hover:border-white/40 hover:bg-white/[0.12]`;
 }
 
 function CharacterAvatar({
