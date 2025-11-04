@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { pulsegridTracks, type PulsegridNote, type PulsegridTrack } from '@/data/pulsegridTracks';
 
-type GameState = 'menu' | 'countdown' | 'playing' | 'over';
-type Judgment = 'perfect' | 'great' | 'good' | 'miss';
+type GameState = 'menu' | 'countdown' | 'playing' | 'paused' | 'over';
+type JudgmentKind = 'perfect' | 'great' | 'good' | 'miss';
 
 type RunnerProps = {
   stats?: Record<string, number> | null;
@@ -14,7 +14,7 @@ type RunnerProps = {
 
 type RuntimeNote = PulsegridNote & {
   judged: boolean;
-  result?: Judgment;
+  result?: JudgmentKind;
   flashUntil?: number;
 };
 
@@ -25,21 +25,24 @@ type Accuracy = {
   miss: number;
 };
 
-type LaneEffect = { lane: number; until: number; strength: number };
+type LaneEffect = { lane: number; until: number; strength: number; tone?: 'hit' | 'input' | 'miss'; duration: number };
+type ActiveJudgment = { kind: JudgmentKind; at: number; offset?: number };
+type CountdownKind = 'start' | 'resume';
 
 const LANES = 4;
 const HIT_WINDOWS = { perfect: 55, great: 95, good: 140 } as const; // ms windows centered on the beat
 const MISS_WINDOW_BASE = 180; // ms after the beat before a note counts as a miss
 const TRAVEL_MS_BASE = 1800; // how long a note takes to travel from spawn to the hit line
 const COUNTDOWN_MS = 2900;
+const RESUME_COUNTDOWN_MS = 1600;
 
-const SCORE_VALUE: Record<Exclude<Judgment, 'miss'>, number> = {
+const SCORE_VALUE: Record<Exclude<JudgmentKind, 'miss'>, number> = {
   perfect: 1250,
   great: 940,
   good: 660,
 };
 
-const JUDGMENT_LABEL: Record<Judgment, string> = {
+const JUDGMENT_LABEL: Record<JudgmentKind, string> = {
   perfect: 'Perfect Sync',
   great: 'Great Timing',
   good: 'On Beat',
@@ -50,6 +53,15 @@ const KEY_BINDINGS = ['KeyF', 'KeyG', 'KeyH', 'KeyJ'];
 const KEY_LABELS = ['F', 'G', 'H', 'J'];
 
 const defaultAccuracy: Accuracy = { perfect: 0, great: 0, good: 0, miss: 0 };
+const hexToRgb = (hex: string): [number, number, number] | null => {
+  const normalized = hex.startsWith('#') ? hex.slice(1) : hex;
+  if (normalized.length !== 6) return null;
+  const r = parseInt(normalized.slice(0, 2), 16);
+  const g = parseInt(normalized.slice(2, 4), 16);
+  const b = parseInt(normalized.slice(4, 6), 16);
+  if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) return null;
+  return [r, g, b];
+};
 const readStat = (stats: Record<string, number> | null | undefined, key: string, fallback: number) => {
   if (!stats) return fallback;
   const target = key.toLowerCase();
@@ -84,6 +96,26 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
   }, [flowRating]);
 
   const missWindow = useMemo(() => Math.max(140, tunedWindows.good + (MISS_WINDOW_BASE - HIT_WINDOWS.good)), [tunedWindows]);
+  const trackDurationMs = useMemo(() => {
+    if (!selectedTrack) return 0;
+    const notes = selectedTrack.notes;
+    if (!notes.length) return 0;
+    const lastNoteTime = notes[notes.length - 1].timeMs;
+    return lastNoteTime + travelMs + 1500;
+  }, [selectedTrack, travelMs]);
+  const progressMarkers = useMemo(() => {
+    if (!selectedTrack || trackDurationMs <= 0) return [];
+    const measureMs = (60000 / selectedTrack.bpm) * 4;
+    if (!Number.isFinite(measureMs) || measureMs <= 0) return [];
+    const sectionMs = measureMs * 4;
+    const markers: number[] = [];
+    for (let t = sectionMs; t < trackDurationMs; t += sectionMs) {
+      const pct = t / trackDurationMs;
+      if (pct >= 1) break;
+      markers.push(pct);
+    }
+    return markers;
+  }, [selectedTrack, trackDurationMs]);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -95,12 +127,16 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
   const [score, setScore] = useState(0);
   const [combo, setCombo] = useState(0);
   const [maxCombo, setMaxCombo] = useState(0);
-  const [judgment, setJudgment] = useState<{ kind: Judgment; at: number } | null>(null);
+  const [judgment, setJudgment] = useState<ActiveJudgment | null>(null);
   const [accuracy, setAccuracy] = useState<Accuracy>(defaultAccuracy);
+  const [progress, setProgress] = useState(0);
+  const [countdownKind, setCountdownKind] = useState<CountdownKind>('start');
 
   const scoreRef = useRef(0);
   const comboRef = useRef(0);
   const maxComboRef = useRef(0);
+  const progressRef = useRef(0);
+  const lastProgressUpdateRef = useRef(0);
 
   const worldRef = useRef({
     notes: [] as RuntimeNote[],
@@ -109,6 +145,7 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
     countdownEnds: 0,
     effects: [] as LaneEffect[],
     track: selectedTrack as PulsegridTrack | null,
+    pausedAt: 0,
     didSubmit: false,
   });
 
@@ -134,12 +171,17 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
       effects: [],
       track,
       didSubmit: false,
+      pausedAt: 0,
     };
     setScore(0);
     setCombo(0);
     setMaxCombo(0);
     setAccuracy(defaultAccuracy);
     setJudgment(null);
+    setProgress(0);
+    progressRef.current = 0;
+    lastProgressUpdateRef.current = 0;
+    setCountdownKind('start');
   }, []);
 
   useEffect(() => {
@@ -181,7 +223,8 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
     }
     const now = performance.now();
     worldRef.current.countdownEnds = now + COUNTDOWN_MS;
-    setCountdown(3);
+    setCountdown(Math.ceil(COUNTDOWN_MS / 1000));
+    setCountdownKind('start');
     setGameState('countdown');
     if (audio?.enabled) audio.playPulse?.();
   }, [audio, resetWorld, selectedTrack]);
@@ -193,24 +236,72 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
     onGameOver?.(scoreRef.current, maxComboRef.current, selectedTrack.id);
   }, [onGameOver, selectedTrack]);
 
-  const finishGame = useCallback(() => {
-    if (gameState === 'over') return;
-    setGameState('over');
-    setCountdown(null);
-    submitRun();
-  }, [gameState, submitRun]);
+  const finishGame = useCallback(
+    (complete = false) => {
+      if (gameState === 'over') return;
+      const audioEl = audioRef.current;
+      audioEl?.pause();
+      setGameState('over');
+      setCountdown(null);
+      if (complete) {
+        progressRef.current = 1;
+        lastProgressUpdateRef.current = performance.now();
+        setProgress(1);
+      }
+      submitRun();
+    },
+    [gameState, submitRun],
+  );
 
-  const handleMiss = useCallback(() => {
+  const pauseGame = useCallback(() => {
+    if (gameState !== 'playing' && gameState !== 'countdown') return;
+    const audioEl = audioRef.current;
+    const world = worldRef.current;
+    world.pausedAt = world.currentTime;
+    world.countdownEnds = 0;
+    audioEl?.pause();
+    setCountdown(null);
+    setGameState('paused');
+  }, [gameState]);
+
+  const resumeGame = useCallback(() => {
+    if (gameState !== 'paused') return;
+    const audioEl = audioRef.current;
+    const world = worldRef.current;
+    const now = performance.now();
+    world.countdownEnds = now + RESUME_COUNTDOWN_MS;
+    world.currentTime = world.pausedAt;
+    setCountdown(Math.ceil(RESUME_COUNTDOWN_MS / 1000));
+    setCountdownKind('resume');
+    setGameState('countdown');
+    if (audioEl) {
+      audioEl.pause();
+      audioEl.currentTime = (world.currentTime ?? 0) / 1000;
+    }
+    if (audio?.enabled) audio.playPulse?.();
+  }, [audio, gameState]);
+
+  const triggerLanePulse = useCallback(
+    (lane: number, strength = 0.6, tone: LaneEffect['tone'] = 'input', duration = 200) => {
+      const now = performance.now();
+      worldRef.current.effects.push({ lane, strength, tone, duration, until: now + duration });
+    },
+    [],
+  );
+
+  const handleMiss = useCallback((lane?: number, at?: number) => {
     setCombo(0);
     comboRef.current = 0;
     setAccuracy((prev) => ({ ...prev, miss: prev.miss + 1 }));
-    setJudgment({ kind: 'miss', at: performance.now() });
+    const stamp = at ?? performance.now();
+    setJudgment({ kind: 'miss', at: stamp });
     if (audio?.enabled) audio.playMiss?.();
-  }, [audio]);
+    if (typeof lane === 'number') triggerLanePulse(lane, 0.55, 'miss', 320);
+  }, [audio, triggerLanePulse]);
 
   const handleJudgment = useCallback((note: RuntimeNote, deltaMs: number, now: number) => {
     const absDelta = Math.abs(deltaMs);
-    let kind: Judgment = 'good';
+    let kind: JudgmentKind = 'good';
     if (absDelta <= tunedWindows.perfect) kind = 'perfect';
     else if (absDelta <= tunedWindows.great) kind = 'great';
 
@@ -227,14 +318,15 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
       return next;
     });
     setAccuracy((prev) => ({ ...prev, [kind]: prev[kind] + 1 }));
-    setJudgment({ kind, at: now });
+    setJudgment({ kind, at: now, offset: deltaMs });
     if (audio?.enabled) audio.playHit?.();
 
-    worldRef.current.effects.push({ lane: note.lane, until: now + 260, strength: kind === 'perfect' ? 1 : 0.7 });
-  }, [audio, tunedWindows]);
+    triggerLanePulse(note.lane, kind === 'perfect' ? 1 : 0.78, 'hit', 260);
+  }, [audio, triggerLanePulse, tunedWindows]);
 
   const judgeLane = useCallback((lane: number) => {
     if (gameState !== 'playing') return;
+    triggerLanePulse(lane, 0.45, 'input', 160);
     const world = worldRef.current;
     const { notes } = world;
     const now = performance.now();
@@ -257,7 +349,7 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
 
     if (!target) return;
     handleJudgment(target, target.timeMs - currentTime, now);
-  }, [gameState, handleJudgment, missWindow, tunedWindows.good]);
+  }, [gameState, handleJudgment, missWindow, triggerLanePulse, tunedWindows.good]);
 
   useEffect(() => {
     const downHandler = (event: KeyboardEvent) => {
@@ -267,18 +359,46 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
         judgeLane(laneIndex);
         return;
       }
-      if ((event.code === 'Space' || event.code === 'Enter') && (gameState === 'menu' || gameState === 'over')) {
-        event.preventDefault();
-        startGame();
+      if (event.code === 'Space' || event.code === 'Enter') {
+        if (gameState === 'menu' || gameState === 'over') {
+          event.preventDefault();
+          startGame();
+          return;
+        }
+        if (gameState === 'paused') {
+          event.preventDefault();
+          resumeGame();
+          return;
+        }
       }
-      if (event.code === 'Escape' && gameState === 'playing') {
-        event.preventDefault();
-        finishGame();
+      if (event.code === 'Escape') {
+        if (gameState === 'playing') {
+          event.preventDefault();
+          pauseGame();
+          return;
+        }
+        if (gameState === 'paused') {
+          event.preventDefault();
+          finishGame();
+        }
       }
     };
     window.addEventListener('keydown', downHandler);
     return () => window.removeEventListener('keydown', downHandler);
-  }, [finishGame, gameState, judgeLane, startGame]);
+  }, [finishGame, gameState, judgeLane, pauseGame, resumeGame, startGame]);
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'hidden') pauseGame();
+    };
+    const handleBlur = () => pauseGame();
+    window.addEventListener('blur', handleBlur);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.removeEventListener('blur', handleBlur);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [pauseGame]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -336,15 +456,35 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
           setCountdown(null);
           setGameState('playing');
           if (audioEl) {
-            audioEl.currentTime = 0;
+            const resumeSeconds = countdownKind === 'resume' ? (world.currentTime ?? 0) / 1000 : 0;
+            audioEl.pause();
+            audioEl.currentTime = resumeSeconds;
             const playPromise = audioEl.play();
             if (playPromise?.catch) playPromise.catch(() => {});
           }
+          if (countdownKind === 'resume') {
+            world.currentTime = world.pausedAt;
+          } else {
+            world.currentTime = 0;
+          }
+          world.pausedAt = 0;
+          if (countdownKind === 'resume') setCountdownKind('start');
         }
       }
 
       if (gameState === 'playing') {
         world.currentTime = (audioEl?.currentTime ?? 0) * 1000;
+
+        if (trackDurationMs > 0) {
+          const nextProgress = Math.min(1, world.currentTime / trackDurationMs);
+          const previous = progressRef.current;
+          progressRef.current = nextProgress;
+          const elapsedSinceUpdate = now - lastProgressUpdateRef.current;
+          if (elapsedSinceUpdate > 80 || Math.abs(nextProgress - previous) > 0.02) {
+            lastProgressUpdateRef.current = now;
+            setProgress(nextProgress);
+          }
+        }
       }
 
       ctx.save();
@@ -358,11 +498,13 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
       ctx.fillRect(0, 0, width, height);
 
       const accent = selectedTrack?.sparkColor ?? '#60a5fa';
+      const accentRgb = hexToRgb(accent);
       ctx.globalAlpha = 0.55;
       for (let i = 0; i < 3; i += 1) {
         const pulseX = ((now / 1000) * (0.08 + i * 0.05)) % 1 * width;
         const radial = ctx.createRadialGradient(pulseX, height * (0.18 + i * 0.24), 40, pulseX, height * (0.18 + i * 0.24), width * 0.9);
-        radial.addColorStop(0, `${accent}55`);
+        const pulseInner = accentRgb ? `rgba(${accentRgb[0]}, ${accentRgb[1]}, ${accentRgb[2]}, 0.33)` : `${accent}55`;
+        radial.addColorStop(0, pulseInner);
         radial.addColorStop(1, 'rgba(255,255,255,0)');
         ctx.fillStyle = radial;
         ctx.fillRect(0, 0, width, height);
@@ -405,12 +547,30 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
       world.effects = world.effects.filter((effect) => effect.until > now);
       for (const effect of world.effects) {
         const remaining = Math.max(0, effect.until - now);
-        const strength = (remaining / 260) * effect.strength;
+        const duration = effect.duration > 0 ? effect.duration : 260;
+        const fade = Math.min(1, Math.max(0, remaining / duration));
+        const strength = fade * effect.strength;
+        if (strength <= 0) continue;
+        const tone = effect.tone ?? 'hit';
         const laneX = effect.lane * laneWidth + laneWidth * 0.12;
         const laneW = laneWidth * 0.76;
         const highlight = ctx.createLinearGradient(laneX, top, laneX + laneW, hitLine);
-        highlight.addColorStop(0, `rgba(255, 255, 255, ${0.32 * strength})`);
-        highlight.addColorStop(1, `rgba(130, 166, 255, ${0.45 * strength})`);
+        if (tone === 'miss') {
+          highlight.addColorStop(0, `rgba(255, 224, 229, ${0.24 * strength})`);
+          highlight.addColorStop(1, `rgba(248, 113, 113, ${0.42 * strength})`);
+        } else if (tone === 'input') {
+          const inputAccent = accentRgb
+            ? `rgba(${accentRgb[0]}, ${accentRgb[1]}, ${accentRgb[2]}, ${0.28 * strength})`
+            : `rgba(125, 211, 252, ${0.28 * strength})`;
+          highlight.addColorStop(0, `rgba(255, 255, 255, ${0.18 * strength})`);
+          highlight.addColorStop(1, inputAccent);
+        } else {
+          const hitAccent = accentRgb
+            ? `rgba(${accentRgb[0]}, ${accentRgb[1]}, ${accentRgb[2]}, ${0.46 * strength})`
+            : `rgba(130, 166, 255, ${0.46 * strength})`;
+          highlight.addColorStop(0, `rgba(255, 255, 255, ${0.32 * strength})`);
+          highlight.addColorStop(1, hitAccent);
+        }
         ctx.fillStyle = highlight;
         ctx.beginPath();
         const radius = laneW * 0.18;
@@ -444,7 +604,7 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
           note.result = 'miss';
           note.flashUntil = now + 180;
           world.nextIndex = Math.max(world.nextIndex, i + 1);
-          handleMiss();
+          handleMiss(note.lane, now);
           continue;
         }
 
@@ -490,7 +650,7 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
       }
 
       if (gameState === 'playing' && remainingNotes === 0) {
-        finishGame();
+        finishGame(true);
       }
 
       ctx.restore();
@@ -501,12 +661,12 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [audio, countdown, finishGame, gameState, handleMiss, missWindow, selectedTrack, travelMs]);
+  }, [audio, countdown, countdownKind, finishGame, gameState, handleMiss, missWindow, selectedTrack, trackDurationMs, travelMs]);
 
   useEffect(() => {
     const audioEl = audioRef.current;
     if (!audioEl) return;
-    const onEnded = () => finishGame();
+    const onEnded = () => finishGame(true);
     audioEl.addEventListener('ended', onEnded);
     return () => audioEl.removeEventListener('ended', onEnded);
   }, [finishGame]);
@@ -517,8 +677,32 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
     const weighted = accuracy.perfect * 1 + accuracy.great * 0.82 + accuracy.good * 0.6;
     return { percent: Math.round((weighted / total) * 100), total };
   }, [accuracy]);
+  const progressPercent = useMemo(() => Math.round(Math.min(1, Math.max(0, progress)) * 100), [progress]);
+  const progressFillWidth = useMemo(() => {
+    if (progress <= 0) return 0;
+    return Math.min(100, Math.max(progress * 100, 4));
+  }, [progress]);
+  const remainingTimeLabel = useMemo(() => {
+    if (trackDurationMs <= 0) return '—';
+    const remainingMs = Math.max(0, trackDurationMs * (1 - progress));
+    const totalSeconds = Math.ceil(remainingMs / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }, [progress, trackDurationMs]);
+  const progressStatus = useMemo(() => {
+    if (gameState === 'playing') {
+      return remainingTimeLabel !== '—' ? `${remainingTimeLabel} left` : 'Live';
+    }
+    if (gameState === 'paused') return 'Paused';
+    if (gameState === 'countdown') return countdownKind === 'resume' ? 'Resuming' : 'Starting';
+    if (gameState === 'over') return 'Run complete';
+    return 'Ready';
+  }, [countdownKind, gameState, remainingTimeLabel]);
 
   const trackCards = useMemo(() => pulsegridTracks, []);
+
+  const countdownLabel = countdownKind === 'resume' ? 'Rejoin Sync' : 'Drop In';
 
   return (
     <div ref={containerRef} className="w-full">
@@ -588,7 +772,7 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
               >
                 {gameState === 'over' ? 'Run It Back' : 'Start the Mix'}
               </button>
-              <div className="text-xs uppercase tracking-[0.35em] text-slate-500">Space or Enter</div>
+              <div className="text-xs uppercase tracking-[0.35em] text-slate-500">Space or Enter • Esc pauses</div>
             </div>
           </div>
         )}
@@ -597,7 +781,36 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center bg-slate-950/25">
             <div className="rounded-full border border-white/40 bg-white/80 px-12 py-8 shadow-lg backdrop-blur">
               <span className="font-display text-6xl font-black text-slate-900 md:text-7xl">{countdown}</span>
-              <div className="mt-2 text-center text-sm uppercase tracking-[0.35em] text-slate-500">Drop In</div>
+              <div className="mt-2 text-center text-sm uppercase tracking-[0.35em] text-slate-500">{countdownLabel}</div>
+            </div>
+          </div>
+        )}
+
+        {gameState === 'paused' && (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-slate-950/40 backdrop-blur-sm">
+            <div className="pointer-events-auto w-full max-w-md rounded-3xl border border-white/40 bg-white/85 px-8 py-7 text-center text-slate-700 shadow-2xl">
+              <div className="text-sm uppercase tracking-[0.35em] text-indigo-500">Run Paused</div>
+              <h3 className="mt-2 font-display text-2xl font-semibold text-slate-900">Catch your breath</h3>
+              <p className="mt-3 text-sm text-slate-600">
+                Resume to sync back in, or end the attempt to lock your current score.
+              </p>
+              <div className="mt-5 flex flex-wrap justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={resumeGame}
+                  className="rounded-full bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-sky-500 px-6 py-2 text-sm font-semibold text-white shadow-[0_12px_32px_rgba(99,102,241,0.3)] transition hover:scale-[1.02] hover:shadow-[0_16px_40px_rgba(99,102,241,0.4)]"
+                >
+                  Resume Mix
+                </button>
+                <button
+                  type="button"
+                  onClick={() => finishGame()}
+                  className="rounded-full border border-slate-300/60 px-6 py-2 text-sm font-semibold text-slate-600 transition hover:bg-white"
+                >
+                  End Run
+                </button>
+              </div>
+              <div className="mt-4 text-xs uppercase tracking-[0.35em] text-slate-500">Space resumes • Escape ends</div>
             </div>
           </div>
         )}
@@ -605,7 +818,7 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
         {gameState === 'playing' && judgment && (
           <div className="pointer-events-none absolute inset-x-0 top-12 flex justify-center">
             <div
-              className={`rounded-full px-6 py-2 text-sm font-semibold uppercase tracking-[0.35em] text-white shadow-lg transition ${
+              className={`rounded-full px-7 py-2.5 text-center text-sm font-semibold uppercase tracking-[0.32em] text-white shadow-lg transition ${
                 judgment.kind === 'perfect'
                   ? 'bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-sky-500'
                   : judgment.kind === 'great'
@@ -615,13 +828,18 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
                       : 'bg-gradient-to-r from-rose-500 via-amber-500 to-slate-900'
               }`}
             >
-              {JUDGMENT_LABEL[judgment.kind]}
+              <div>{JUDGMENT_LABEL[judgment.kind]}</div>
+              {judgment.offset !== undefined && judgment.kind !== 'miss' && (
+                <div className="mt-1 text-[10px] font-medium tracking-[0.4em] text-white/90">
+                  {judgment.offset < 0 ? 'EARLY' : 'LATE'} {Math.abs(Math.round(judgment.offset))}MS
+                </div>
+              )}
             </div>
           </div>
         )}
       </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 shadow-inner">
           <div className="text-xs uppercase tracking-[0.4em] text-indigo-200">Score</div>
           <div className="mt-1 text-lg font-semibold text-white">{score.toLocaleString()}</div>
@@ -634,6 +852,28 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
           <div className="text-xs uppercase tracking-[0.4em] text-indigo-200">Accuracy</div>
           <div className="mt-1 text-lg font-semibold text-white">{accuracySummary.percent}%</div>
           <div className="mt-1 text-xs text-indigo-100">Perfect {accuracy.perfect} • Great {accuracy.great} • Good {accuracy.good} • Miss {accuracy.miss}</div>
+        </div>
+        <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3 shadow-inner">
+          <div className="flex items-center justify-between">
+            <div className="text-xs uppercase tracking-[0.4em] text-indigo-200">Progress</div>
+            <div className="text-[10px] uppercase tracking-[0.35em] text-indigo-100">
+              {progressStatus}
+            </div>
+          </div>
+          <div className="mt-1 text-lg font-semibold text-white">{progressPercent}%</div>
+          <div className="relative mt-2 h-2 w-full overflow-hidden rounded-full bg-white/12">
+            {progressMarkers.map((marker) => (
+              <span
+                key={marker.toFixed(3)}
+                className="pointer-events-none absolute top-0 bottom-0 w-[1px] bg-white/25"
+                style={{ left: `${marker * 100}%` }}
+              />
+            ))}
+            <div
+              className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-indigo-400 via-fuchsia-400 to-sky-400 transition-[width] duration-150 ease-out"
+              style={{ width: `${progressFillWidth}%` }}
+            />
+          </div>
         </div>
       </div>
 
