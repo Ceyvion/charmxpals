@@ -15,7 +15,7 @@ type PlayerView = PlayerState & {
   renderPos: Vec2;
   targetPos: Vec2;
   lastUpdate: number;
-  emote?: { code: string; until: number };
+  activeEmote?: { code: string; until: number };
 };
 
 type ChatMessage = {
@@ -69,6 +69,7 @@ export default function PlazaClient({ height = 420 }: PlazaClientProps) {
       renderPos: { ...state.pos },
       targetPos: { ...state.pos },
       lastUpdate: performance.now(),
+      activeEmote: undefined,
     };
   }, []);
 
@@ -318,7 +319,7 @@ export default function PlazaClient({ height = 420 }: PlazaClientProps) {
               const next = new Map(prev);
               const target = next.get(payload.id);
               if (target) {
-                target.emote = { code: payload.emote, until: performance.now() + 1_600 };
+                target.activeEmote = { code: payload.emote, until: performance.now() + 1_600 };
                 next.set(payload.id, target);
               }
               return next;
@@ -465,8 +466,8 @@ export default function PlazaClient({ height = 420 }: PlazaClientProps) {
           player.renderPos.y = lerp(player.renderPos.y, player.targetPos.y, dt * 8);
         }
 
-        if (player.emote && player.emote.until < now) {
-          delete player.emote;
+        if (player.activeEmote && player.activeEmote.until < now) {
+          delete player.activeEmote;
         }
 
         const px = ox + player.renderPos.x * scale;
@@ -487,8 +488,8 @@ export default function PlazaClient({ height = 420 }: PlazaClientProps) {
         ctx.textAlign = 'center';
         ctx.fillText(player.displayName || id.slice(0, 4), px, py - 12);
 
-        if (player.emote) {
-          const glyph = EMOTES.find((e) => e.code === player.emote?.code)?.glyph || player.emote.code;
+        if (player.activeEmote) {
+          const glyph = EMOTES.find((e) => e.code === player.activeEmote?.code)?.glyph || player.activeEmote.code;
           ctx.fillStyle = 'rgba(255,255,255,0.9)';
           ctx.fillRect(px - 12, py - 34, 24, 18);
           ctx.fillStyle = '#301243';

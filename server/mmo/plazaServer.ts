@@ -70,6 +70,7 @@ const EMOTE_WINDOW_MS = 4_000;
 const EMOTE_MAX = 6;
 const INSTANCE_ID = 'plaza-1';
 const MOTD = 'Signal Plaza is live — drop in and vibe.';
+const WS_READY_STATE_OPEN = 1;
 
 function decodeBase64Url(input: string) {
   let normalized = input.replace(/-/g, '+').replace(/_/g, '/');
@@ -123,7 +124,7 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
   const log = opts.logger || console.log;
 
   const safeSend = (ws: WebSocket, payload: unknown) => {
-    if (ws.readyState !== WebSocket.OPEN) return;
+    if (ws.readyState !== WS_READY_STATE_OPEN) return;
     try {
       ws.send(JSON.stringify(payload));
     } catch {
@@ -135,7 +136,7 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
     const serialized = JSON.stringify(payload);
     clients.forEach((client, id) => {
       if (excludeId && id === excludeId) return;
-      if (client.ws.readyState === WebSocket.OPEN) {
+      if (client.ws.readyState === WS_READY_STATE_OPEN) {
         try {
           client.ws.send(serialized);
         } catch {
@@ -243,7 +244,7 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
 
     safeSend(ws, { type: 'welcome', motd: MOTD, instanceId: INSTANCE_ID, snapshotInterval: snapshotMs });
 
-    ws.on('message', (raw: WebSocket.RawData) => {
+    ws.on('message', (raw: unknown) => {
       const context = sockets.get(ws);
       if (!context) return;
 
