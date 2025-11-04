@@ -56,7 +56,7 @@ Update statuses in `orchestrator/plan.json` after each meaningful change to keep
   - Start Next.js: `npm run dev`
   - Open app: `/plaza` (or via Play → Plaza)
   - Plaza client now includes chat, emotes, avatar selection, and latency/player-count overlays once the handshake completes.
-  - If `NEXT_PUBLIC_MMO_WS_URL` is unset, hitting `/plaza` auto-starts a local WS server via the token route (set `MMO_AUTO_START=0` to disable).
+  - If `NEXT_PUBLIC_MMO_WS_URL` is unset and you are running locally, hitting `/plaza` auto-starts a local WS server via the token route (set `MMO_AUTO_START=0` to disable). Hosted environments must point `NEXT_PUBLIC_MMO_WS_URL` at an external plaza server.
 
 ## Brand & Color
 

@@ -107,7 +107,14 @@ export default function PlazaClient({ height = 420 }: PlazaClientProps) {
           }
           return;
         }
-        if (!res.ok) throw new Error('Failed to fetch token');
+        if (!res.ok) {
+          const payload = await res.json().catch(() => null);
+          const errorMsg =
+            typeof payload?.error === 'string'
+              ? payload.error
+              : 'Failed to mint plaza session.';
+          throw new Error(errorMsg);
+        }
         const body = await res.json();
         const token = body.token as string;
         tokenRef.current = token;
@@ -119,16 +126,34 @@ export default function PlazaClient({ height = 420 }: PlazaClientProps) {
         const initialChar = owned[0] || 'demo';
         selectedCharRef.current = initialChar;
         setSelectedChar(initialChar);
-        const base = process.env.NEXT_PUBLIC_MMO_WS_URL || `ws://localhost:${process.env.NEXT_PUBLIC_MMO_WS_PORT || 8787}`;
+        const envUrl = process.env.NEXT_PUBLIC_MMO_WS_URL;
+        let base = envUrl;
+        if (!base && typeof window !== 'undefined') {
+          const host = window.location.hostname;
+          const isLocal =
+            host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local');
+          if (isLocal) {
+            const port = process.env.NEXT_PUBLIC_MMO_WS_PORT || '8787';
+            base = `ws://${host}:${port}`;
+          }
+        }
+        if (!base) {
+          throw new Error('No plaza server configured. Set NEXT_PUBLIC_MMO_WS_URL.');
+        }
         const url = `${base}?token=${encodeURIComponent(token)}`;
         if (!stop) {
           setWsUrl(url);
         }
       } catch (err: any) {
-        if (!stop) {
-          setStatus('error');
-          setInfo(err?.message || 'Failed to connect');
+        if (stop) return;
+        let message = err?.message || 'Failed to connect';
+        if (message === 'plaza_unconfigured') {
+          message = 'Plaza server not configured. Set NEXT_PUBLIC_MMO_WS_URL.';
+        } else if (message === 'plaza_unavailable') {
+          message = 'Plaza server unreachable. Start the MMO WS server locally.';
         }
+        setStatus('error');
+        setInfo(message);
       }
     })();
     return () => {

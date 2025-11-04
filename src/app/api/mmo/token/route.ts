@@ -34,10 +34,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'no_ownership' }, { status: 403 });
   }
 
-  const shouldAutoStart = !process.env.NEXT_PUBLIC_MMO_WS_URL && process.env.MMO_AUTO_START !== '0';
+  const hasExternalWs = Boolean(process.env.NEXT_PUBLIC_MMO_WS_URL);
+  const isHosted = process.env.VERCEL === '1';
+  const shouldAutoStart = !hasExternalWs && process.env.MMO_AUTO_START !== '0' && !isHosted;
+
+  if (!hasExternalWs && isHosted) {
+    return NextResponse.json({ ok: false, error: 'plaza_unconfigured' }, { status: 503 });
+  }
+
   if (shouldAutoStart) {
     try {
-      await ensurePlazaServer();
+      const server = await ensurePlazaServer();
+      if (!server) {
+        console.warn('[mmo] plaza server auto-start skipped (port already in use)');
+      }
     } catch (err) {
       console.error('[mmo] failed to auto-start plaza server', err);
       return NextResponse.json({ ok: false, error: 'plaza_unavailable' }, { status: 503 });
