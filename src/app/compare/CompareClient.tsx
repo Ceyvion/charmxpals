@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSfx } from "@/lib/sfx";
@@ -61,6 +61,17 @@ export default function CompareClient({ characters }: CompareClientProps) {
     });
   };
 
+  const handleSwap = useCallback(() => {
+    setPrimaryId((currentPrimary) => {
+      let nextPrimary = currentPrimary ?? null;
+      setSecondaryId((currentSecondary) => {
+        nextPrimary = currentSecondary ?? null;
+        return currentPrimary ?? null;
+      });
+      return nextPrimary;
+    });
+  }, []);
+
   const statsComparison = useMemo(() => buildStatComparison(primary, secondary), [primary, secondary]);
   const insights = useMemo(() => buildInsights(statsComparison, primary, secondary), [primary, secondary, statsComparison]);
 
@@ -68,16 +79,15 @@ export default function CompareClient({ characters }: CompareClientProps) {
     <div className="space-y-10">
       <HeroSection primary={primary} secondary={secondary} />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
-        <RosterPanel
-          characters={roster}
-          primaryId={primary?.id ?? null}
-          secondaryId={secondary?.id ?? null}
-          onSelectPrimary={handleSelectPrimary}
-          onSelectSecondary={handleSelectSecondary}
-        />
-        <FocusPanel primary={primary} secondary={secondary} insights={insights} />
-      </div>
+      <MatchupBoard primary={primary} secondary={secondary} onSwap={handleSwap} insights={insights} />
+
+      <RosterRail
+        characters={roster}
+        primaryId={primary?.id ?? null}
+        secondaryId={secondary?.id ?? null}
+        onSelectPrimary={handleSelectPrimary}
+        onSelectSecondary={handleSelectSecondary}
+      />
 
       <StatsPanel comparison={statsComparison} primary={primary} secondary={secondary} />
 
@@ -106,7 +116,128 @@ function HeroSection({ primary, secondary }: { primary: CompareCharacter | null;
   );
 }
 
-function RosterPanel({
+function MatchupBoard({
+  primary,
+  secondary,
+  onSwap,
+  insights,
+}: {
+  primary: CompareCharacter | null;
+  secondary: CompareCharacter | null;
+  onSwap: () => void;
+  insights: Insight[];
+}) {
+  const bothSelected = Boolean(primary && secondary);
+  const insightList = bothSelected
+    ? insights
+    : [
+        {
+          label: "Choose two champions to unlock matchup notes.",
+          difference: "",
+          tone: "neutral" as const,
+        },
+      ];
+  return (
+    <section className="cp-panel overflow-hidden border border-white/10 bg-gradient-to-br from-white/[0.1] via-white/[0.03] to-transparent">
+      <div className="flex flex-col gap-8 px-6 py-6 lg:px-10 lg:py-8">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center">
+          <CharacterPlate character={primary} align="left" />
+          <VsDivider primary={primary} secondary={secondary} onSwap={onSwap} />
+          <CharacterPlate character={secondary} align="right" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {insightList.map((insight, index) => (
+            <InsightCard key={`${insight.label}-${index}`} insight={insight} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CharacterPlate({ character, align }: { character: CompareCharacter | null; align: "left" | "right" }) {
+  if (!character) {
+    return (
+      <div className="rounded-3xl border border-dashed border-white/15 bg-white/[0.04] px-5 py-6 text-white/60">
+        <div className="text-[11px] uppercase tracking-[0.32em] text-white/30">{align === "left" ? "Primary Slot" : "Rival Slot"}</div>
+        <div className="mt-3 text-lg font-semibold">{align === "left" ? "Pick a primary pal" : "Pick a rival to compare"}</div>
+        <p className="mt-2 text-sm text-white/50">Use the roster rail to drop someone into this position.</p>
+      </div>
+    );
+  }
+  const charmTitle = extractCharmTitle(character.coreCharm);
+  return (
+    <article className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] px-6 py-6 text-white shadow-[0_25px_80px_rgba(15,23,42,0.35)]">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-90"
+        style={{ backgroundImage: `linear-gradient(135deg, ${withAlpha(character.color ?? FALLBACK_COLOR, 0.5)} 0%, rgba(15,23,42,0.9) 100%)` }}
+      />
+      <div className="relative flex flex-col gap-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="text-[10px] uppercase tracking-[0.3em] text-white/70">{character.realm ?? character.title ?? "Across Realms"}</div>
+            <h2 className="mt-2 text-3xl font-display font-extrabold leading-tight">{character.name}</h2>
+            {character.tagline && <p className="mt-2 text-sm text-white/80">{character.tagline}</p>}
+          </div>
+          <span className="rounded-full border border-white/20 bg-white/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-white">
+            {rarityLabel(character.rarity)}
+          </span>
+        </div>
+        <div className="flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.28em] text-white/80">
+          {charmTitle && <span className="rounded-full border border-white/20 bg-white/15 px-2 py-1">{charmTitle}</span>}
+          {character.danceStyle && <span className="rounded-full border border-white/15 bg-black/30 px-2 py-1">{character.danceStyle}</span>}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function VsDivider({
+  primary,
+  secondary,
+  onSwap,
+}: {
+  primary: CompareCharacter | null;
+  secondary: CompareCharacter | null;
+  onSwap: () => void;
+}) {
+  const { playClick, playHover } = useSfx();
+  const disabled = !primary || !secondary;
+  return (
+    <div className="flex flex-col items-center gap-3 text-center text-xs uppercase tracking-[0.35em] text-white/60">
+      <span>{primary?.name ?? "Primary"}</span>
+      <button
+        type="button"
+        className={`group relative flex h-16 w-16 items-center justify-center rounded-full border text-lg font-semibold text-white shadow-[0_15px_40px_rgba(15,23,42,0.45)] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
+          disabled ? "cursor-not-allowed border-white/10 bg-white/5 text-white/40" : "border-white/20 bg-white/10 hover:border-white/40 hover:bg-white/20"
+        }`}
+        disabled={disabled}
+        onClick={() => {
+          if (disabled) return;
+          onSwap();
+          playClick();
+        }}
+        onMouseEnter={playHover}
+        onFocus={playHover}
+        aria-label="Swap matchup sides"
+      >
+        VS
+      </button>
+      <span>{secondary?.name ?? "Rival"}</span>
+    </div>
+  );
+}
+
+function InsightCard({ insight }: { insight: Insight }) {
+  return (
+    <div className="rounded-2xl border border-white/12 bg-white/[0.05] px-4 py-4 text-sm text-white backdrop-blur-sm">
+      <div className="text-[11px] uppercase tracking-[0.32em] text-white/45">{insight.difference || "SCOUTING NOTE"}</div>
+      <div className="mt-2 font-semibold text-white/85">{insight.label}</div>
+    </div>
+  );
+}
+
+function RosterRail({
   characters,
   primaryId,
   secondaryId,
@@ -120,7 +251,7 @@ function RosterPanel({
   onSelectSecondary: (id: string) => void;
 }) {
   const [query, setQuery] = useState("");
-  const [showAll, setShowAll] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const { playClick, playHover } = useSfx();
 
   const filtered = useMemo(() => {
@@ -132,110 +263,63 @@ function RosterPanel({
     });
   }, [characters, query]);
 
-  const DEFAULT_VISIBLE = 8;
-  const visible = useMemo(() => (showAll ? filtered : filtered.slice(0, DEFAULT_VISIBLE)), [filtered, showAll]);
+  const LIMIT = 12;
+  const visible = expanded ? filtered : filtered.slice(0, LIMIT);
 
   return (
-    <section className="cp-panel flex h-full flex-col overflow-hidden">
-      <div className="border-b border-white/10 px-5 py-5">
-        <div className="flex flex-col gap-4">
-          <div>
-            <div className="cp-kicker text-xs uppercase tracking-[0.3em] text-white/60">Roster Control</div>
-            <h2 className="font-display text-2xl font-bold text-white">Pick Your Matchup</h2>
-            <p className="cp-muted mt-2 text-sm">
-              Assign a champion to each slot. Use the quick toggles to flip sides without losing your place.
-            </p>
-          </div>
-          <label className="block">
+    <section className="cp-panel space-y-4 px-5 py-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="cp-kicker text-xs uppercase tracking-[0.28em] text-white/60">Roster Rail</div>
+          <h2 className="font-display text-2xl font-bold text-white">Slot in your pals</h2>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="relative">
             <span className="sr-only">Search roster</span>
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search roster..."
-              className="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20"
+              placeholder="Search..."
+              className="w-40 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20"
             />
           </label>
-        </div>
-      </div>
-      <div className="flex-1 overflow-hidden px-5 pb-5 pt-4">
-        <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-white/50">
-          <span>Top candidates</span>
-          <div className="flex items-center gap-3 text-[11px]">
-            <span className="text-white/60">Primary</span>
-            <span className="text-white/30">Swap</span>
-            <span className="text-white/60">Rival</span>
-          </div>
-        </div>
-        <div className="mt-3 space-y-3 overflow-y-auto pr-1">
-          {visible.map((character) => {
-            const isPrimary = character.id === primaryId;
-            const isSecondary = character.id === secondaryId;
-            const rarity = rarityLabel(character.rarity);
-            const charmTitle = extractCharmTitle(character.coreCharm);
-            return (
-              <div
-                key={character.id}
-                className="group relative overflow-hidden rounded-2xl border border-white/12 bg-white/[0.04] px-3 py-3 transition duration-200 hover:border-white/35 hover:bg-white/[0.08]"
-              >
-                <div className="flex items-center gap-3">
-                  <CharacterAvatar name={character.name} color={character.color} art={character.art} />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="truncate text-sm font-semibold text-white">{character.name}</span>
-                      {isPrimary && <RoleBadge tone="primary" label="Primary" />}
-                      {isSecondary && <RoleBadge tone="secondary" label="Rival" />}
-                      <span className="rounded-full border border-white/15 bg-white/[0.05] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.28em] text-white/70">
-                        {rarity}
-                      </span>
-                    </div>
-                    <div className="text-xs text-white/60">{character.realm ?? character.title ?? "Unknown Realm"}</div>
-                    {charmTitle && <div className="text-[10px] uppercase tracking-[0.28em] text-white/35">{charmTitle}</div>}
-                  </div>
-                  <div className="ml-auto flex shrink-0 items-center gap-2">
-                    <RosterSelectButton
-                      label="Primary"
-                      active={isPrimary}
-                      onClick={() => {
-                        onSelectPrimary(character.id);
-                        playClick();
-                      }}
-                      onHover={playHover}
-                    />
-                    <RosterSelectButton
-                      label="Rival"
-                      active={isSecondary}
-                      variant="secondary"
-                      onClick={() => {
-                        onSelectSecondary(character.id);
-                        playClick();
-                      }}
-                      onHover={playHover}
-                    />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-          {filtered.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.03] p-6 text-center text-sm text-white/60">
-              No matches yet - adjust your search.
-            </div>
-          )}
-        </div>
-        {filtered.length > DEFAULT_VISIBLE && (
-          <div className="mt-4 flex justify-center">
+          {filtered.length > LIMIT && (
             <button
               type="button"
-              className="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-1.5 text-sm font-semibold text-white transition hover:border-white/35 hover:bg-white/10"
+              className="rounded-full border border-white/20 px-3 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-white/70 hover:border-white/35 hover:text-white"
               onClick={() => {
-                setShowAll((value) => !value);
+                setExpanded((value) => !value);
                 playClick();
               }}
               onMouseEnter={playHover}
               onFocus={playHover}
             >
-              {showAll ? "Show fewer pals" : `Show all (${filtered.length})`}
+              {expanded ? "Collapse" : `Show ${filtered.length - LIMIT}+`}
             </button>
+          )}
+        </div>
+      </div>
+      <div className="flex gap-4 overflow-x-auto pb-2">
+        {visible.map((character) => (
+          <RosterCard
+            key={character.id}
+            character={character}
+            isPrimary={character.id === primaryId}
+            isSecondary={character.id === secondaryId}
+            onSelectPrimary={() => {
+              onSelectPrimary(character.id);
+              playClick();
+            }}
+            onSelectSecondary={() => {
+              onSelectSecondary(character.id);
+              playClick();
+            }}
+            onHover={playHover}
+          />
+        ))}
+        {visible.length === 0 && (
+          <div className="flex h-32 shrink-0 items-center justify-center rounded-2xl border border-dashed border-white/15 bg-white/[0.03] px-6 text-sm text-white/60">
+            No roster matches—try a different search.
           </div>
         )}
       </div>
@@ -243,33 +327,55 @@ function RosterPanel({
   );
 }
 
-function RoleBadge({ tone, label }: { tone: "primary" | "secondary"; label: string }) {
-  const palette =
-    tone === "primary"
-      ? { background: "linear-gradient(135deg,#facc15,#f97316,#ec4899)", color: "#111826" }
-      : { background: "linear-gradient(135deg,#a855f7,#6366f1,#22d3ee)", color: "#0f172a" };
+function RosterCard({
+  character,
+  isPrimary,
+  isSecondary,
+  onSelectPrimary,
+  onSelectSecondary,
+  onHover,
+}: {
+  character: CompareCharacter;
+  isPrimary: boolean;
+  isSecondary: boolean;
+  onSelectPrimary: () => void;
+  onSelectSecondary: () => void;
+  onHover: () => void;
+}) {
+  const charmTitle = extractCharmTitle(character.coreCharm);
   return (
-    <span
-      className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.3em]"
-      style={{ backgroundImage: palette.background, color: palette.color }}
-    >
-      {label}
-    </span>
+    <article className="flex w-56 shrink-0 flex-col gap-4 rounded-3xl border border-white/12 bg-white/[0.04] px-4 py-4 text-white transition hover:border-white/35 hover:bg-white/[0.08]">
+      <div className="flex items-center gap-3">
+        <CharacterAvatar name={character.name} color={character.color} art={character.art} />
+        <div className="min-w-0">
+          <div className="truncate text-sm font-semibold">{character.name}</div>
+          <div className="text-xs text-white/60">{character.realm ?? character.title ?? "Unknown Realm"}</div>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.28em] text-white/50">
+        <span className="rounded-full border border-white/15 bg-white/[0.06] px-2 py-1">{rarityLabel(character.rarity)}</span>
+        {charmTitle && <span className="rounded-full border border-white/12 bg-white/[0.04] px-2 py-1">{charmTitle}</span>}
+      </div>
+      <div className="flex items-center gap-2">
+        <RosterPill label="Primary" active={isPrimary} onClick={onSelectPrimary} onHover={onHover} />
+        <RosterPill label="Rival" active={isSecondary} variant="secondary" onClick={onSelectSecondary} onHover={onHover} />
+      </div>
+    </article>
   );
 }
 
-function RosterSelectButton({
+function RosterPill({
   label,
   active,
+  variant = "primary",
   onClick,
   onHover,
-  variant = "primary",
 }: {
   label: string;
   active: boolean;
+  variant?: "primary" | "secondary";
   onClick: () => void;
   onHover: () => void;
-  variant?: "primary" | "secondary";
 }) {
   const gradient =
     variant === "primary"
@@ -278,8 +384,8 @@ function RosterSelectButton({
   return (
     <button
       type="button"
-      className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.32em] transition focus:outline-none focus:ring-2 focus:ring-white/30 ${
-        active ? "border-white/70 text-white shadow-[0_10px_30px_rgba(15,23,42,0.45)]" : "border-white/20 text-white/70 hover:border-white/35 hover:text-white"
+      className={`flex-1 rounded-full border px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.32em] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30 ${
+        active ? "border-white/75 text-white shadow-[0_12px_30px_rgba(15,23,42,0.45)]" : "border-white/20 text-white/70 hover:border-white/35 hover:text-white"
       }`}
       style={active ? { backgroundImage: gradient } : undefined}
       onClick={onClick}
@@ -288,98 +394,6 @@ function RosterSelectButton({
     >
       {label}
     </button>
-  );
-}
-
-function FocusPanel({
-  primary,
-  secondary,
-  insights,
-}: {
-  primary: CompareCharacter | null;
-  secondary: CompareCharacter | null;
-  insights: Insight[];
-}) {
-  const bothSelected = primary && secondary;
-  const fallbackInsight = {
-    label: "Pick two champions to unlock stat insights.",
-    difference: "",
-    tone: "neutral" as const,
-  };
-  return (
-    <section className="cp-panel flex h-full flex-col overflow-hidden">
-      <div className="border-b border-white/10 px-5 py-5">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <div className="cp-kicker text-xs uppercase tracking-[0.28em] text-white/60">Matchup Overview</div>
-            <h2 className="font-display text-2xl font-bold text-white">Realm Pulse</h2>
-          </div>
-          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.32em] text-white/60">
-            <span>{primary?.name ?? "Primary slot"}</span>
-            <span className="text-white/30">vs</span>
-            <span>{secondary?.name ?? "Rival slot"}</span>
-          </div>
-        </div>
-      </div>
-      <div className="flex flex-1 flex-col gap-6 px-5 py-5">
-        <div className="grid gap-4 md:grid-cols-2">
-          <SpotlightCard character={primary} tone="primary" />
-          <SpotlightCard character={secondary} tone="secondary" />
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {(bothSelected ? insights : [fallbackInsight]).map((insight, index) => (
-            <div
-              key={`${insight.label}-${index}`}
-              className="rounded-2xl border border-white/12 bg-white/[0.05] px-4 py-3 text-sm text-white backdrop-blur-sm transition duration-200 hover:border-white/30 hover:bg-white/[0.08]"
-            >
-              <div className="font-semibold text-white/85">{insight.label}</div>
-              {insight.difference && <div className="mt-1 text-[10px] uppercase tracking-[0.32em] text-white/45">{insight.difference}</div>}
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function SpotlightCard({ character, tone }: { character: CompareCharacter | null; tone: "primary" | "secondary" }) {
-  const accent = character?.color ?? (tone === "primary" ? "#f97316" : "#6366f1");
-  const gradient = `linear-gradient(135deg, ${withAlpha(accent, 0.55)} 0%, rgba(15,23,42,0.78) 55%, rgba(15,23,42,0.92) 100%)`;
-  const charmTitle = extractCharmTitle(character?.coreCharm ?? null);
-  return (
-    <article className="relative overflow-hidden rounded-3xl border border-white/12 bg-white/[0.04] p-5 text-white">
-      <div className="absolute inset-0 opacity-90" style={{ backgroundImage: gradient }} aria-hidden />
-      <div className="relative flex min-h-[160px] flex-col justify-between gap-3">
-        {character ? (
-          <>
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="text-[10px] uppercase tracking-[0.35em] text-white/70">{character.realm ?? character.title ?? "Across Realms"}</div>
-                <h3 className="mt-1 text-2xl font-display font-semibold leading-tight">{character.name}</h3>
-              </div>
-              <span className="rounded-full border border-white/30 bg-white/20 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-white">
-                {rarityLabel(character.rarity)}
-              </span>
-            </div>
-            {character.tagline && <p className="text-sm text-white/80">{character.tagline}</p>}
-            <div className="flex flex-wrap gap-2 text-[11px] text-white/85">
-              {charmTitle && (
-                <span className="rounded-full border border-white/20 bg-white/15 px-2 py-1 font-semibold uppercase tracking-[0.28em] text-white">
-                  {charmTitle}
-                </span>
-              )}
-              {character.danceStyle && (
-                <span className="rounded-full border border-white/20 bg-black/25 px-2 py-1 font-medium text-white/80">{character.danceStyle}</span>
-              )}
-            </div>
-          </>
-        ) : (
-          <div className="py-6 text-sm text-white/70">
-            {tone === "primary" ? "Choose a primary pal to compare." : "Pick a rival to complete the matchup."}
-          </div>
-        )}
-      </div>
-    </article>
   );
 }
 
