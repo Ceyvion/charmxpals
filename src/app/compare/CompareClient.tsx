@@ -483,7 +483,7 @@ function buildStatComparison(primary: CompareCharacter | null, secondary: Compar
       const secondaryValue = clampStat(secondary.stats?.[key]);
       const maxValue = Math.max(primaryValue, secondaryValue, 1);
       const delta = primaryValue - secondaryValue;
-      const leader = delta === 0 ? "tie" : delta > 0 ? "primary" : "secondary";
+      const leader: StatComparison["leader"] = delta === 0 ? "tie" : delta > 0 ? "primary" : "secondary";
       return {
         key,
         label: prettifyLabel(key),

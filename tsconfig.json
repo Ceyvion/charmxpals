@@ -24,8 +24,12 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "uncrypto": [
+        "./src/polyfills/uncrypto"
       ]
-    }
+    },
+    "target": "ES2017"
   },
   "include": [
     "next-env.d.ts",
@@ -35,6 +39,7 @@
   ],
   "exclude": [
     "node_modules",
-    ".next"
+    ".next",
+    "node_modules_old*"
   ]
 }

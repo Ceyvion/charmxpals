@@ -94,10 +94,10 @@ async function writeRedisScore(client: Redis, key: string, entry: LeaderboardEnt
 async function readRedisTop(client: Redis, key: string, limit: number): Promise<LeaderboardEntry[]> {
   if (limit <= 0) return [];
   const dataKey = dataKeyFor(key);
-  const range = await client.zrange<{ member: string; score: number }>(key, 0, limit - 1, { rev: true, withScores: true });
+  const range = (await client.zrange(key, 0, limit - 1, { rev: true, withScores: true })) as Array<{ member: string; score: number }>;
   if (!range?.length) return [];
   const members = range.map((item) => item.member);
-  const rawEntries = members.length ? await client.hmget<string | null>(dataKey, ...members) : [];
+  const rawEntries = members.length ? ((await client.hmget(dataKey, ...members)) as unknown as Array<string | null>) : [];
   const results: LeaderboardEntry[] = [];
   for (let i = 0; i < members.length; i += 1) {
     const serialized = rawEntries?.[i];
@@ -160,4 +160,3 @@ export async function getTopScores(mode: string, limit = 20): Promise<Leaderboar
   }
   return readMemoryTop(key, limit);
 }
-
