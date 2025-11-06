@@ -62,24 +62,59 @@ export default function BetaWelcome({
   const patchDate = formatAbsolute(content.patch.publishedAt);
 
   const rosterTitle =
-    ownedCount > 0 ? `${ownedCount} ${ownedCount === 1 ? 'pal' : 'pals'} synced` : '0 pals synced';
+    ownedCount > 0 ? `${ownedCount} ${ownedCount === 1 ? 'pal' : 'pals'} synced` : 'No pals yet';
   const rosterDescription =
-    ownedCount > 0
-      ? 'Keep codes coming. Track cosmetics, stats, and loadouts here.'
-      : 'No codes redeemed yet.';
+    ownedCount > 0 ? 'Track stats, cosmetics, and loadouts from here.' : 'Claim a code to light up this space.';
 
   const lastSyncPrimary = lastClaimAtIso ? formatAbsolute(lastClaimAtIso, true) : '--';
   const lastSyncSecondary = lastClaimAtIso
-    ? `Last sync ${formatRelative(lastClaimAtIso)}. Keep timing the flow.`
+    ? `Last claim ${formatRelative(lastClaimAtIso)}`
     : 'Redeem your first code to start tracking.';
 
   const newestPalPrimary = newestPalName ?? '--';
-  const newestPalSecondary = newestPalName
-    ? 'Spin the viewer, equip cosmetics, and log anything glitchy.'
-    : 'Waiting for first claim.';
+  const newestPalSecondary = newestPalName ? 'Jump in to tweak cosmetics or nameplates.' : 'Waiting for first claim.';
 
   const missions = content.highlights;
   const quickActions = content.resources;
+  const patchSummary = truncate(content.patch.summary, 120);
+
+  const statCards: Array<{
+    id: string;
+    label: string;
+    primary: string;
+    secondary?: string | null;
+    meta?: string | null;
+    href?: string;
+    external?: boolean;
+  }> = [
+    {
+      id: 'patch',
+      label: 'Latest Patch',
+      primary: patchVersion,
+      secondary: patchSummary,
+      meta: patchDate ? `Published ${patchDate}` : null,
+      href: content.patch.href,
+      external: true,
+    },
+    {
+      id: 'roster',
+      label: 'Roster',
+      primary: rosterTitle,
+      secondary: rosterDescription,
+    },
+    {
+      id: 'sync',
+      label: 'Last Sync',
+      primary: lastSyncPrimary,
+      secondary: lastSyncSecondary,
+    },
+    {
+      id: 'newest',
+      label: 'Newest Pal',
+      primary: newestPalPrimary,
+      secondary: newestPalSecondary,
+    },
+  ];
 
   return (
     <section className="relative overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-br from-[#160732] via-[#12062a] to-[#050112] px-8 py-10 shadow-[0_34px_120px_rgba(60,10,120,0.35)] text-white">
@@ -107,38 +142,54 @@ export default function BetaWelcome({
           ) : null}
         </header>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-white/12 bg-white/6 px-5 py-6 shadow-inner shadow-black/20">
-            <div className="text-[11px] uppercase tracking-[0.28em] text-white/55">Latest Patch</div>
-            <div className="mt-2 text-xl font-semibold text-white">{patchVersion}</div>
-            <p className="mt-3 text-sm leading-relaxed text-white/70">{content.patch.summary}</p>
-            <Link
-              href={content.patch.href}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-4 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.28em] text-white/80 hover:text-white"
-            >
-              {patchDate ?? 'Patch notes'} | Patch Notes ↗
-            </Link>
-          </div>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {statCards.map((card) => {
+            const body = (
+              <div className="h-full rounded-2xl border border-white/12 bg-white/6 px-4 py-4 shadow-inner shadow-black/10 transition hover:border-white/25 hover:bg-white/10">
+                <div className="text-[11px] uppercase tracking-[0.28em] text-white/55">{card.label}</div>
+                <div className="mt-1 text-lg font-semibold text-white">{card.primary}</div>
+                {card.secondary ? (
+                  <p className="mt-1 text-xs leading-relaxed text-white/70">{card.secondary}</p>
+                ) : null}
+                {card.meta ? (
+                  <p className="mt-2 text-[10px] uppercase tracking-[0.24em] text-white/45">{card.meta}</p>
+                ) : null}
+                {card.href ? (
+                  <span className="mt-3 inline-flex text-[10px] font-semibold uppercase tracking-[0.28em] text-white/70">
+                    {card.external ? 'Open ↗' : 'Details ⇢'}
+                  </span>
+                ) : null}
+              </div>
+            );
 
-          <div className="rounded-2xl border border-white/12 bg-white/6 px-5 py-6 shadow-inner shadow-black/20">
-            <div className="text-[11px] uppercase tracking-[0.28em] text-white/55">Roster</div>
-            <div className="mt-2 text-xl font-semibold text-white">{rosterTitle}</div>
-            <p className="mt-3 text-sm leading-relaxed text-white/70">{rosterDescription}</p>
-          </div>
+            if (!card.href) {
+              return (
+                <div key={card.id} className="h-full">
+                  {body}
+                </div>
+              );
+            }
 
-          <div className="rounded-2xl border border-white/12 bg-white/6 px-5 py-6 shadow-inner shadow-black/20">
-            <div className="text-[11px] uppercase tracking-[0.28em] text-white/55">Last Sync</div>
-            <div className="mt-2 text-xl font-semibold text-white">{lastSyncPrimary}</div>
-            <p className="mt-3 text-sm leading-relaxed text-white/70">{lastSyncSecondary}</p>
-          </div>
-
-          <div className="rounded-2xl border border-white/12 bg-white/6 px-5 py-6 shadow-inner shadow-black/20">
-            <div className="text-[11px] uppercase tracking-[0.28em] text-white/55">Newest Pal</div>
-            <div className="mt-2 text-xl font-semibold text-white">{newestPalPrimary}</div>
-            <p className="mt-3 text-sm leading-relaxed text-white/70">{newestPalSecondary}</p>
-          </div>
+            return card.external ? (
+              <a
+                key={card.id}
+                href={card.href}
+                target="_blank"
+                rel="noreferrer"
+                className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-2xl"
+              >
+                {body}
+              </a>
+            ) : (
+              <Link
+                key={card.id}
+                href={card.href}
+                className="block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-2xl"
+              >
+                {body}
+              </Link>
+            );
+          })}
         </div>
 
         <div className="space-y-4">
@@ -242,4 +293,9 @@ export default function BetaWelcome({
       </div>
     </section>
   );
+}
+
+function truncate(value: string, max: number) {
+  if (value.length <= max) return value;
+  return `${value.slice(0, max - 1).trim()}…`;
 }
