@@ -26,3 +26,9 @@ declare module 'ws' {
     close(callback?: () => void): void;
   }
 }
+
+declare module 'uncrypto' {
+  export const subtle: SubtleCrypto;
+  const crypto: Crypto;
+  export default crypto;
+}

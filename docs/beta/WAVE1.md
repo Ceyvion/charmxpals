@@ -7,11 +7,11 @@
 | johnhashats@gmail.com | 1st-wave tester | `CXP-429D-BLUE-WTR-ICE-5TVET` | Blue Dash |
 | tylynstewart@gmail.com | 1st-wave tester | `CXP-271P-PURPLE-MYS-DRM-1F103` | Purple Dash |
 | tatiabiggs@yahoo.com | 1st-wave tester | `CXP-258D-BLACK-SHD-NGT-14HQ8` | Black Dash |
-| noelcle@gmail.com | Paired with FlowerBaby | `CXP-492P-PINK-LUV-ROS-UC2PT` | Pink Dash |
-| 1227flowerbaby@gmail.com | Shares code with Noel (confirm if unique needed) | `CXP-492P-PINK-LUV-ROS-UC2PT` | Pink Dash |
+| noelcle@gmail.com | Paired with FlowerBaby (converted to Black Dash) | `CXP-423D-BLACK-SHD-NGT-ZAP8J` | Black Dash |
+| 1227flowerbaby@gmail.com | Shares onboarding with Noel; prefers Pink Pixie | `CXP-492P-PINK-LUV-ROS-UC2PT` | Pink Pixie |
 | demetriam000@gmail.com | 1st-wave tester | `CXP-132D-PINK-LUV-ROS-GMRER` | Pink Dash |
 
-> ⚠️ `noelcle@gmail.com` and `1227flowerbaby@gmail.com` were both given the same claim code. If you want one-per-person ownership, allocate an additional unique code before import.
+> ⚠️ Noel now uses a unique Black Dash code (`CXP-423D-BLACK-SHD-NGT-ZAP8J`). FlowerBaby keeps the original Pink Pixie code (`CXP-492P-PINK-LUV-ROS-UC2PT`).
 
 ## Setup Checklist
 

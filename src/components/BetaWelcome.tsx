@@ -66,9 +66,11 @@ export default function BetaWelcome({
   const rosterDescription =
     ownedCount > 0 ? 'Track stats, cosmetics, and loadouts from here.' : 'Claim a code to light up this space.';
 
-  const lastSyncPrimary = lastClaimAtIso ? formatAbsolute(lastClaimAtIso, true) : '--';
+  const lastSyncAbsolute = lastClaimAtIso ? formatAbsolute(lastClaimAtIso, true) : null;
+  const lastSyncPrimary = lastSyncAbsolute ?? '--';
+  const lastSyncRelative = lastClaimAtIso ? formatRelative(lastClaimAtIso) : null;
   const lastSyncSecondary = lastClaimAtIso
-    ? `Last claim ${formatRelative(lastClaimAtIso)}`
+    ? `Last claim ${lastSyncRelative ?? 'moments ago'}`
     : 'Redeem your first code to start tracking.';
 
   const newestPalPrimary = newestPalName ?? '--';
