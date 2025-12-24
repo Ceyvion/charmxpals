@@ -1,34 +1,32 @@
 "use client";
 
 const stats = [
-  { icon: '⚡', label: '2.4K Pals Claimed', color: 'from-yellow-400 to-orange-500' },
-  { icon: '🎮', label: '850+ Active Players', color: 'from-pink-400 to-rose-500' },
-  { icon: '🏆', label: '12K+ Games Played', color: 'from-purple-400 to-indigo-500' },
-  { icon: '✨', label: '99.8% Uptime', color: 'from-cyan-400 to-blue-500' },
-  { icon: '🔥', label: 'Beta Wave 1 Live', color: 'from-red-400 to-pink-500' },
-  { icon: '💎', label: 'Legendary Drops', color: 'from-emerald-400 to-green-500' },
+  { value: '2.4K', label: 'Pals claimed' },
+  { value: '850+', label: 'Active players' },
+  { value: '12K+', label: 'Games played' },
+  { value: '99.8%', label: 'Uptime' },
 ];
 
 export default function LiveStatsMarquee() {
   return (
-    <div className="relative py-6 overflow-hidden border-y border-white/10 bg-gradient-to-r from-purple-950/50 via-pink-950/50 to-cyan-950/50">
-      {/* Animated Background Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-gradient-shift" />
+    <section className="relative py-10 border-y border-white/10 overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,_rgba(125,231,255,0.12),_rgba(0,0,0,0)_55%),_radial-gradient(circle_at_80%_0%,_rgba(255,185,154,0.12),_rgba(0,0,0,0)_55%)]" />
 
-      {/* Double Marquee for Seamless Loop */}
-      <div className="flex items-center gap-8 animate-marquee">
-        {[...stats, ...stats, ...stats].map((stat, index) => (
-          <div
-            key={index}
-            className="flex items-center gap-3 px-6 py-3 rounded-full bg-white/5 backdrop-blur-sm border border-white/10 whitespace-nowrap group hover:bg-white/10 transition-all duration-300 flex-shrink-0"
-          >
-            <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${stat.color} flex items-center justify-center text-xl group-hover:scale-110 transition-transform`}>
-              {stat.icon}
+      <div className="cp-container max-w-6xl relative z-10">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {stats.map((stat) => (
+            <div key={stat.label} className="cp-stat-card">
+              <div className="h-0.5 w-10 rounded-full bg-gradient-to-r from-cyan-300/70 to-amber-200/70 mb-3" />
+              <div className="text-2xl md:text-3xl font-display font-black text-white">
+                {stat.value}
+              </div>
+              <div className="text-[0.65rem] uppercase tracking-[0.28em] text-white/55 mt-1">
+                {stat.label}
+              </div>
             </div>
-            <span className="font-bold text-white text-sm">{stat.label}</span>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
+    </section>
   );
 }

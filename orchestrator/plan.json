@@ -108,6 +108,13 @@
       "area": "backend"
     },
     {
+      "id": "A1.13",
+      "title": "Landing visual refinement (soft sci-fi + playful)",
+      "detail": "Refresh palette, typography, and landing sections for a refined sci-fi collectible aesthetic.",
+      "status": "done",
+      "area": "frontend"
+    },
+    {
       "id": "A2",
       "title": "Auth: passwordless email (magic link)",
       "detail": "Integrate Auth.js (NextAuth) email provider; store users; session in RSC.",

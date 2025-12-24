@@ -32,7 +32,7 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
               <Link href="/" className="text-2xl font-extrabold tracking-tight font-display">
                 CHARM PALS
               </Link>
-              <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-gradient-to-r from-amber-500 to-red-500 text-white font-bold">beta</span>
+              <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-gradient-to-r from-cyan-300 to-amber-300 text-slate-900 font-bold">beta</span>
             </div>
             <AppNav />
             <div className="flex items-center gap-2">
@@ -43,7 +43,7 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
                   </span>
                   <button
                     onClick={handleSignOut}
-                    className="px-4 py-2 rounded-lg bg-white text-gray-900 text-sm font-bold hover:bg-gray-100 transition"
+                    className="px-4 py-2 rounded-lg border border-white/15 bg-white/5 text-white/80 text-sm font-semibold hover:bg-white/10 transition"
                     data-magnetic="chrome"
                     data-magnetic-color="sunrise"
                     data-ripple
@@ -54,13 +54,13 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
               ) : (
                 <Link
                   href="/login"
-                  className="group relative inline-flex items-center justify-center overflow-hidden rounded-full px-5 py-2.5 text-sm font-semibold uppercase tracking-wide text-white transition-transform duration-200 hover:translate-y-[-1px]"
+                  className="group relative inline-flex items-center justify-center overflow-hidden rounded-full px-5 py-2.5 text-sm font-semibold uppercase tracking-wide text-slate-900 transition-transform duration-200 hover:translate-y-[-1px]"
                   data-magnetic="chrome"
-                  data-magnetic-color="sunrise"
+                  data-magnetic-color="aqua"
                   data-ripple
                 >
-                  <span className="absolute inset-0 rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-sky-500 opacity-90 transition-opacity duration-200 group-hover:opacity-100" />
-                  <span className="absolute inset-0 rounded-full blur-xl bg-gradient-to-r from-pink-500/50 via-purple-500/40 to-sky-500/50 opacity-70 group-hover:opacity-90" aria-hidden />
+                  <span className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-300 via-blue-200 to-amber-200 opacity-90 transition-opacity duration-200 group-hover:opacity-100" />
+                  <span className="absolute inset-0 rounded-full blur-xl bg-gradient-to-r from-cyan-200/50 via-blue-200/40 to-amber-200/50 opacity-70 group-hover:opacity-90" aria-hidden />
                   <span className="relative inline-flex items-center gap-2">
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-7.5A2.25 2.25 0 003.75 5.25v13.5A2.25 2.25 0 006 21h7.5a2.25 2.25 0 002.25-2.25V15" />

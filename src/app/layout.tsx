@@ -1,11 +1,11 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Inter, Teko } from 'next/font/google';
+import { Space_Grotesk, Teko } from 'next/font/google';
 import LayoutChrome from '@/components/LayoutChrome';
 import AuthSessionProvider from '@/components/AuthSessionProvider';
 import { getTheme } from '@/lib/theme';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-space' });
 const teko = Teko({ subsets: ['latin'], weight: ['500', '700'], variable: '--font-teko' });
 
 export const metadata: Metadata = {
@@ -22,7 +22,7 @@ export default function RootLayout({
   const theme = getTheme();
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${teko.variable} font-sans bg-hero-radial bg-fixed`} data-theme={theme}>
+      <body className={`${spaceGrotesk.variable} ${teko.variable} font-sans bg-hero-radial bg-fixed`} data-theme={theme}>
         <AuthSessionProvider>
           <LayoutChrome>{children}</LayoutChrome>
         </AuthSessionProvider>
