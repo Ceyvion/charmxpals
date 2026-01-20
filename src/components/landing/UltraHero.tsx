@@ -141,7 +141,8 @@ export default function UltraHero() {
                   style={{ '--surface-accent': 'rgba(120, 224, 255, 0.35)' } as CSSProperties}
                 >
                   <div
-                    className="relative aspect-square rounded-[1.8rem] overflow-hidden border border-white/10 bg-[radial-gradient(circle_at_20%_15%,_rgba(125,231,255,0.2),_rgba(0,0,0,0)_55%),_radial-gradient(circle_at_80%_20%,_rgba(255,181,154,0.18),_rgba(0,0,0,0)_60%),_linear-gradient(160deg,_rgba(14,20,38,0.9),_rgba(10,14,28,0.95))]"
+                  className="relative aspect-square rounded-[1.8rem] overflow-hidden border border-white/10 bg-[radial-gradient(circle_at_20%_15%,_rgba(125,231,255,0.2),_rgba(0,0,0,0)_55%),_radial-gradient(circle_at_80%_20%,_rgba(255,181,154,0.18),_rgba(0,0,0,0)_60%),_linear-gradient(160deg,_rgba(14,20,38,0.9),_rgba(10,14,28,0.95))]"
+                  className="relative aspect-square rounded-[1.8rem] overflow-hidden border border-white/10 bg-[radial-gradient(circle_at_20%_15%,_rgba(110,210,242,0.22),_rgba(0,0,0,0)_55%),_radial-gradient(circle_at_80%_20%,_rgba(255,191,140,0.2),_rgba(0,0,0,0)_60%),_linear-gradient(160deg,_rgba(255,255,255,0.96),_rgba(245,250,255,0.92))]"
                     style={{
                       transform: `perspective(1200px) rotateX(${mousePos.y * -6}deg) rotateY(${mousePos.x * 6}deg)`,
                       transition: 'transform 0.3s ease-out',

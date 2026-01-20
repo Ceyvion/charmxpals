@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 export default function PlazaPage() {
   return (
-    <div className="min-h-screen bg-gray-950/90 py-12 px-4">
+    <div className="min-h-screen bg-grid-overlay py-12 px-4">
       <div className="cp-container space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-white">Plaza (Preview)</h1>
@@ -17,4 +17,3 @@ export default function PlazaPage() {
     </div>
   );
 }
-

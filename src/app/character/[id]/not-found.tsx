@@ -6,7 +6,7 @@ export default async function NotFound() {
   const picks = await repo.listCharacters({ limit: 6, offset: 0 });
 
   return (
-    <div className="min-h-screen bg-gray-950/90 px-4 py-16">
+    <div className="min-h-screen bg-grid-overlay px-4 py-16">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl md:text-4xl font-extrabold text-white font-display mb-2">Character Not Found</h1>

@@ -15,7 +15,7 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
   const displayName = session?.user?.name || session?.user?.email || 'You';
 
   useEffect(() => {
-    if (typeof document !== 'undefined') document.documentElement.setAttribute('data-appearance', 'dark');
+    if (typeof document !== 'undefined') document.documentElement.setAttribute('data-appearance', 'light');
     if (typeof window !== 'undefined') window.localStorage.removeItem('cp:appearance');
   }, []);
 
@@ -25,7 +25,7 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
   return (
     <div className="min-h-screen flex flex-col">
       <InteractionEffects />
-      <header className="cp-header bg-gray-900/60 backdrop-blur supports-[backdrop-filter]:bg-gray-900/50 border-b border-white/10 text-white">
+      <header className="cp-header backdrop-blur border-b border-white/10 text-white">
         <div className="cp-container">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
@@ -77,7 +77,7 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
 
       <main className="flex-grow">{children}</main>
 
-      <footer className="cp-footer bg-gray-950 text-white py-12">
+      <footer className="cp-footer text-white py-12">
         <div className="cp-container">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>

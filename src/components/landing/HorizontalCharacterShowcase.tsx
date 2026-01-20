@@ -46,7 +46,7 @@ export default function HorizontalCharacterShowcase({ characters }: { characters
   return (
     <section className="relative py-20 md:py-32 overflow-hidden">
       <div className="absolute inset-0 bg-grid-overlay cp-grid-soft opacity-40" />
-      <div className="absolute inset-0 bg-gradient-to-b from-cyan-950/20 via-transparent to-amber-950/20" />
+      <div className="absolute inset-0 bg-gradient-to-b from-sky-100/40 via-transparent to-amber-100/40" />
 
       <div className="relative z-10">
         <div className="cp-container max-w-7xl mb-16">

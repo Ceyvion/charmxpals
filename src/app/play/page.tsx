@@ -218,7 +218,7 @@ export default function GameHub() {
                 <div className="mt-8 flex items-center justify-between gap-3">
                   <Link
                     href={game.slug}
-                    className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(15,23,42,0.25)] transition hover:bg-slate-800"
+                    className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-amber-300 via-orange-200 to-sky-200 px-5 py-3 text-sm font-semibold text-slate-900 shadow-[0_10px_30px_rgba(110,206,242,0.2)] transition hover:brightness-95"
                   >
                     {game.cta}
                   </Link>

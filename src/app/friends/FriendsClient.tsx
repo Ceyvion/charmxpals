@@ -15,7 +15,7 @@ function StageBadge({ friend, style }: { friend: CrewFriend; style: CSSPropertie
   return (
     <div
       style={style}
-      className="absolute flex flex-col items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-5 text-center shadow-[0_12px_40px_rgba(124,58,237,0.35)] backdrop-blur-md transition-transform hover:-translate-y-1"
+      className="absolute flex flex-col items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-5 text-center shadow-[0_12px_40px_rgba(110,206,242,0.25)] backdrop-blur-md transition-transform hover:-translate-y-1"
     >
       <div
         className="h-14 w-14 rounded-full border border-white/40 bg-gradient-to-br from-white/40 to-white/10 shadow-inner"
@@ -46,7 +46,7 @@ export default function FriendsClient({ userLabel, isAuthenticated, friends, pen
   return (
     <div className="min-h-screen bg-grid-overlay px-4 py-12">
       <div className="cp-container space-y-8 sm:space-y-10 lg:space-y-12">
-        <header className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-500/25 via-purple-500/15 to-emerald-500/25 p-7 sm:p-9 lg:p-10">
+        <header className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-amber-300/30 via-sky-200/20 to-emerald-200/25 p-7 sm:p-9 lg:p-10">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.25),_transparent_55%)]" />
           <div className="relative grid gap-6 text-white lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:items-end">
             <div className="space-y-5">
@@ -99,8 +99,8 @@ export default function FriendsClient({ userLabel, isAuthenticated, friends, pen
         </header>
 
         <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/35 px-6 py-8 sm:px-8 sm:py-10 backdrop-blur-xl">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,_rgba(99,102,241,0.28),_transparent_65%)]" />
-          <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(147,197,253,0.08),rgba(244,114,182,0.06)_45%,rgba(167,139,250,0.09))]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,_rgba(110,206,242,0.28),_transparent_65%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(255,210,170,0.08),rgba(180,226,255,0.08)_45%,rgba(255,230,200,0.1))]" />
           <div className="relative grid gap-8 text-white lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:items-start">
             <div className="space-y-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -124,8 +124,8 @@ export default function FriendsClient({ userLabel, isAuthenticated, friends, pen
                 )}
               </div>
 
-              <div className="relative h-[18rem] sm:h-[22rem] lg:h-[24rem] rounded-[32px] border border-white/15 bg-gradient-to-br from-black/75 via-indigo-950/45 to-purple-950/50 shadow-[0_28px_100px_rgba(45,18,88,0.35)]">
-                <div className="absolute inset-x-1/4 bottom-6 h-2 rounded-full bg-gradient-to-r from-violet-400/30 via-sky-400/35 to-fuchsia-400/30 blur-md" />
+              <div className="relative h-[18rem] sm:h-[22rem] lg:h-[24rem] rounded-[32px] border border-white/15 bg-gradient-to-br from-white/85 via-sky-100/60 to-amber-100/70 shadow-[0_28px_100px_rgba(110,206,242,0.22)]">
+                <div className="absolute inset-x-1/4 bottom-6 h-2 rounded-full bg-gradient-to-r from-amber-300/30 via-sky-300/35 to-emerald-200/30 blur-md" />
                 <div className="absolute inset-x-[18%] bottom-16 h-20 rounded-full border border-white/10 bg-white/5 blur-lg" />
 
                 {hasFriends ? (

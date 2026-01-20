@@ -29,7 +29,7 @@ export default function Interactive3DScanner() {
 
   return (
     <section className="relative py-20 md:py-32 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-950/10 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-sky-100/50 to-transparent" />
 
       <div className="cp-container max-w-6xl relative z-10">
         <div className="text-center mb-16">
@@ -50,7 +50,7 @@ export default function Interactive3DScanner() {
           <div className="relative">
             <div className="relative aspect-square max-w-lg mx-auto">
               <div className="cp-surface-neo p-8 rounded-[2.6rem]" style={{ '--surface-accent': 'rgba(120, 224, 255, 0.3)' } as CSSProperties}>
-                <div className="relative w-full h-full rounded-3xl overflow-hidden border border-white/10 bg-[radial-gradient(circle_at_25%_20%,_rgba(125,231,255,0.12),_rgba(0,0,0,0)_60%),_linear-gradient(160deg,_rgba(8,12,24,0.95),_rgba(6,10,20,0.95))] flex items-center justify-center">
+                <div className="relative w-full h-full rounded-3xl overflow-hidden border border-white/10 bg-[radial-gradient(circle_at_25%_20%,_rgba(110,210,242,0.16),_rgba(0,0,0,0)_60%),_linear-gradient(160deg,_rgba(255,255,255,0.96),_rgba(245,250,255,0.92))] flex items-center justify-center">
                   <div className={`relative w-48 h-48 transition-transform duration-500 ${scanning ? 'scale-95' : 'scale-100'}`}>
                     <div className="absolute inset-0 grid grid-cols-8 grid-rows-8 gap-1 p-4 bg-white rounded-2xl">
                       {qrPattern.map((on, i) => (

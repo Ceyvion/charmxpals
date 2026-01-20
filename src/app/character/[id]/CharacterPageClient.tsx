@@ -205,21 +205,21 @@ export default function CharacterPageClient({ character, modelUrl }: { character
 
   const realmLabel = character.realm ? character.realm.toUpperCase() : 'UNKNOWN REALM';
   const accentColor = character.color ?? rarity.accent;
-  const fallbackHeroBackground = `radial-gradient(circle at top, ${accentColor}22, transparent 55%), #050510`;
+  const fallbackHeroBackground = `radial-gradient(circle at top, ${accentColor}22, transparent 55%), #fffaf5`;
 
   return (
-    <div className="min-h-screen bg-[#050510] text-white">
+    <div className="min-h-screen bg-transparent text-white">
       <section className="relative min-h-[80vh] overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
             backgroundImage: heroArt
-              ? `linear-gradient(120deg, rgba(5,5,16,0.9) 15%, rgba(5,5,16,0.75) 38%, rgba(5,5,16,0.45) 65%), url(${heroArt})`
+              ? `linear-gradient(120deg, rgba(255,255,255,0.92) 15%, rgba(255,248,236,0.75) 38%, rgba(255,255,255,0.35) 65%), url(${heroArt})`
               : fallbackHeroBackground
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#050510] via-[#050510]/80 to-transparent" />
-        <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-[#050510]/75 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#fff7ec] via-[#fff7ec]/80 to-transparent" />
+        <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-[#fff7ec]/70 to-transparent" />
 
         <div className="relative max-w-6xl mx-auto px-6 md:px-10 lg:px-16 py-20 lg:py-28 grid gap-16 lg:grid-cols-[1.2fr,0.8fr] items-start">
           <RevealOnView className="space-y-8">
@@ -260,7 +260,7 @@ export default function CharacterPageClient({ character, modelUrl }: { character
             <div className="flex flex-wrap gap-4 pt-4">
               <Link
                 href="/play"
-                className="group inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-sm font-semibold uppercase tracking-widest transition-all hover:shadow-[0_10px_35px_rgba(168,85,247,0.35)]"
+                className="group inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-amber-400 via-orange-300 to-sky-300 text-sm font-semibold uppercase tracking-widest transition-all hover:shadow-[0_10px_35px_rgba(110,206,242,0.28)]"
               >
                 Battle Mode
                 <span className="transition-transform group-hover:translate-x-1">→</span>
@@ -275,14 +275,14 @@ export default function CharacterPageClient({ character, modelUrl }: { character
           </RevealOnView>
 
           <RevealOnView>
-            <div className="relative rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden shadow-[0_25px_60px_rgba(0,0,0,0.45)]">
+            <div className="relative rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden shadow-[0_25px_60px_rgba(110,206,242,0.2)]">
               <div className="absolute -inset-1 rounded-[26px]" style={{ background: `linear-gradient(140deg, ${accentColor}44, transparent 55%)` }} />
               <div className="relative p-6">
                 <div className="flex items-center justify-between mb-4 text-xs uppercase tracking-[0.3em] text-white/60">
                   <span>Holo Model</span>
                   <span>Interactive</span>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-black/50 overflow-hidden">
+                <div className="rounded-2xl border border-white/10 bg-white/70 overflow-hidden">
                   <CharacterViewer3D modelUrl={modelUrl} height={420} />
                 </div>
               </div>
@@ -291,7 +291,7 @@ export default function CharacterPageClient({ character, modelUrl }: { character
         </div>
       </section>
 
-      <section className="border-t border-white/5 bg-[#06091a]">
+      <section className="border-t border-black/5 bg-white/50">
         <div className="max-w-6xl mx-auto px-6 md:px-10 lg:px-16 py-20 grid gap-12 lg:grid-cols-[1.05fr,0.95fr]">
           <RevealOnView className="rounded-3xl border border-white/10 bg-black/40 backdrop-blur-xl p-8">
             <div className="flex items-center justify-between mb-8">
@@ -373,7 +373,7 @@ export default function CharacterPageClient({ character, modelUrl }: { character
       </section>
 
       {highlights.length > 0 && (
-        <section className="bg-[#050510] py-16 border-t border-white/5">
+        <section className="bg-white/40 py-16 border-t border-black/5">
           <div className="max-w-6xl mx-auto px-6 md:px-10 lg:px-16">
             <RevealOnView className="rounded-3xl border border-white/10 bg-black/40 backdrop-blur-xl p-10 space-y-10">
               <div className="flex items-end justify-between flex-wrap gap-6">
@@ -426,7 +426,7 @@ export default function CharacterPageClient({ character, modelUrl }: { character
         </section>
       )}
 
-      <section className="bg-[#040512] border-t border-white/5">
+      <section className="bg-white/50 border-t border-black/5">
         <div className="max-w-6xl mx-auto px-6 md:px-10 lg:px-16 py-20 space-y-10">
           <RevealOnView className="flex flex-col gap-6">
             <div className="flex items-center justify-between flex-wrap gap-4">

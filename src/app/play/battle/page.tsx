@@ -91,7 +91,7 @@ function FighterCard({ fighter, role, highlight, phase, statKey, spinPreview }: 
 
   return (
     <div
-      className={`relative overflow-hidden rounded-3xl border border-white/10 bg-slate-950/60 p-6 text-white backdrop-blur-xl transition ${ringClass}`}
+      className={`relative overflow-hidden rounded-3xl border border-white/10 bg-white/70 p-6 text-white backdrop-blur-xl transition ${ringClass}`}
     >
       <div className="pointer-events-none absolute inset-0 opacity-95" style={backdropStyle} />
 
@@ -352,7 +352,7 @@ export default function BattlePage() {
 
   return (
     <div className="min-h-screen py-14 px-4" style={auraStyle}>
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 rounded-[32px] border border-white/10 bg-slate-950/70 p-6 text-white shadow-[0_40px_140px_rgba(56,189,248,0.18)] backdrop-blur-2xl md:p-10">
+      <div className="mx-auto flex max-w-6xl flex-col gap-8 rounded-[32px] border border-white/10 bg-white/80 p-6 text-white shadow-[0_40px_140px_rgba(110,206,242,0.2)] backdrop-blur-2xl md:p-10">
         <header className="text-center">
           <p className="text-xs uppercase tracking-[0.4em] text-white/60">Rift League Gauntlet</p>
           <h1 className="mt-2 font-display text-4xl font-semibold md:text-5xl">Stat Battle: Harmonic Rift</h1>
@@ -372,7 +372,7 @@ export default function BattlePage() {
             spinPreview={spinPreview}
           />
 
-          <div className="flex flex-col gap-5 rounded-3xl border border-white/12 bg-slate-950/60 p-5 backdrop-blur-xl">
+          <div className="flex flex-col gap-5 rounded-3xl border border-white/12 bg-white/70 p-5 backdrop-blur-xl">
             <div className="text-center">
               <div className="text-xs uppercase tracking-[0.34em] text-white/50">Scoreline</div>
               <div className="mt-2 font-display text-3xl font-semibold">
@@ -469,7 +469,7 @@ export default function BattlePage() {
           />
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-slate-950/60 p-5 backdrop-blur-xl">
+        <section className="rounded-3xl border border-white/10 bg-white/70 p-5 backdrop-blur-xl">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-xs uppercase tracking-[0.32em] text-white/60">Battle Feed</h2>
             <div className="flex gap-2">

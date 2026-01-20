@@ -151,7 +151,7 @@ export default function TimeTrial() {
         <div className="flex items-center justify-center gap-3">
           <button
             onClick={start}
-            className="rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+            className="rounded-xl bg-gradient-to-r from-amber-300 via-orange-200 to-sky-200 px-6 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:brightness-95"
           >
             Launch relay
           </button>

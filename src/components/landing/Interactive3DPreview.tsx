@@ -57,7 +57,7 @@ export default function Interactive3DPreview() {
 
   return (
     <section className="relative py-20 md:py-32 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-950/10 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-sky-100/50 to-transparent" />
 
       <div className="cp-container max-w-7xl relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">

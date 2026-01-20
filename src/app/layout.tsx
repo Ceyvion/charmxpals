@@ -21,7 +21,7 @@ export default function RootLayout({
 }) {
   const theme = getTheme();
   return (
-    <html lang="en">
+    <html lang="en" data-appearance="light">
       <body className={`${spaceGrotesk.variable} ${teko.variable} font-sans bg-hero-radial bg-fixed`} data-theme={theme}>
         <AuthSessionProvider>
           <LayoutChrome>{children}</LayoutChrome>
