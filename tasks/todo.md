@@ -1,5 +1,14 @@
 # Beta Exit Tonight Checklist
 
+## Legacy Character Recovery Plan (2026-02-17)
+
+- [ ] Confirm root causes for `Character Not Found` on the reported roster names.
+- [ ] Add lore + deterministic art mappings for: Shadow Mantis, Storm Leviathan, Tidal Serpent, Aero Falcon, Aurora Stag, Frost Wolf, Vine Warden, Volt Lynx, Crystal Nymph, Quartz Sentinel, Terra Golem.
+- [ ] Patch character profile resolution to support both DB id and slug identifiers.
+- [ ] Ensure profile links use identifiers that always resolve.
+- [ ] Verify with lint and targeted route checks.
+- [ ] Document a review note with what changed and residual risks.
+
 - [x] Remove all user-facing 3D surfaces from home, character, and inventory experiences.
 - [x] Redesign character profile page around static art, stats, and battle CTAs.
 - [x] Expand roster dataset beyond initial beta set and wire deterministic local asset refs.
@@ -380,3 +389,30 @@
     - `output/champion-profile-polish-gallery.png`
 - Residual risk:
   - Identity highlights still intentionally show fallback copy for characters missing trait metadata; only lore-backed characters render the new colorful highlight cards.
+
+## Redis + Character Mapping Integrity Audit Plan (2026-02-17)
+
+- [x] Audit all Redis-backed repository paths (`src/lib/redis.ts`, `src/lib/repoRedis.ts`, relevant API routes) for key schema consistency and fallback behavior.
+- [x] Verify character ID/slug mapping correctness across claim, ownership, and MMO token/session payloads.
+- [x] Run automated checks/tests for Redis repo + claim flow + mapping logic and fix any regressions.
+- [x] Add integrity hardening where needed (validation/sanitization/defensive parsing) and keep compatibility with current data.
+- [x] Document audit results, verified commands, and any residual risk in a review section.
+
+### Redis + Character Mapping Integrity Audit Review (2026-02-17)
+
+- Redis/data integrity audit (live Upstash with local `.env`) confirms key/index consistency:
+  - `seeded=true`, `characters=25`, `units=505`, `unitByCodeHashEntries=505`, `users=10`, `ownershipEntries=10`.
+  - No broken references found across units, ownerships, or user lookup hashes (`userByEmail`, `userByHandle`).
+  - No malformed challenges; no expired unconsumed challenges at audit time.
+- Mapping finding:
+  - 15 persisted legacy character records have no `slug` and no sprite-path metadata (e.g., `Aero Falcon`, `Storm Leviathan`), so MMO token mapping could previously fall back to DB UUIDs and cause sprite path misses.
+- Hardening shipped:
+  - Added `src/lib/mmo/avatarId.ts` to normalize/resolve sprite-safe avatar IDs from slug, sprite path, and lore fallback (`withCharacterLore`).
+  - Updated `src/app/api/mmo/token/route.ts` to emit only sprite-safe IDs; unresolved records now use a configurable safe fallback (`MMO_DEFAULT_AVATAR_ID`, default `neon-city`) instead of raw DB UUIDs.
+  - Added `src/lib/mmo/avatarId.test.ts` for normalization, sprite-path parsing, lore fallback for legacy records, and null-path handling.
+- Verification:
+  - `npm test -- src/lib/mmo/avatarId.test.ts src/lib/repoRedis.test.ts src/app/api/claim/flow.test.ts src/app/api/redeem/route.test.ts`
+  - `npm run lint -- --file src/app/api/mmo/token/route.ts --file src/lib/mmo/avatarId.ts --file src/lib/mmo/avatarId.test.ts`
+  - `npm run build`
+- Residual risk:
+  - Legacy character records missing lore/slug metadata still exist in Redis and therefore use fallback avatar IDs in MMO. Data integrity is stable, but profile identity fidelity for those legacy records remains limited until those records are normalized/migrated.

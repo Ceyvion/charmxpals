@@ -3,20 +3,11 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getRepo } from '@/lib/repo';
 import { rateLimitCheck } from '@/lib/rateLimit';
+import { normalizeAvatarId, resolveAvatarId } from '@/lib/mmo/avatarId';
 import { signToken, type MmoSessionClaims } from '@/lib/mmo/token';
 import { ensurePlazaServer } from '@/lib/mmo/serverRuntime';
 import { resolveConfiguredWsBase, resolveServerWsBase } from '@/lib/mmo/wsUrl';
 import { getSafeServerSession } from '@/lib/serverSession';
-
-function resolveAvatarId(character: { id: string; slug?: string | null; artRefs?: Record<string, string> }) {
-  if (typeof character.slug === 'string' && character.slug.trim()) {
-    return character.slug.trim();
-  }
-  const spriteRef = character.artRefs?.sprite;
-  if (typeof spriteRef !== 'string') return null;
-  const match = spriteRef.match(/\/assets\/characters\/([^/]+)\/sprite\.png$/);
-  return match?.[1] || null;
-}
 
 export async function GET(request: NextRequest) {
   const modeParam = request.nextUrl.searchParams.get('mode');
@@ -44,15 +35,28 @@ export async function GET(request: NextRequest) {
   const owns = await repo.listOwnershipsByUser(user.id);
   const ownedDbCharacterIds = Array.from(new Set(owns.map((o) => o.characterId)));
   const ownedCharacters = ownedDbCharacterIds.length > 0 ? await repo.getCharactersByIds(ownedDbCharacterIds) : [];
+  const configuredFallbackAvatarId = normalizeAvatarId(process.env.MMO_DEFAULT_AVATAR_ID);
+  const fallbackAvatarId = configuredFallbackAvatarId || 'neon-city';
   const avatarIdByCharacterId = new Map<string, string>();
+  const unresolvedOwnedIds: string[] = [];
   for (const character of ownedCharacters) {
     const avatarId = resolveAvatarId(character);
-    if (avatarId) avatarIdByCharacterId.set(character.id, avatarId);
+    if (avatarId) {
+      avatarIdByCharacterId.set(character.id, avatarId);
+    } else {
+      unresolvedOwnedIds.push(character.id);
+    }
+  }
+  if (unresolvedOwnedIds.length > 0 && process.env.NODE_ENV !== 'test') {
+    console.warn('[mmo-token] Falling back avatar ID for unmapped owned characters', {
+      unresolvedCount: unresolvedOwnedIds.length,
+      sampleCharacterIds: unresolvedOwnedIds.slice(0, 5),
+    });
   }
   const ownedAvatarIds = Array.from(
     new Set(
       ownedDbCharacterIds
-        .map((characterId) => avatarIdByCharacterId.get(characterId) || characterId)
+        .map((characterId) => avatarIdByCharacterId.get(characterId) || fallbackAvatarId)
         .filter((id): id is string => typeof id === 'string' && id.trim().length > 0),
     ),
   );
