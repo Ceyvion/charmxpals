@@ -150,6 +150,13 @@
       "area": "frontend"
     },
     {
+      "id": "UX-CHAMPION-PROFILE-POLISH-2026-02-17",
+      "title": "Champion profile metrics + identity + gallery polish",
+      "detail": "Refine performance metric hover/tier visuals, add richer identity highlight styling, and compress gallery into a compact differentiated asset reel.",
+      "status": "done",
+      "area": "frontend"
+    },
+    {
       "id": "MMO-PLAZA-STABILITY-2026-02-17",
       "title": "Plaza startup and handshake stability",
       "detail": "Fix local MMO server startup command, harden WS payload decode, and prevent bundled ws bufferutil runtime failures that caused handshake timeouts.",

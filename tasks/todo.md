@@ -343,3 +343,40 @@
   - `npm run lint` passes (warnings are pre-existing and unrelated).
   - Fresh dev visual check captured at `output/login-legibility-after-fresh-dev.png`.
 - Residual risk: no automated visual regression test exists for `/login`, so future copy/style edits could reintroduce low-contrast combinations without screenshot checks.
+
+## Champion Profile Component Map (2026-02-17)
+
+- [x] Identify the champion profile “/character” page entry point and folder structure.
+- [x] Trace the sections responsible for performance metrics, identity highlights, and the gallery/asset set.
+- [x] Document the file paths plus key props/state/style hooks used for hover interactions and tier tiles.
+
+## Champion Profile Visual Polish Plan (2026-02-17)
+
+- [x] Rework `CharacterStats` hover/tier tile treatment to remove wonky glow behavior and stabilize tier badge readability.
+- [x] Redesign “Identity Highlights” in `CharacterPageClient` with stronger color accents, richer hierarchy, and more visual life.
+- [x] Tighten “Asset Set / Character Gallery” so it occupies less space and no longer repeats identical-looking cards.
+- [x] Verify with targeted lint checks and a quick visual pass of `/character/[id]`.
+- [x] Add a review note with final behavior changes and residual risk.
+
+### Champion Profile Visual Polish Review (2026-02-17)
+
+- Performance metrics polish (`src/components/CharacterStats.tsx`):
+  - Replaced overbright tier gradients with readable tier chips (`chipBg/chipBorder/chipText`) and kept tier labels consistent across stat values.
+  - Calmed hover behavior: removed the heavy hover glow stack and switched to subtle lift + accent border + controlled shadow.
+  - Kept existing layout/information hierarchy but tuned copy for concise tier descriptors.
+- Identity highlights refresh (`src/app/character/[id]/CharacterPageClient.tsx`):
+  - Added trait-specific color treatments (surface gradient, halo, chip styling) so each highlight card has distinct personality.
+  - Switched layout from plain stacked rows to a two-column spotlight grid with hover lift and stronger label hierarchy.
+- Gallery minimization (`src/app/character/[id]/CharacterPageClient.tsx`):
+  - Converted the gallery from a full tile grid into a compact horizontal reel (`galleryPreview` limited to 5 items).
+  - Added per-asset color accents and compact index labels to reduce repetition while preserving discoverability.
+  - Added concise overflow note when extra assets are hidden.
+- Verification:
+  - `npm run lint -- --file src/components/CharacterStats.tsx --file 'src/app/character/[id]/CharacterPageClient.tsx'` passes (pre-existing `@next/next/no-img-element` warnings only).
+  - `npm run build` passes.
+  - Production visual spot-check completed for `/character/1febfca5-e98f-4b8b-aded-79b912db843f`; captures saved to:
+    - `output/champion-profile-polish-metrics.png`
+    - `output/champion-profile-polish-identity-gallery.png`
+    - `output/champion-profile-polish-gallery.png`
+- Residual risk:
+  - Identity highlights still intentionally show fallback copy for characters missing trait metadata; only lore-backed characters render the new colorful highlight cards.

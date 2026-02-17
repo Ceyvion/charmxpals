@@ -95,11 +95,46 @@ const DEFAULT_THEME: StatTheme = {
 };
 
 const STAT_TIERS = [
-  { min: 92, label: 'S Tier', gradient: 'linear-gradient(135deg,#fde68a,#f9a8d4)', foreground: '#111827', description: 'Arena-breaking mastery—drop them straight into finals.' },
-  { min: 84, label: 'A Tier', gradient: 'linear-gradient(135deg,#c084fc,#7dd3fc)', foreground: '#0f172a', description: 'Headliner ready with only light coaching to sync.' },
-  { min: 70, label: 'B Tier', gradient: 'linear-gradient(135deg,#38bdf8,#86efac)', foreground: '#020617', description: 'Reliable in most squads—scales fast with thoughtful combos.' },
-  { min: 55, label: 'C Tier', gradient: 'linear-gradient(135deg,#fbbf24,#fb7185)', foreground: '#1f2937', description: 'Developing spark—pair with mentors for dramatic gains.' },
-  { min: 0, label: 'D Tier', gradient: 'linear-gradient(135deg,#94a3b8,#475569)', foreground: '#020617', description: 'Dormant potential waiting for a training montage.' },
+  {
+    min: 92,
+    label: 'S Tier',
+    chipBg: 'rgba(254, 243, 199, 0.95)',
+    chipBorder: 'rgba(251, 191, 36, 0.86)',
+    chipText: '#713f12',
+    description: 'Final-stage consistency with elite upside.',
+  },
+  {
+    min: 84,
+    label: 'A Tier',
+    chipBg: 'rgba(233, 213, 255, 0.94)',
+    chipBorder: 'rgba(192, 132, 252, 0.82)',
+    chipText: '#581c87',
+    description: 'Reliable starter profile with standout moments.',
+  },
+  {
+    min: 70,
+    label: 'B Tier',
+    chipBg: 'rgba(186, 230, 253, 0.94)',
+    chipBorder: 'rgba(56, 189, 248, 0.8)',
+    chipText: '#0c4a6e',
+    description: 'Solid foundation that performs in most comps.',
+  },
+  {
+    min: 55,
+    label: 'C Tier',
+    chipBg: 'rgba(254, 215, 170, 0.94)',
+    chipBorder: 'rgba(251, 146, 60, 0.8)',
+    chipText: '#9a3412',
+    description: 'Raw toolkit showing flashes but needs polish.',
+  },
+  {
+    min: 0,
+    label: 'D Tier',
+    chipBg: 'rgba(203, 213, 225, 0.95)',
+    chipBorder: 'rgba(148, 163, 184, 0.82)',
+    chipText: '#334155',
+    description: 'Early-stage profile with room to develop.',
+  },
 ] as const;
 
 function clamp(value: number, min = 0, max = 100) {
@@ -180,9 +215,10 @@ export default function CharacterStats({ stats }: { stats: Record<string, number
         };
 
         const badgeStyle: CSSProperties = {
-          backgroundImage: tier.gradient,
-          color: tier.foreground,
-          boxShadow: '0 10px 25px rgba(15, 23, 42, 0.25)',
+          backgroundColor: tier.chipBg,
+          borderColor: tier.chipBorder,
+          color: tier.chipText,
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.35)',
         };
 
         const Icon = theme.icon;
@@ -192,11 +228,11 @@ export default function CharacterStats({ stats }: { stats: Record<string, number
             key={key}
             data-stat-tile
             style={tileStyle}
-            className="group relative overflow-hidden rounded-3xl border border-white/12 bg-white/[0.04] px-5 py-4 text-white backdrop-blur-xl transition duration-300 hover:border-white/40 hover:shadow-[0_22px_50px_var(--accent-glow)]"
+            className="group relative overflow-hidden rounded-3xl border border-white/12 bg-[linear-gradient(160deg,rgba(19,18,36,0.9),rgba(10,10,23,0.95))] px-5 py-4 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--accent)] hover:shadow-[0_16px_32px_-24px_var(--accent)]"
           >
-            <div className="pointer-events-none absolute inset-0 opacity-80 transition-opacity duration-300 group-hover:opacity-100">
-              <div className="absolute -top-16 left-[-15%] h-40 w-40 rounded-full bg-[radial-gradient(circle,var(--accent-soft)_0%,transparent_65%)] blur-2xl" />
-              <div className="absolute -bottom-20 right-[-20%] h-44 w-44 rounded-full bg-[radial-gradient(circle,var(--accent-soft)_0%,transparent_70%)] blur-3xl" />
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+              <div className="absolute -top-20 right-[-10%] h-36 w-36 rounded-full bg-[radial-gradient(circle,var(--accent-soft)_0%,transparent_72%)] opacity-70 blur-3xl transition-opacity duration-200 group-hover:opacity-90" />
             </div>
 
             <div className="relative flex items-start gap-4">
@@ -217,11 +253,12 @@ export default function CharacterStats({ stats }: { stats: Record<string, number
                       <span className="text-xs text-white/60">/ 100</span>
                     </div>
                   </div>
-                  <span className="rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em]" style={badgeStyle}>
+                  <span className="inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em]" style={badgeStyle}>
+                    <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-current/70" />
                     {tier.label}
                   </span>
                 </div>
-                <p className="text-xs leading-relaxed text-white/70">{tier.description}</p>
+                <p className="text-xs leading-relaxed text-white/65">{tier.description}</p>
               </div>
             </div>
           </div>
