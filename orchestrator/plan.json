@@ -157,6 +157,13 @@
       "area": "frontend"
     },
     {
+      "id": "UX-LEGACY-CHARACTER-RECOVERY-2026-02-17",
+      "title": "Legacy character profile + art recovery",
+      "detail": "Restore missing legacy roster lore/art mappings and harden character profile routing to resolve id, slug, and lore-backed identifiers.",
+      "status": "done",
+      "area": "fullstack"
+    },
+    {
       "id": "MMO-PLAZA-STABILITY-2026-02-17",
       "title": "Plaza startup and handshake stability",
       "detail": "Fix local MMO server startup command, harden WS payload decode, and prevent bundled ws bufferutil runtime failures that caused handshake timeouts.",

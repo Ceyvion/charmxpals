@@ -6,7 +6,7 @@ import { withCharacterLore, type CharacterWithLore } from "@/lib/characterLore";
 
 export default async function ComparePage() {
   const repo = await getRepo();
-  const characters = await repo.listCharacters({ limit: 48, offset: 0 });
+  const characters = await repo.listCharacters({ limit: 96, offset: 0 });
   const enriched = characters
     .map((character) => withCharacterLore(character))
     .filter((value): value is CharacterWithLore => Boolean(value));

@@ -13,3 +13,4 @@
 - For Tailwind arbitrary grid column values, use underscore-separated track list (spaces) rather than commas, or generated `grid-template-columns` will be invalid in browsers.
 - In React + game-engine integrations (Phaser/canvas), never include evolving HUD score state in the engine boot `useEffect` dependencies; use refs/bridge callbacks for live values so score updates do not tear down and recreate the running game.
 - When guarding Next.js startup against `.next` corruption, validate webpack runtime chunk-map paths (for example `./vendor-chunks/@swc.js`, `./9161.js`) in addition to static `require(...)` paths, or production can still boot with hidden broken chunks and return `500`.
+- For dynamic profile routes, resolve both DB IDs and slugs (plus name-slug fallback) before returning 404, otherwise UI links from different surfaces can intermittently hit `Character Not Found` despite valid roster entries.

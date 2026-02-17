@@ -7,7 +7,7 @@ import { getSafeServerSession } from '@/lib/serverSession';
 
 export default async function ExplorePage() {
   const repo = await getRepo();
-  const characters = await repo.listCharacters({ limit: 24, offset: 0 });
+  const characters = await repo.listCharacters({ limit: 96, offset: 0 });
   const enriched = characters
     .map((character) => withCharacterLore(character))
     .filter((value): value is CharacterWithLore => Boolean(value));

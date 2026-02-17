@@ -2,12 +2,29 @@
 
 ## Legacy Character Recovery Plan (2026-02-17)
 
-- [ ] Confirm root causes for `Character Not Found` on the reported roster names.
-- [ ] Add lore + deterministic art mappings for: Shadow Mantis, Storm Leviathan, Tidal Serpent, Aero Falcon, Aurora Stag, Frost Wolf, Vine Warden, Volt Lynx, Crystal Nymph, Quartz Sentinel, Terra Golem.
-- [ ] Patch character profile resolution to support both DB id and slug identifiers.
-- [ ] Ensure profile links use identifiers that always resolve.
-- [ ] Verify with lint and targeted route checks.
-- [ ] Document a review note with what changed and residual risks.
+- [x] Confirm root causes for `Character Not Found` on the reported roster names.
+- [x] Add lore + deterministic art mappings for: Shadow Mantis, Storm Leviathan, Tidal Serpent, Aero Falcon, Aurora Stag, Frost Wolf, Vine Warden, Volt Lynx, Crystal Nymph, Quartz Sentinel, Terra Golem.
+- [x] Patch character profile resolution to support both DB id and slug identifiers.
+- [x] Ensure profile links use identifiers that always resolve.
+- [x] Verify with lint and targeted route checks.
+- [x] Document a review note with what changed and residual risks.
+
+### Legacy Character Recovery Review (2026-02-17)
+
+- Root causes:
+  - Legacy characters still existed in persisted datasets, but they were no longer present in `src/data/characterLore.ts`, so UI fallback lore/art mapping could not enrich them.
+  - `src/app/compare/CompareClient.tsx` generated slug-based profile URLs while `src/app/character/[id]/page.tsx` only resolved strict DB IDs.
+- Fixes:
+  - Added lore entries for all requested legacy names in `src/data/characterLore.ts` with deterministic non-placeholder art refs mapped to existing staged character art sets.
+  - Added `src/lib/characterLookup.ts` and switched character page/API routes to resolve identifiers by ID, slug, name slug, and lore fallback.
+  - Updated compare profile links to use DB IDs (`/character/${character.id}`) to avoid slug-only routing mismatches.
+  - Increased roster fetch caps on compare/explore pages so expanded rosters remain visible.
+- Verification:
+  - `npm run test -- src/lib/characterLookup.test.ts` passes (4 tests).
+  - `npm run lint` passes (warnings only, pre-existing).
+  - `npm run build` passes.
+- Residual risk:
+  - Legacy entries currently reuse curated art packs from related active realms (deterministic and non-placeholder) rather than bespoke one-off generated art per character.
 
 - [x] Remove all user-facing 3D surfaces from home, character, and inventory experiences.
 - [x] Redesign character profile page around static art, stats, and battle CTAs.
@@ -415,4 +432,30 @@
   - `npm run lint -- --file src/app/api/mmo/token/route.ts --file src/lib/mmo/avatarId.ts --file src/lib/mmo/avatarId.test.ts`
   - `npm run build`
 - Residual risk:
-  - Legacy character records missing lore/slug metadata still exist in Redis and therefore use fallback avatar IDs in MMO. Data integrity is stable, but profile identity fidelity for those legacy records remains limited until those records are normalized/migrated.
+  - Mitigated by follow-up migration (`scripts/migrate-character-avatar-slugs.ts`); live Redis now reports zero unresolved avatar mappings.
+
+## Legacy Character Slug Normalization Migration Plan (2026-02-17)
+
+- [x] Add a one-time Redis migration script that backfills deterministic sprite-safe slugs/art refs for legacy characters missing avatar identity fields.
+- [x] Support `--dry-run` preview output before applying writes.
+- [x] Run dry-run against live Upstash data and verify exact records/slug targets.
+- [x] Run migration apply mode and persist normalized character records.
+- [x] Re-run integrity checks to confirm unresolved avatar mappings drop to zero and document results.
+
+### Legacy Character Slug Normalization Migration Review (2026-02-17)
+
+- Added one-time migration script: `scripts/migrate-character-avatar-slugs.ts`.
+  - Targets only records in `charmxpals:characters` that still lack resolvable avatar identity (`slug` and sprite-path slug).
+  - Backfills `slug` and full art refs (`signature`, `thumbnail`, `card`, `portrait`, `banner`, `full`, `sprite`) using explicit legacy-name mapping and deterministic fallback.
+  - Supports safe preview mode by default (dry run); write mode requires `--apply`.
+- Executed against live Upstash data:
+  - Dry run: `npx ts-node --transpile-only --project tsconfig.scripts.json scripts/migrate-character-avatar-slugs.ts`
+  - Apply: `npx ts-node --transpile-only --project tsconfig.scripts.json scripts/migrate-character-avatar-slugs.ts --apply`
+  - Idempotency check: re-running dry run reports no unresolved records.
+- Migration result:
+  - Updated 15 legacy records (`Obsidian Panther`, `Tidal Serpent`, `Aero Falcon`, `Storm Leviathan`, `Frost Wolf`, `Volt Lynx`, `Terra Golem`, `Blaze the Dragon`, `Nova Kitsune`, `Pyro Beetle`, `Vine Warden`, `Aurora Stag`, `Quartz Sentinel`, `Shadow Mantis`, `Crystal Nymph`).
+  - Post-migration Redis audit: `totalCharacters=25`, `unresolvedCharacters=0`, `ownershipCount=10`, `ownershipUnresolved=0`.
+- Verification:
+  - `npm test -- src/lib/mmo/avatarId.test.ts src/lib/repoRedis.test.ts src/app/api/claim/flow.test.ts`
+  - `npm run lint -- --file scripts/migrate-character-avatar-slugs.ts --file src/app/api/mmo/token/route.ts --file src/lib/mmo/avatarId.ts`
+  - `npm run build`

@@ -549,7 +549,7 @@ function LorePanel({ primary, secondary }: { primary: CompareCharacter | null; s
               <h3 className="font-display text-2xl font-bold text-[var(--cp-text-primary)]">{character.name}</h3>
             </div>
             <Link
-              href={`/character/${character.slug ?? character.id}`}
+              href={`/character/${character.id}`}
               className="rounded-full border-2 border-[var(--cp-border)] bg-[var(--cp-white)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-[var(--cp-text-secondary)] transition-colors hover:border-[var(--cp-border-strong)] hover:text-[var(--cp-text-primary)]"
             >
               Full Profile
