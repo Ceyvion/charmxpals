@@ -19,7 +19,7 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
         <div className="cp-container">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <Link href="/" className="text-2xl font-extrabold tracking-tight font-display">
+              <Link href="/" prefetch={false} className="text-2xl font-extrabold tracking-tight font-display">
                 CHARM PALS
               </Link>
               <span className="ml-2 px-2 py-0.5 text-xs rounded-[var(--cp-radius-sm)] bg-[var(--cp-yellow)] text-[var(--cp-black)] font-bold uppercase tracking-wider">beta</span>
@@ -41,6 +41,7 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
               ) : (
                 <Link
                   href="/login"
+                  prefetch={false}
                   className="cp-cta-primary text-sm"
                 >
                   Sign in
@@ -65,9 +66,9 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
             <div>
               <h4 className="font-bold mb-4 text-[var(--cp-text-primary)]">Product</h4>
               <ul className="space-y-2 text-[var(--cp-text-muted)]">
-                <li><Link href="/#features" className="hover:text-[var(--cp-red)] transition-colors">Features</Link></li>
-                <li><Link href="/#how-it-works" className="hover:text-[var(--cp-red)] transition-colors">How It Works</Link></li>
-                <li><Link href="/claim" className="hover:text-[var(--cp-red)] transition-colors">Claim</Link></li>
+                <li><Link href="/#features" prefetch={false} className="hover:text-[var(--cp-red)] transition-colors">Features</Link></li>
+                <li><Link href="/#how-it-works" prefetch={false} className="hover:text-[var(--cp-red)] transition-colors">How It Works</Link></li>
+                <li><Link href="/claim" prefetch={false} className="hover:text-[var(--cp-red)] transition-colors">Claim</Link></li>
               </ul>
             </div>
             <div>

@@ -11,3 +11,4 @@
 - When clients render assets from path patterns (for example `/assets/characters/<id>/sprite.png`), do not pass DB UUIDs through realtime payloads; normalize to slug-style avatar IDs (or include explicit asset refs) at token/session boundaries.
 - Tailwind content scanning will treat bracketed `dev:plaza`-style tokens in non-UI files as arbitrary utilities and emit invalid CSS declarations; avoid bracketed log tags in scanned files.
 - For Tailwind arbitrary grid column values, use underscore-separated track list (spaces) rather than commas, or generated `grid-template-columns` will be invalid in browsers.
+- In React + game-engine integrations (Phaser/canvas), never include evolving HUD score state in the engine boot `useEffect` dependencies; use refs/bridge callbacks for live values so score updates do not tear down and recreate the running game.

@@ -28,6 +28,7 @@ export default function AppNav() {
             <Link
               key={it.href}
               href={it.href}
+              prefetch={false}
               className={active ? 'active' : ''}
               aria-current={active ? 'page' : undefined}
             >
@@ -48,6 +49,7 @@ export default function AppNav() {
               <Link
                 key={`mobile-${it.href}`}
                 href={it.href}
+                prefetch={false}
                 className={`block rounded-[var(--cp-radius-sm)] px-3 py-2 text-sm font-semibold ${active ? 'bg-[var(--cp-gray-100)] text-[var(--cp-text-primary)]' : 'text-[var(--cp-text-secondary)] hover:bg-[var(--cp-gray-100)]'}`}
                 aria-current={active ? 'page' : undefined}
               >

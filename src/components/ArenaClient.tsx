@@ -5,6 +5,7 @@ import { signIn } from 'next-auth/react';
 
 import type { ArenaMapId, ArenaRotation, PlayerState, S2C } from '@/lib/mmo/messages';
 import type { MmoSessionClaims } from '@/lib/mmo/token';
+import { resolveClientWsBase } from '@/lib/mmo/wsUrl';
 
 type ArenaClientProps = { height?: number };
 
@@ -265,10 +266,14 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
           const payload = await res.json().catch(() => null);
           throw new Error(typeof payload?.error === 'string' ? payload.error : 'Failed to mint arena session.');
         }
-        const body = await res.json();
-        const token = body.token as string;
+        const body = await res.json() as {
+          token: string;
+          claims?: Partial<MmoSessionClaims>;
+          wsBase?: string;
+        };
+        const token = body.token;
         tokenRef.current = token;
-        const claims = body.claims as Partial<MmoSessionClaims> | undefined;
+        const claims = body.claims;
         const owned = Array.isArray(claims?.owned)
           ? (claims?.owned || []).filter((item): item is string => typeof item === 'string')
           : [];
@@ -277,17 +282,9 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
         selectedCharRef.current = initialChar;
         setSelectedChar(initialChar);
 
-        const envUrl = process.env.NEXT_PUBLIC_MMO_WS_URL;
-        let base = envUrl;
-        if (!base && typeof window !== 'undefined') {
-          const host = window.location.hostname;
-          const isLocal = host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local');
-          if (isLocal) {
-            const port = process.env.NEXT_PUBLIC_MMO_WS_PORT || '8787';
-            base = `ws://${host}:${port}`;
-          }
-        }
-        if (!base) throw new Error('No arena server configured. Set NEXT_PUBLIC_MMO_WS_URL.');
+        const host = typeof window !== 'undefined' ? window.location.hostname : null;
+        const base = resolveClientWsBase({ serverBase: body.wsBase, locationHostname: host });
+        if (!base) throw new Error('No arena server configured. Set MMO_WS_URL or NEXT_PUBLIC_MMO_WS_URL.');
         const url = `${base}?token=${encodeURIComponent(token)}`;
         if (!stop) setWsUrl(url);
       } catch (err: unknown) {

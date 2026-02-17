@@ -6,6 +6,7 @@ import { getRepo } from '@/lib/repo';
 import { rateLimitCheck } from '@/lib/rateLimit';
 import { signToken, type MmoSessionClaims } from '@/lib/mmo/token';
 import { ensurePlazaServer } from '@/lib/mmo/serverRuntime';
+import { resolveConfiguredWsBase, resolveServerWsBase } from '@/lib/mmo/wsUrl';
 import { authOptions } from '@/lib/auth';
 
 function resolveAvatarId(character: { id: string; slug?: string | null; artRefs?: Record<string, string> }) {
@@ -60,11 +61,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'no_ownership' }, { status: 403 });
   }
 
-  const hasExternalWs = Boolean(process.env.NEXT_PUBLIC_MMO_WS_URL);
   const isHosted = process.env.VERCEL === '1';
-  const shouldAutoStart = !hasExternalWs && process.env.MMO_AUTO_START !== '0' && !isHosted;
+  const configuredWsBase = resolveConfiguredWsBase();
+  const hasConfiguredWs = Boolean(configuredWsBase);
+  const shouldAutoStart = !hasConfiguredWs && process.env.MMO_AUTO_START !== '0' && !isHosted;
 
-  if (!hasExternalWs && isHosted) {
+  if (!hasConfiguredWs && isHosted) {
     return NextResponse.json({ ok: false, error: 'plaza_unconfigured' }, { status: 503 });
   }
 
@@ -94,8 +96,14 @@ export async function GET(request: NextRequest) {
     mode,
   };
   const token = signToken(claims);
+  const requestHost =
+    request.headers.get('x-forwarded-host') ||
+    request.headers.get('host') ||
+    request.nextUrl.host ||
+    request.nextUrl.hostname;
+  const wsBase = resolveServerWsBase({ requestHost, isHosted });
 
-  return NextResponse.json({ ok: true, token, claims: { ...claims, iat: now, mode } });
+  return NextResponse.json({ ok: true, token, claims: { ...claims, iat: now, mode }, wsBase });
 }
 
 export const dynamic = 'force-dynamic';

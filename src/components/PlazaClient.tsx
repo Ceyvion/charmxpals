@@ -5,6 +5,7 @@ import { signIn } from 'next-auth/react';
 
 import type { PlayerState, S2C } from '@/lib/mmo/messages';
 import type { MmoSessionClaims } from '@/lib/mmo/token';
+import { resolveClientWsBase } from '@/lib/mmo/wsUrl';
 import { filterProfanity } from '@/lib/profanity';
 
 type PlazaClientProps = { height?: number };
@@ -115,10 +116,14 @@ export default function PlazaClient({ height = 420 }: PlazaClientProps) {
               : 'Failed to mint plaza session.';
           throw new Error(errorMsg);
         }
-        const body = await res.json();
-        const token = body.token as string;
+        const body = await res.json() as {
+          token: string;
+          claims?: Partial<MmoSessionClaims>;
+          wsBase?: string;
+        };
+        const token = body.token;
         tokenRef.current = token;
-        const claims = body.claims as Partial<MmoSessionClaims> | undefined;
+        const claims = body.claims;
         const owned = Array.isArray(claims?.owned)
           ? (claims?.owned || []).filter((item): item is string => typeof item === 'string')
           : [];
@@ -126,19 +131,10 @@ export default function PlazaClient({ height = 420 }: PlazaClientProps) {
         const initialChar = owned[0] || 'neon-city';
         selectedCharRef.current = initialChar;
         setSelectedChar(initialChar);
-        const envUrl = process.env.NEXT_PUBLIC_MMO_WS_URL;
-        let base = envUrl;
-        if (!base && typeof window !== 'undefined') {
-          const host = window.location.hostname;
-          const isLocal =
-            host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local');
-          if (isLocal) {
-            const port = process.env.NEXT_PUBLIC_MMO_WS_PORT || '8787';
-            base = `ws://${host}:${port}`;
-          }
-        }
+        const host = typeof window !== 'undefined' ? window.location.hostname : null;
+        const base = resolveClientWsBase({ serverBase: body.wsBase, locationHostname: host });
         if (!base) {
-          throw new Error('No plaza server configured. Set NEXT_PUBLIC_MMO_WS_URL.');
+          throw new Error('No plaza server configured. Set MMO_WS_URL or NEXT_PUBLIC_MMO_WS_URL.');
         }
         const url = `${base}?token=${encodeURIComponent(token)}`;
         if (!stop) {
@@ -148,7 +144,7 @@ export default function PlazaClient({ height = 420 }: PlazaClientProps) {
         if (stop) return;
         let message = err?.message || 'Failed to connect';
         if (message === 'plaza_unconfigured') {
-          message = 'Plaza server not configured. Set NEXT_PUBLIC_MMO_WS_URL.';
+          message = 'Plaza server not configured. Set MMO_WS_URL or NEXT_PUBLIC_MMO_WS_URL.';
         } else if (message === 'plaza_unavailable') {
           message = 'Plaza server unreachable. Start the MMO WS server locally.';
         }

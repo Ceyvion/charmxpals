@@ -178,6 +178,13 @@
       "area": "frontend"
     },
     {
+      "id": "PLAY-BATTLE-REBUILD-2026-02-17",
+      "title": "Play battle arcade rebuild + legibility",
+      "detail": "Replace washed-out stat battle cards with a high-contrast single-canvas arcade mode, deterministic test hooks, and validated controls/end states.",
+      "status": "done",
+      "area": "gameplay"
+    },
+    {
       "id": "A2",
       "title": "Auth: passwordless email (magic link)",
       "detail": "Integrate Auth.js (NextAuth) email provider; store users; session in RSC.",

@@ -1,0 +1,34 @@
+[
+  {
+    "type": "console.error",
+    "text": "Failed to fetch RSC payload for http://localhost:3000/explore. Falling back to browser navigation. Error: Failed to read a RSC payload created by a development version of React on the server while using a production version on the client. Always use matching versions on the server and the client.\n    at t (http://localhost:3000/_next/static/chunks/117-d7503e7bd0466447.js:2:20379)"
+  },
+  {
+    "type": "console.error",
+    "text": "Failed to fetch RSC payload for http://localhost:3000/claim. Falling back to browser navigation. Error: Failed to read a RSC payload created by a development version of React on the server while using a production version on the client. Always use matching versions on the server and the client.\n    at t (http://localhost:3000/_next/static/chunks/117-d7503e7bd0466447.js:2:20379)"
+  },
+  {
+    "type": "console.error",
+    "text": "Failed to fetch RSC payload for http://localhost:3000/play. Falling back to browser navigation. Error: Failed to read a RSC payload created by a development version of React on the server while using a production version on the client. Always use matching versions on the server and the client.\n    at t (http://localhost:3000/_next/static/chunks/117-d7503e7bd0466447.js:2:20379)"
+  },
+  {
+    "type": "console.error",
+    "text": "Failed to fetch RSC payload for http://localhost:3000/compare. Falling back to browser navigation. Error: Failed to read a RSC payload created by a development version of React on the server while using a production version on the client. Always use matching versions on the server and the client.\n    at t (http://localhost:3000/_next/static/chunks/117-d7503e7bd0466447.js:2:20379)"
+  },
+  {
+    "type": "console.error",
+    "text": "Failed to fetch RSC payload for http://localhost:3000/. Falling back to browser navigation. Error: Failed to read a RSC payload created by a development version of React on the server while using a production version on the client. Always use matching versions on the server and the client.\n    at t (http://localhost:3000/_next/static/chunks/117-d7503e7bd0466447.js:2:20379)"
+  },
+  {
+    "type": "console.error",
+    "text": "Failed to fetch RSC payload for http://localhost:3000/me. Falling back to browser navigation. Error: Failed to read a RSC payload created by a development version of React on the server while using a production version on the client. Always use matching versions on the server and the client.\n    at t (http://localhost:3000/_next/static/chunks/117-d7503e7bd0466447.js:2:20379)"
+  },
+  {
+    "type": "console.error",
+    "text": "Failed to fetch RSC payload for http://localhost:3000/login. Falling back to browser navigation. Error: Failed to read a RSC payload created by a development version of React on the server while using a production version on the client. Always use matching versions on the server and the client.\n    at t (http://localhost:3000/_next/static/chunks/117-d7503e7bd0466447.js:2:20379)"
+  },
+  {
+    "type": "console.error",
+    "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  }
+]

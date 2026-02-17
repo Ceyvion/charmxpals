@@ -1,19 +1,40 @@
+
+> charmxpals@0.1.0 dev
+> node ./scripts/dev-guard.mjs
+
   ▲ Next.js 14.2.15
-  - Local:        http://localhost:4010
+  - Local:        http://localhost:3000
   - Environments: .env.local, .env
 
  ✓ Starting...
- ✓ Ready in 1419ms
- ○ Compiling / ...
+ ✓ Ready in 5s
+ ○ Compiling /play/battle ...
 Browserslist: browsers data (caniuse-lite) is 6 months old. Please run:
   npx update-browserslist-db@latest
   Why you should do it regularly: https://github.com/browserslist/update-db#readme
- ✓ Compiled / in 1854ms (926 modules)
- ✓ Compiled in 349ms (316 modules)
-[next-auth][warn][NEXTAUTH_URL] 
-https://next-auth.js.org/warnings#nextauth_url
- GET / 200 in 3251ms
- ○ Compiling /claim ...
- ✓ Compiled /claim in 992ms (925 modules)
- GET /claim 200 in 1074ms
-[?25h
+ ✓ Compiled /play/battle in 2.7s (639 modules)
+ HEAD /play/battle 200 in 2816ms
+ ✓ Compiled in 324ms (312 modules)
+ GET /play/battle 200 in 24ms
+ ○ Compiling /api/auth/[...nextauth] ...
+ ✓ Compiled /api/auth/[...nextauth] in 835ms (1111 modules)
+ GET /favicon.ico 500 in 1001ms
+ GET /favicon.ico 500 in 67ms
+ GET /favicon.ico 500 in 6ms
+ GET /favicon.ico 500 in 4ms
+ GET /favicon.ico 500 in 5ms
+ GET /api/auth/session 200 in 1275ms
+ GET /api/auth/session 200 in 6ms
+ ✓ Compiled in 511ms (1125 modules)
+ ✓ Compiled in 378ms (1125 modules)
+ GET /play/battle 200 in 72ms
+ GET /api/auth/session 200 in 47ms
+ GET /api/auth/session 200 in 7ms
+ ✓ Compiled in 376ms (496 modules)
+ ✓ Compiled in 287ms (496 modules)
+ ✓ Compiled in 284ms (496 modules)
+ ✓ Compiled in 232ms (496 modules)
+ ✓ Compiled in 311ms (496 modules)
+ ✓ Compiled in 212ms (496 modules)
+ ✓ Compiled in 205ms (496 modules)
+ ✓ Compiled in 523ms (862 modules)

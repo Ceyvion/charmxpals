@@ -9,6 +9,11 @@
 - [x] Update docs/copy that still referenced 3D viewer as a user-facing feature.
 - [x] Add retention/game-loop upgrades inspired by top competitors (map rotation, mutators, daily missions, match reset target).
 - [x] Stabilize quality gates for beta handoff (Vitest boundary fix, claim flow test reliability, build/lint pass).
+## Battle Review Plan (2026-02-17)
+
+- [x] Inspect `src/components/play/BattlePhaserGame.tsx` for correctness issues around end-state transitions, API hooks, and testing hooks.
+- [x] Inspect `src/app/play/battle/page.tsx` for runtime bugs, memory leaks, and gameplay logic flaws.
+- [x] Summarize findings with severity, reproduction notes, and suggested fixes.
 
 ## Arena Sprite ID Mapping Fix Plan (2026-02-17)
 
@@ -183,3 +188,124 @@
   - `npm run lint` passes (warnings only, pre-existing).
   - `curl -s http://localhost:3000` content check confirms inactive names like `Frost Wolf` no longer appear in landing output.
   - Same output contains Blaze fallback art paths (`/assets/characters/volcanic-lab/portrait.png`, `/assets/characters/volcanic-lab/thumb.png`) and no `card-placeholder.svg` usage for showcased landing cards.
+
+## MMO Hosted WS Runtime Fix Plan (2026-02-17)
+
+- [x] Add shared WS URL resolver helpers so server and client paths resolve base URLs consistently.
+- [x] Patch MMO token API to accept server-side `MMO_WS_URL` config, keep local auto-start behavior, and return resolved `wsBase`.
+- [x] Update Plaza and Arena clients to prefer token-response `wsBase` and only then use local/public fallbacks.
+- [x] Update env/docs guidance and verify with targeted tests, lint, and production build.
+
+### MMO Hosted WS Runtime Fix Review (2026-02-17)
+
+- Root cause:
+  - Hosted token API gating in `src/app/api/mmo/token/route.ts` only considered `NEXT_PUBLIC_MMO_WS_URL`; if unset, it returned `plaza_unconfigured`.
+  - Plaza/Arena clients only read `NEXT_PUBLIC_MMO_WS_URL` (build-time public env) plus localhost fallback, so hosted deployments without that build-time value could never connect.
+- Fixes:
+  - Added shared resolver utilities in `src/lib/mmo/wsUrl.ts` for configured URLs, local fallback URLs, and consistent normalization.
+  - `src/app/api/mmo/token/route.ts` now treats `MMO_WS_URL` (server env) or `NEXT_PUBLIC_MMO_WS_URL` as valid hosted config and returns `wsBase` in token responses.
+  - `src/components/PlazaClient.tsx` and `src/components/ArenaClient.tsx` now prefer `body.wsBase` from `/api/mmo/token`, with existing local fallback retained.
+  - Added regression tests in `src/lib/mmo/wsUrl.test.ts`.
+  - Documented hosted config in `.env.example` and `README.md`.
+- Verification:
+  - `npm run test -- src/lib/mmo/wsUrl.test.ts server/mmo/__tests__/plazaServer.test.ts` passes (10/10 tests).
+  - `npm run lint` passes with pre-existing warnings only.
+  - `npm run build` passes.
+- Residual risk:
+  - Hosted deployments still require an external WS endpoint; this fix removes the build-time env coupling but cannot provide a WS server on Vercel by itself.
+
+## Play Battle Rebuild Plan (2026-02-17)
+
+- [x] Audit the current `/play/battle` UI issues and define a replacement game loop focused on readability + fun.
+- [x] Rebuild `src/app/play/battle/page.tsx` into a canvas-driven game with explicit controls and higher-contrast UI.
+- [x] Add deterministic automation hooks (`window.render_game_to_text`, `window.advanceTime`) and fullscreen toggle support (`f` / `Esc`).
+- [x] Validate gameplay and controls with the `$develop-web-game` Playwright client using action bursts and screenshot/state inspection.
+- [x] Run project checks (`npm run lint`) and document a review summary with outcomes and residual risks.
+
+### Play Battle Rebuild Review (2026-02-17)
+
+- Replaced the previous low-contrast stat-card battle screen with a new single-canvas arcade loop (`Rift Pulse Rush`) in `src/app/play/battle/page.tsx`.
+- Legibility fixes:
+  - High-contrast side HUD (`bg-slate-900/950`, bright text) with clear button hierarchy and disabled states.
+  - Removed white-on-light button/text combinations that made controls unreadable.
+  - Verified control readability in sidebar capture (`output/web-game-battle-sidebar.png` equivalent capture via Playwright MCP).
+- Gameplay upgrades:
+  - Added movement, pulse shot, dash, shield, pause/resume, restart, wave escalation, enemy types, combo scoring, shard pickups, and timed win/lose transitions.
+  - Added menu, live, pause, gameover, and victory presentation states.
+- Deterministic test hooks:
+  - `window.render_game_to_text()` now exports concise JSON game state with coordinate-system note.
+  - `window.advanceTime(ms)` now steps the simulation deterministically for automation.
+  - Fullscreen toggle supports `f` and browser `Esc`.
+- Verification:
+  - `npm run lint` passes (warnings are pre-existing and unrelated).
+  - `$develop-web-game` Playwright client runs captured gameplay screenshots + state snapshots with no new game-loop console errors:
+    - `output/web-game-battle-1/`
+    - `output/web-game-battle-2/`
+  - Additional control-sequence validation via Playwright MCP confirmed:
+    - Dash cooldown engages (`dashCooldown > 0` after `E`).
+    - Shield activation consumes shield and sets active timer (`Shift`).
+    - Pause/resume transitions (`P`) update `mode` correctly.
+    - Restart resets score/time/health.
+    - Both defeat and victory end states are reachable and reflected in `render_game_to_text`.
+- Residual risk:
+  - Existing repo-level Next runtime issue causes occasional unrelated `500` resource console noise in manual browser sessions (`/favicon.ico` and route prefetch chunk requests); this is pre-existing and outside `battle` gameplay logic.
+
+## Play Battle Phaser Upgrade Plan (2026-02-17)
+
+- [x] Research a production-compatible browser game library that fits Next.js App Router constraints.
+- [x] Replace the prior canvas implementation with a Phaser scene architecture that supports richer combat and clean UI controls.
+- [x] Expose deterministic automation hooks (`window.render_game_to_text`, `window.advanceTime`) and resilient control APIs for scripted verification.
+- [x] Validate controls/state transitions with `$develop-web-game` action bursts plus Playwright deterministic checks.
+- [x] Run lint/build gates and document fixes for discovered regressions.
+
+### Play Battle Phaser Upgrade Review (2026-02-17)
+
+- Library choice:
+  - Selected Phaser 3 (`phaser@3.90.0`) because official docs and templates explicitly support browser-first game loops and Next.js integration patterns.
+  - Integrated via client-only dynamic import in `src/app/play/battle/page.tsx` to avoid SSR/hydration issues.
+- Implementation:
+  - Added `src/components/play/BattlePhaserGame.tsx` with a scene-driven combat loop, enemy archetypes, boss cadence, XP upgrades, abilities (dash/nova/shield), improved HUD readability, and robust run-state transitions.
+  - Added button-level ability controls (`#dash-btn`, `#nova-btn`, `#shield-btn`) and start fallback queueing when scene boot is still in-flight.
+- Regression fix from review:
+  - Fixed Phaser boot `useEffect` dependency bug that could recreate the game instance whenever best score changed by switching scene HUD reads to refs (`bestScoreRef`) instead of closing over React score state.
+  - Pause button is no longer blocked by stale disabled-state rendering; scene runtime now enforces pause validity.
+- Verification:
+  - `npm run lint -- --file src/components/play/BattlePhaserGame.tsx --file src/app/play/battle/page.tsx` passes with zero warnings/errors.
+  - `npm run build` passes.
+  - `$develop-web-game` Playwright client run completed against `/play/battle` with new artifacts under `output/web-game/` (`state-*.json`, `shot-*.png`), and visual inspection confirms gameplay rendering.
+  - Deterministic Playwright evaluation confirmed run continuity after score growth (no boot-loop reset): mode remains `playing` while score/time advance.
+- Residual risk:
+  - Dev-runtime noise (`/favicon.ico` 500 and transient hot-update 404) remains in this repo and is not introduced by the Phaser battle code.
+
+## Play Battle Next Sprint Plan (2026-02-17)
+
+- [x] Stabilize runtime/dev ergonomics for battle iteration (guard start path, reduce noisy prefetch errors).
+- [x] Add run-to-run progression/perk economy to deepen replay value.
+- [x] Improve combat feedback with stronger hit/kill/level-up game feel cues.
+- [x] Re-verify with `$develop-web-game` automation plus lint/build.
+- [x] Document results and residual risks.
+
+### Play Battle Next Sprint Review (2026-02-17)
+
+- Stability upgrades:
+  - Added guarded production launcher `scripts/start-guard.mjs` and routed `npm start` through it, so production boot now blocks when a repo-local dev server is running and auto-rebuilds if `.next` chunks are stale.
+  - Reduced prefetch noise in shared shell links by disabling prefetch on primary nav/footer links in `src/components/AppNav.tsx` and `src/components/LayoutChrome.tsx`.
+- Progression upgrades:
+  - Added persistent run economy (`battle_phaser_meta_v1` localStorage) with credits, run count, highest wave, and permanent perk levels.
+  - Added Ops Hangar perk system with purchasable permanent upgrades: Armor Core, Reactor Tuning, Bounty Protocol.
+  - Added mutator system (`Standard`, `Overclocked`, `Glass`, `Swarm`) with run-to-run variation and score multipliers.
+  - Added end-of-run credit payouts and surfaced progression in HUD + battle feed.
+- Game-feel upgrades:
+  - Added floating combat text, improved impact rings, wave/boss announcement bursts, level-up flash, and ability cue text (Dash/Nova/Aegis).
+  - Added combo milestone surge events with bonus score/log feedback.
+- Verification:
+  - `npm run lint -- --file src/components/play/BattlePhaserGame.tsx --file src/components/AppNav.tsx --file src/components/LayoutChrome.tsx --file scripts/start-guard.mjs --file src/app/play/battle/page.tsx` passes.
+  - `npm run build` passes.
+  - `npm start -- --port 3400` now correctly blocks while dev server is running (guard behavior verified).
+  - `$develop-web-game` automation passes with updated state output showing mutators, multipliers, and combat feedback fields in `output/web-game/state-*.json`.
+  - Manual Playwright deterministic checks confirm:
+    - credit payout after run end,
+    - perk purchase reduces credits and increments perk level,
+    - updated perk costs/economy progression reflect immediately in UI and render-state output.
+- Residual risk:
+  - Existing repo/runtime console noise (`/favicon.ico` 500 and intermittent RSC payload mismatch from stale browser/dev contexts) still appears outside core battle logic and can pollute automation error logs.

@@ -1,0 +1,1809 @@
+
+> charmxpals@0.1.0 start
+> node ./node_modules/next/dist/bin/next start --port 3300
+
+  ▲ Next.js 14.2.15
+  - Local:        http://localhost:3300
+
+ ✓ Starting...
+ ✓ Ready in 188ms
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9379.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/cli/next-start.js'
+  ]
+}
