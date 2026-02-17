@@ -1,5 +1,4 @@
 import { randomUUID } from 'crypto';
-import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getRepo } from '@/lib/repo';
@@ -7,7 +6,7 @@ import { rateLimitCheck } from '@/lib/rateLimit';
 import { signToken, type MmoSessionClaims } from '@/lib/mmo/token';
 import { ensurePlazaServer } from '@/lib/mmo/serverRuntime';
 import { resolveConfiguredWsBase, resolveServerWsBase } from '@/lib/mmo/wsUrl';
-import { authOptions } from '@/lib/auth';
+import { getSafeServerSession } from '@/lib/serverSession';
 
 function resolveAvatarId(character: { id: string; slug?: string | null; artRefs?: Record<string, string> }) {
   if (typeof character.slug === 'string' && character.slug.trim()) {
@@ -33,7 +32,7 @@ export async function GET(request: NextRequest) {
   const repo = await getRepo();
   const devAllow = process.env.NODE_ENV !== 'production';
 
-  const session = await getServerSession(authOptions);
+  const session = await getSafeServerSession();
   const userId = session?.user?.id;
   if (!userId) {
     return NextResponse.json({ ok: false, error: 'unauthenticated' }, { status: 401 });

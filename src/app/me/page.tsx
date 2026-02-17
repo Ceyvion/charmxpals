@@ -1,13 +1,12 @@
 import Link from 'next/link';
-import { getServerSession } from 'next-auth';
 
 import { getRepo, type Character } from '@/lib/repo';
-import { authOptions } from '@/lib/auth';
+import { getSafeServerSession } from '@/lib/serverSession';
 import { getBetaChecklistProgress } from '@/lib/betaChecklistStore';
 import MeDashboard from './MeDashboard';
 
 export default async function MePage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSafeServerSession();
   const userId = session?.user?.id ?? null;
   const userDisplayName = session?.user?.name ?? session?.user?.email ?? 'Beta Tester';
 

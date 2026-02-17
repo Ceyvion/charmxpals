@@ -12,8 +12,12 @@ function resolveNextAuthSecret() {
   const configured = process.env.NEXTAUTH_SECRET?.trim();
   const fallback = process.env.CODE_HASH_SECRET?.trim();
 
-  if (!configured && process.env.NODE_ENV !== 'production' && fallback) {
-    console.info('[auth] NEXTAUTH_SECRET is missing; using CODE_HASH_SECRET for local/dev session encryption.');
+  if (!configured && fallback) {
+    const warningMessage =
+      process.env.NODE_ENV === 'production'
+        ? '[auth] NEXTAUTH_SECRET is missing; using CODE_HASH_SECRET to keep local start working.'
+        : '[auth] NEXTAUTH_SECRET is missing; using CODE_HASH_SECRET for local/dev session encryption.';
+    console.info(warningMessage);
     return fallback;
   }
 
@@ -41,7 +45,7 @@ function normalizeEmails(input: string | undefined) {
 const NEXTAUTH_SECRET = resolveNextAuthSecret();
 
 if (process.env.NODE_ENV === 'production' && !NEXTAUTH_SECRET) {
-  throw new Error('NEXTAUTH_SECRET is required in production.');
+  throw new Error('NEXTAUTH_SECRET or CODE_HASH_SECRET is required in production.');
 }
 
 export const authOptions: NextAuthOptions = {

@@ -1,14 +1,13 @@
 import { NextRequest } from 'next/server';
-import { getServerSession } from 'next-auth';
 
-import { authOptions } from '@/lib/auth';
+import { getSafeServerSession } from '@/lib/serverSession';
 import { getBetaChecklistProgress, setBetaChecklistProgress } from '@/lib/betaChecklistStore';
 import { betaChecklistTasks } from '@/data/betaChecklist';
 
 const validTaskIds = new Set(betaChecklistTasks.map((task) => task.id));
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
+  const session = await getSafeServerSession();
   const userId = session?.user?.id;
   if (!userId) {
     return Response.json({ success: false, error: 'unauthorized' }, { status: 401 });
@@ -28,7 +27,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getSafeServerSession();
   const userId = session?.user?.id;
   if (!userId) {
     return Response.json({ success: false, error: 'unauthorized' }, { status: 401 });

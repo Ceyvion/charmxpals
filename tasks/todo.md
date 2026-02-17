@@ -309,3 +309,37 @@
     - updated perk costs/economy progression reflect immediately in UI and render-state output.
 - Residual risk:
   - Existing repo/runtime console noise (`/favicon.ico` 500 and intermittent RSC payload mismatch from stale browser/dev contexts) still appears outside core battle logic and can pollute automation error logs.
+
+## Localhost 500 Startup Recovery Plan (2026-02-17)
+
+- [x] Reproduce `/` returning `500` on `npm start` and capture production stack traces.
+- [x] Patch startup guard to detect broken `.next` server chunks beyond numeric `require()` references.
+- [x] Patch startup guard to handle `EADDRINUSE` on the target start port with actionable behavior.
+- [x] Re-verify `npm run start:kill-dev` serves `/` with HTTP `200`.
+
+### Localhost 500 Startup Recovery Review (2026-02-17)
+
+- Root cause confirmed in production startup logs: corrupted `.next` runtime references missing files (`./vendor-chunks/@swc.js`, `./9161.js`) caused route `500`s.
+- `scripts/start-guard.mjs` now:
+  - validates relative server `require(...)` references with a broader pattern;
+  - validates webpack runtime chunk-map paths in `.next/server/webpack-runtime.js`;
+  - rebuilds when any required chunk file is missing;
+  - detects and optionally clears occupied start-port listeners (`--kill-dev`/`--force`) before `next start`.
+- Verification: after guarded start, `curl -i http://localhost:3000/` returns `HTTP/1.1 200 OK` with full page HTML.
+
+## Login Legibility Fix Plan (2026-02-17)
+
+- [x] Audit `/login` text/input/button contrast against the light `cp-*` design system.
+- [x] Refactor `src/app/login/page.tsx` to use consistent token-based foreground colors that match app chrome.
+- [x] Verify with `npm run lint` and a quick visual check of the login page.
+- [x] Add a short review note with outcomes and residual risk.
+
+### Login Legibility Fix Review (2026-02-17)
+
+- Root cause: `src/app/login/page.tsx` used `text-white` and translucent white foreground colors on light glass surfaces (`bg-white/*`), making headings, labels, body copy, and form fields low-contrast.
+- Login page typography now uses design-system color tokens (`--cp-text-primary`, `--cp-text-secondary`, `--cp-text-muted`) across both hero and form panels, matching app chrome/readability.
+- Form controls now use tokenized borders/text on solid light surfaces; error state uses readable red-on-light styling, and primary submit uses the shared `cp-cta-primary` pattern.
+- Verification:
+  - `npm run lint` passes (warnings are pre-existing and unrelated).
+  - Fresh dev visual check captured at `output/login-legibility-after-fresh-dev.png`.
+- Residual risk: no automated visual regression test exists for `/login`, so future copy/style edits could reintroduce low-contrast combinations without screenshot checks.

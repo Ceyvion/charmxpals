@@ -38,3 +38,100 @@ Browserslist: browsers data (caniuse-lite) is 6 months old. Please run:
  ✓ Compiled in 212ms (496 modules)
  ✓ Compiled in 205ms (496 modules)
  ✓ Compiled in 523ms (862 modules)
+ ○ Compiling /explore ...
+ ✓ Compiled /explore in 660ms (1133 modules)
+ ✓ Compiled /_not-found in 115ms (1122 modules)
+ GET /_next/static/css/app/layout.css?v=1771341357474 404 in 176ms
+ GET /_next/static/chunks/main-app.js?v=1771341357474 404 in 176ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 175ms
+ GET /_next/static/chunks/app/loading.js 404 in 171ms
+ ⨯ TypeError: Cannot read properties of undefined (reading 'call')
+    at Object.__webpack_require__ [as require] (/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js:33:43)
+digest: "2940089045"
+ GET /explore 200 in 2096ms
+ ✓ Compiled /_error in 124ms (1124 modules)
+ ⨯ Error: Cannot find module './9161.js'
+Require stack:
+- /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js
+- /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/load-components.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/build/utils.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/dev/hot-middleware.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/dev/hot-reloader-webpack.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/router-server.js
+- /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at __webpack_require__.f.require (/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js:198:28)
+    at /Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js:162:22)
+    at /Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js:1:340
+    at Object.<anonymous> (/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js:1:383)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at requirePage (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js:109:84)
+    at /Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/load-components.js:72:65
+    at async Promise.all (index 0)
+    at async loadComponentsImpl (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/load-components.js:71:33)
+    at async DevServer.findPageComponentsImpl (/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/next-server.js:709:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js',
+    '/Users/macbookpro/Desktop/charmxpals/.next/server/pages/_document.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/require.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/load-components.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/build/utils.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/dev/hot-middleware.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/dev/hot-reloader-webpack.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/router-server.js',
+    '/Users/macbookpro/Desktop/charmxpals/node_modules/next/dist/server/lib/start-server.js'
+  ]
+}
+ GET /favicon.ico 500 in 927ms
+ ✓ Compiled / in 187ms (1149 modules)
+ GET /_next/static/css/app/layout.css?v=1771341363686 404 in 29ms
+ GET /_next/static/chunks/main-app.js?v=1771341363686 404 in 29ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 28ms
+ GET /_next/static/chunks/app/loading.js 404 in 28ms
+ GET / 200 in 1461ms
+ GET /_next/static/css/app/layout.css?v=1771341366726 404 in 35ms
+ GET /_next/static/chunks/main-app.js?v=1771341366726 404 in 34ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 34ms
+ GET /_next/static/chunks/app/loading.js 404 in 25ms
+ GET / 200 in 549ms
+ ✓ Compiled in 274ms (510 modules)
+ ✓ Compiled in 216ms (508 modules)
+ ✓ Compiled in 197ms (508 modules)
+ ✓ Compiled in 318ms (874 modules)
+ ✓ Compiled / in 118ms (644 modules)
+ ✓ Compiled /_not-found in 96ms (1141 modules)
+ GET /_next/static/css/app/layout.css?v=1771341447206 404 in 157ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 156ms
+ GET /_next/static/chunks/app/loading.js 404 in 152ms
+ GET /_next/static/chunks/main-app.js?v=1771341447206 404 in 157ms
+ ⨯ TypeError: Cannot read properties of undefined (reading 'call')
+    at Object.__webpack_require__ [as require] (/Users/macbookpro/Desktop/charmxpals/.next/server/webpack-runtime.js:33:43)
+digest: "2261842098"
+ GET / 200 in 2095ms
+[?25h

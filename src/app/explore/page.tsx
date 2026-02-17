@@ -1,10 +1,9 @@
 import Link from 'next/link';
-import { getServerSession } from 'next-auth';
 
 import { getRepo } from '@/lib/repo';
 import ExploreClient from './ExploreClient';
 import { withCharacterLore, type CharacterWithLore } from '@/lib/characterLore';
-import { authOptions } from '@/lib/auth';
+import { getSafeServerSession } from '@/lib/serverSession';
 
 export default async function ExplorePage() {
   const repo = await getRepo();
@@ -12,7 +11,7 @@ export default async function ExplorePage() {
   const enriched = characters
     .map((character) => withCharacterLore(character))
     .filter((value): value is CharacterWithLore => Boolean(value));
-  const session = await getServerSession(authOptions);
+  const session = await getSafeServerSession();
   const userId = session?.user?.id ?? null;
   const ownedIds = new Set<string>();
   if (userId) {

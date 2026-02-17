@@ -1,8 +1,7 @@
 import { NextRequest } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { getTopScores, submitScore } from '@/lib/leaderboard';
-import { authOptions } from '@/lib/auth';
 import { rateLimitCheck } from '@/lib/rateLimit';
+import { getSafeServerSession } from '@/lib/serverSession';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -27,7 +26,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Require authentication
-  const session = await getServerSession(authOptions);
+  const session = await getSafeServerSession();
   if (!session?.user?.id) {
     return Response.json(
       { success: false, error: 'unauthorized' },

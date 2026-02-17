@@ -9,6 +9,8 @@
     "dev:safe": "NEXT_PUBLIC_DISABLE_3D=1 node ./scripts/dev-guard.mjs --no-turbo",
     "build": "node ./node_modules/next/dist/bin/next build",
     "start": "node ./scripts/start-guard.mjs",
+    "start:kill-dev": "node ./scripts/start-guard.mjs --kill-dev",
+    "start:force": "node ./scripts/start-guard.mjs --force",
     "lint": "node ./node_modules/next/dist/bin/next lint",
     "test": "vitest run",
     "test:watch": "vitest",

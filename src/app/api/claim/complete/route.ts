@@ -1,11 +1,10 @@
 import { NextRequest } from 'next/server';
-import { getServerSession } from 'next-auth';
 
 import { computeChallengeDigest, hashClaimCode, signChallengeWithCode } from '@/lib/crypto';
 import { getRepo } from '@/lib/repo';
 import { rateLimitCheck } from '@/lib/rateLimit';
 import { getClientIp } from '@/lib/ip';
-import { authOptions } from '@/lib/auth';
+import { getSafeServerSession } from '@/lib/serverSession';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +20,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const session = await getServerSession(authOptions);
+    const session = await getSafeServerSession();
     const userId = session?.user?.id;
     if (!userId) {
       return Response.json({ success: false, error: 'Not authenticated' }, { status: 401 });

@@ -1,9 +1,7 @@
 import Link from 'next/link';
-import { getServerSession } from 'next-auth';
-
 import { getRepo } from '@/lib/repo';
 import { withCharacterLore, type CharacterWithLore } from '@/lib/characterLore';
-import { authOptions } from '@/lib/auth';
+import { getSafeServerSession } from '@/lib/serverSession';
 import UltraHero from '@/components/landing/UltraHero';
 import HorizontalCharacterShowcase from '@/components/landing/HorizontalCharacterShowcase';
 import BentoFeatures from '@/components/landing/BentoFeatures';
@@ -54,7 +52,7 @@ export default async function Home() {
     .map((character) => withCharacterLore(character))
     .filter((value): value is CharacterWithLore => Boolean(value));
   const landingRoster = buildLandingRoster(enriched);
-  const session = await getServerSession(authOptions);
+  const session = await getSafeServerSession();
   const userId = session?.user?.id ?? null;
   const ownedIds = new Set<string>();
   if (userId) {
