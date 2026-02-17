@@ -8,7 +8,20 @@ import { signToken, type MmoSessionClaims } from '@/lib/mmo/token';
 import { ensurePlazaServer } from '@/lib/mmo/serverRuntime';
 import { authOptions } from '@/lib/auth';
 
+function resolveAvatarId(character: { id: string; slug?: string | null; artRefs?: Record<string, string> }) {
+  if (typeof character.slug === 'string' && character.slug.trim()) {
+    return character.slug.trim();
+  }
+  const spriteRef = character.artRefs?.sprite;
+  if (typeof spriteRef !== 'string') return null;
+  const match = spriteRef.match(/\/assets\/characters\/([^/]+)\/sprite\.png$/);
+  return match?.[1] || null;
+}
+
 export async function GET(request: NextRequest) {
+  const modeParam = request.nextUrl.searchParams.get('mode');
+  const mode: 'plaza' | 'arena' = modeParam === 'arena' ? 'arena' : 'plaza';
+
   // Simple rate limit
   const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'local';
   const rl = await rateLimitCheck(`mmo-token:${ip}`, { windowMs: 15_000, max: 10, prefix: 'mmo' });
@@ -29,8 +42,21 @@ export async function GET(request: NextRequest) {
 
   // Gate by ownership (dev can bypass in non-prod)
   const owns = await repo.listOwnershipsByUser(user.id);
-  const ownedCharIds = Array.from(new Set(owns.map((o) => o.characterId)));
-  if (!devAllow && ownedCharIds.length === 0) {
+  const ownedDbCharacterIds = Array.from(new Set(owns.map((o) => o.characterId)));
+  const ownedCharacters = ownedDbCharacterIds.length > 0 ? await repo.getCharactersByIds(ownedDbCharacterIds) : [];
+  const avatarIdByCharacterId = new Map<string, string>();
+  for (const character of ownedCharacters) {
+    const avatarId = resolveAvatarId(character);
+    if (avatarId) avatarIdByCharacterId.set(character.id, avatarId);
+  }
+  const ownedAvatarIds = Array.from(
+    new Set(
+      ownedDbCharacterIds
+        .map((characterId) => avatarIdByCharacterId.get(characterId) || characterId)
+        .filter((id): id is string => typeof id === 'string' && id.trim().length > 0),
+    ),
+  );
+  if (!devAllow && ownedAvatarIds.length === 0) {
     return NextResponse.json({ ok: false, error: 'no_ownership' }, { status: 403 });
   }
 
@@ -63,12 +89,13 @@ export async function GET(request: NextRequest) {
     sid: sessionId,
     exp: now + ttlSec,
     nonce: randomUUID(),
-    scope: ['plaza:join'],
-    owned: ownedCharIds,
+    scope: [mode === 'arena' ? 'arena:join' : 'plaza:join'],
+    owned: ownedAvatarIds,
+    mode,
   };
   const token = signToken(claims);
 
-  return NextResponse.json({ ok: true, token, claims: { ...claims, iat: now } });
+  return NextResponse.json({ ok: true, token, claims: { ...claims, iat: now, mode } });
 }
 
 export const dynamic = 'force-dynamic';

@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 
 import { getRepo, type Character } from '@/lib/repo';
-import { getModelUrl } from '@/data/characterModels';
 import { authOptions } from '@/lib/auth';
 import { getBetaChecklistProgress } from '@/lib/betaChecklistStore';
 import MeDashboard from './MeDashboard';
@@ -17,11 +16,16 @@ export default async function MePage() {
       <div className="min-h-screen py-16 px-4 bg-grid-overlay">
         <div className="cp-container max-w-2xl">
           <div className="cp-panel p-8 text-center">
-            <h1 className="text-3xl font-extrabold text-white font-display mb-2">Your Pals</h1>
+            <h1 className="text-3xl font-extrabold text-[color:var(--cp-text-primary)] font-display mb-2">Your Pals</h1>
             <p className="cp-muted">Sign in to view your roster, claim new pals, and sync cosmetics across experiences.</p>
             <div className="mt-6 flex justify-center gap-3">
               <Link href="/login" className="px-6 py-3 bg-white text-gray-900 rounded-lg font-bold">Sign in</Link>
-              <Link href="/explore" className="px-6 py-3 border border-white/20 text-white rounded-lg font-bold hover:bg-white/5">Explore</Link>
+              <Link
+                href="/explore"
+                className="px-6 py-3 border border-[var(--cp-border)] text-[color:var(--cp-text-secondary)] rounded-lg font-bold hover:bg-[var(--cp-gray-100)] hover:text-[color:var(--cp-text-primary)]"
+              >
+                Explore
+              </Link>
             </div>
           </div>
         </div>
@@ -32,8 +36,11 @@ export default async function MePage() {
   const repo = await getRepo();
   const ownerships = await repo.listOwnershipsByUser(userId);
   const ownedRecords: Array<{ character: Character; ownedAt: Date | null }> = [];
+  const characterIds = ownerships.map((ownership) => ownership.characterId);
+  const ownedCharacters = await repo.getCharactersByIds(characterIds);
+  const characterById = new Map(ownedCharacters.map((character) => [character.id, character]));
   for (const ownership of ownerships) {
-    const character = await repo.getCharacterById(ownership.characterId);
+    const character = characterById.get(ownership.characterId);
     if (!character) continue;
     ownedRecords.push({ character, ownedAt: ownership.createdAt ?? null });
   }
@@ -56,7 +63,8 @@ export default async function MePage() {
     title: character.title ?? null,
     tagline: character.tagline ?? null,
     stats: (character.stats || {}) as Record<string, number>,
-    modelUrl: getModelUrl(character) ?? null,
+    artRefs: character.artRefs ?? {},
+    color: character.color ?? null,
     ownedAtIso: ownedAt ? ownedAt.toISOString() : null,
   }));
 

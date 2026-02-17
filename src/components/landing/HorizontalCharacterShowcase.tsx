@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type Character = {
   id: string;
@@ -9,6 +9,8 @@ type Character = {
   description?: string | null;
   rarity?: number;
   owned?: boolean;
+  artRefs?: Record<string, string>;
+  slug?: string | null;
   realm?: string | null;
   title?: string | null;
   tagline?: string | null;
@@ -20,21 +22,61 @@ const rarityLabel = (rarity?: number) => {
   return 'Rare';
 };
 
-const rarityAccent = (rarity?: number) => {
-  if (rarity && rarity >= 5) return 'rgba(255, 198, 150, 0.32)';
-  if (rarity && rarity >= 4) return 'rgba(174, 186, 255, 0.3)';
-  return 'rgba(120, 224, 255, 0.28)';
+const rarityBorder = (rarity?: number) => {
+  if (rarity && rarity >= 5) return 'var(--cp-yellow)';
+  if (rarity && rarity >= 4) return 'var(--cp-violet)';
+  return 'var(--cp-cyan)';
+};
+
+const pushCandidate = (target: string[], seen: Set<string>, value?: string | null) => {
+  if (!value) return;
+  const normalized = value.trim();
+  if (!normalized || seen.has(normalized)) return;
+  seen.add(normalized);
+  target.push(normalized);
+};
+
+const artCandidatesFor = (character: Character): string[] => {
+  const candidates: string[] = [];
+  const seen = new Set<string>();
+  const refs = character.artRefs;
+
+  if (refs) {
+    pushCandidate(candidates, seen, refs.signature);
+    pushCandidate(candidates, seen, refs.banner);
+    pushCandidate(candidates, seen, refs.portrait);
+    pushCandidate(candidates, seen, refs.card);
+    pushCandidate(candidates, seen, refs.thumbnail);
+    pushCandidate(candidates, seen, refs.full);
+    pushCandidate(candidates, seen, refs.sprite);
+    for (const value of Object.values(refs)) {
+      pushCandidate(candidates, seen, value);
+    }
+  }
+
+  if (character.slug) {
+    const base = `/assets/characters/${character.slug}`;
+    pushCandidate(candidates, seen, `${base}/portrait.png`);
+    pushCandidate(candidates, seen, `${base}/card.png`);
+    pushCandidate(candidates, seen, `${base}/thumb.png`);
+  }
+
+  pushCandidate(candidates, seen, '/card-placeholder.svg');
+  return candidates;
 };
 
 export default function HorizontalCharacterShowcase({ characters }: { characters: Character[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [mediaIndexById, setMediaIndexById] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const handleScroll = () => {
       if (!scrollRef.current) return;
       const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-      const progress = scrollLeft / (scrollWidth - clientWidth || 1);
+      const scrollRange = scrollWidth - clientWidth;
+      const rawProgress = scrollRange > 0 ? scrollLeft / scrollRange : 0;
+      const progress = Math.min(1, Math.max(0, rawProgress));
       setScrollProgress(progress);
     };
 
@@ -44,10 +86,7 @@ export default function HorizontalCharacterShowcase({ characters }: { characters
   }, []);
 
   return (
-    <section className="relative py-20 md:py-32 overflow-hidden">
-      <div className="absolute inset-0 bg-grid-overlay cp-grid-soft opacity-40" />
-      <div className="absolute inset-0 bg-gradient-to-b from-sky-100/40 via-transparent to-amber-100/40" />
-
+    <section className="relative py-20 md:py-32 overflow-hidden cp-section-dark">
       <div className="relative z-10">
         <div className="cp-container max-w-7xl mb-16">
           <div className="text-center">
@@ -55,18 +94,18 @@ export default function HorizontalCharacterShowcase({ characters }: { characters
               <span className="cp-kicker">The Roster</span>
             </div>
             <h2 className="font-display font-black text-5xl md:text-6xl lg:text-7xl leading-tight mb-6">
-              <span className="text-white">Collect Your</span>
+              <span className="text-[var(--cp-white)]">Collect Your</span>
               <br />
               <span className="cp-gradient-text">Dream Squad</span>
             </h2>
-            <p className="text-xl text-white/70 max-w-2xl mx-auto mb-8">
-              Drag to explore. Each CharmXPal has unique stats, lore, and rarities.
+            <p className="text-xl text-[var(--cp-gray-300)] max-w-2xl mx-auto mb-8">
+              Each CharmXPal has unique stats, lore, and rarities. Scroll to explore the roster.
             </p>
 
             <div className="max-w-md mx-auto">
-              <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+              <div className="h-1 bg-[var(--cp-gray-700)] rounded-[var(--cp-radius-sm)] overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-cyan-300/80 via-blue-200/70 to-amber-200/70 transition-all duration-300 ease-out"
+                  className="h-full bg-[var(--cp-white)] transition-all duration-300 ease-out"
                   style={{ width: `${scrollProgress * 100}%` }}
                 />
               </div>
@@ -75,114 +114,123 @@ export default function HorizontalCharacterShowcase({ characters }: { characters
         </div>
 
         <div ref={scrollRef} className="horizontal-scroll-container flex gap-8 px-8 md:px-16 pb-8">
-          {characters.map((char) => (
-            <Link
-              key={char.id}
-              href={`/character/${char.id}`}
-              className="horizontal-scroll-item group relative w-[320px] md:w-[400px] flex-shrink-0"
-            >
-              <div
-                className="relative h-[500px] md:h-[600px] rounded-3xl overflow-hidden cp-surface-neo transition-all duration-500 group-hover:scale-[1.02]"
-                style={{ '--surface-accent': rarityAccent(char.rarity) } as CSSProperties}
-              >
-                <div className="absolute inset-0 bg-grid-overlay cp-grid-soft opacity-25" />
-                <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent" />
+          {characters.map((char) => {
+            const artCandidates = artCandidatesFor(char);
+            const mediaIndex = mediaIndexById[char.id] ?? 0;
+            const mediaSrc = artCandidates[Math.min(mediaIndex, artCandidates.length - 1)] ?? '/card-placeholder.svg';
 
-                <div className="relative h-full flex flex-col justify-end p-8">
-                  <div className="absolute top-6 left-6 right-6 flex justify-between items-start">
-                    <div className="flex gap-2">
-                      <span className="cp-pill text-[0.6rem]">
-                        {rarityLabel(char.rarity)}
-                      </span>
-                      {char.owned && (
-                        <span
-                          className="cp-pill text-[0.6rem]"
-                          style={{
-                            '--pill-bg': 'rgba(16, 120, 86, 0.25)',
-                            '--pill-border': 'rgba(167, 243, 208, 0.45)',
-                            '--pill-color': 'rgba(236, 253, 245, 0.95)',
-                          } as CSSProperties}
-                        >
-                          Owned
-                        </span>
-                      )}
-                    </div>
-                    <div className="px-3 py-1 rounded-full border border-white/10 bg-white/5 text-[0.65rem] uppercase tracking-[0.3em] text-white/60">
-                      {((char.rarity ?? 3) + 2.7).toFixed(1)}
-                    </div>
+            return (
+              <Link
+                key={char.id}
+                href={`/character/${char.id}`}
+                className="horizontal-scroll-item group relative w-[320px] md:w-[400px] flex-shrink-0"
+              >
+                <div
+                  className="relative h-[500px] md:h-[600px] rounded-[var(--cp-radius-lg)] overflow-hidden bg-[var(--cp-gray-900)] border-2 transition-all duration-300 group-hover:border-[var(--cp-white)]"
+                  style={{ borderColor: rarityBorder(char.rarity) }}
+                >
+                  <div className="absolute inset-0">
+                    <img
+                      src={mediaSrc}
+                      alt={`${char.name} character art`}
+                      className="h-full w-full object-cover object-center opacity-90 transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                      onError={() => {
+                        const nextIndex = mediaIndex + 1;
+                        if (nextIndex >= artCandidates.length) return;
+                        setMediaIndexById((prev) => ({ ...prev, [char.id]: nextIndex }));
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/45 to-black/92" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.12),_transparent_58%)]" />
                   </div>
 
-                  <div className="space-y-3">
-                    {char.realm && (
-                      <div className="inline-flex px-3 py-1 rounded-full border border-white/10 bg-white/5">
-                        <span className="text-xs font-semibold text-white/70 uppercase tracking-wider">
-                          {char.realm}
+                  <div className="relative h-full flex flex-col justify-end p-8">
+                    <div className="absolute top-6 left-6 right-6 flex justify-between items-start">
+                      <div className="flex gap-2">
+                        <span className="cp-pill text-[0.6rem]">
+                          {rarityLabel(char.rarity)}
                         </span>
+                        {char.owned && (
+                          <span className="cp-pill text-[0.6rem]" style={{ borderColor: 'var(--cp-green)', color: 'var(--cp-green)' }}>
+                            Owned
+                          </span>
+                        )}
                       </div>
-                    )}
+                      <div className="cp-chip text-[0.65rem]">
+                        {((char.rarity ?? 3) + 2.7).toFixed(1)}
+                      </div>
+                    </div>
 
-                    <h3 className="font-display font-black text-4xl md:text-5xl text-white leading-tight">
-                      {char.name}
-                    </h3>
+                    <div className="space-y-3">
+                      {char.realm && (
+                        <div className="inline-flex px-3 py-1 rounded-[var(--cp-radius-sm)] border-2 border-[var(--cp-gray-700)] bg-black/35 backdrop-blur-[1px]">
+                          <span className="text-xs font-semibold text-[var(--cp-gray-300)] uppercase tracking-wider">
+                            {char.realm}
+                          </span>
+                        </div>
+                      )}
 
-                    {char.title && (
-                      <p className="text-lg font-semibold text-white/80">{char.title}</p>
-                    )}
+                      <h3 className="font-display font-black text-4xl md:text-5xl text-[var(--cp-white)] leading-tight">
+                        {char.name}
+                      </h3>
 
-                    {(char.tagline || char.description) && (
-                      <p className="text-sm text-white/70 line-clamp-3 leading-relaxed">
-                        {char.tagline || char.description}
-                      </p>
-                    )}
+                      {char.title && (
+                        <p className="text-lg font-semibold text-[var(--cp-gray-300)]">{char.title}</p>
+                      )}
 
-                    <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-white/80">
-                      <span>View Details</span>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.4} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </span>
+                      {(char.tagline || char.description) && (
+                        <p className="text-sm text-[var(--cp-gray-400)] line-clamp-3 leading-relaxed">
+                          {char.tagline || char.description}
+                        </p>
+                      )}
+
+                      <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[var(--cp-white)]">
+                        <span>View Details</span>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.4} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
 
           <Link
             href="/explore"
             className="horizontal-scroll-item group relative w-[320px] md:w-[400px] flex-shrink-0"
           >
-            <div className="relative h-[500px] md:h-[600px] rounded-3xl overflow-hidden cp-surface-neo flex items-center justify-center transition-all duration-500 group-hover:scale-[1.02]">
+            <div className="relative h-[500px] md:h-[600px] rounded-[var(--cp-radius-lg)] overflow-hidden bg-[var(--cp-gray-900)] border-2 border-[var(--cp-gray-700)] flex items-center justify-center transition-all duration-300 group-hover:border-[var(--cp-white)]">
               <div className="text-center px-8">
-                <div className="w-20 h-20 mx-auto mb-6 rounded-2xl border border-white/15 bg-white/5 flex items-center justify-center">
-                  <svg className="w-10 h-10 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-16 h-16 mx-auto mb-6 rounded-[var(--cp-radius-md)] border-2 border-[var(--cp-gray-700)] bg-[var(--cp-gray-800)] flex items-center justify-center group-hover:border-[var(--cp-white)] transition-colors">
+                  <svg className="w-7 h-7 text-[var(--cp-gray-300)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
                 </div>
-                <h3 className="font-display font-black text-3xl text-white mb-4">
+                <h3 className="font-display font-black text-3xl text-[var(--cp-white)] mb-3">
                   Explore Full<br />Roster
                 </h3>
-                <p className="text-white/70 mb-6">
+                <p className="text-sm text-[var(--cp-gray-500)] mb-8">
                   Discover every CharmXPal and their unique abilities.
                 </p>
-                <div className="inline-flex items-center gap-2 text-cyan-200 font-semibold group-hover:gap-3 transition-all">
-                  <span>View All</span>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </div>
+                <span className="cp-cta-primary text-sm font-display">
+                  View All
+                </span>
               </div>
             </div>
           </Link>
         </div>
 
-        <div className="text-center mt-8 opacity-60">
-          <div className="inline-flex items-center gap-2 text-white text-sm font-semibold">
-            <svg className="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ transform: 'rotate(-90deg)' }}>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+        <div className="text-center mt-8">
+          <div className="inline-flex items-center gap-2 text-[var(--cp-gray-500)] text-sm font-semibold">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
             </svg>
-            <span>Drag to explore</span>
-            <svg className="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ transform: 'rotate(-90deg)', animationDelay: '0.2s' }}>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            <span>Scroll to explore</span>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>
           </div>
         </div>

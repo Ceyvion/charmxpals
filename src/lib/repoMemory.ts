@@ -80,7 +80,7 @@ if (!memorySecret) {
     characters,
     units,
     challenges: [] as ClaimChallenge[],
-    abuse: [] as any[],
+    abuse: [] as unknown[],
     ownerships: [] as Array<{ id: string; userId: string; characterId: string; source: string; cosmetics: string[]; createdAt: Date }>,
   };
 })();
@@ -133,9 +133,18 @@ export const memoryRepo: Repo = {
   async findUnitByCodeHash(codeHash) {
     return data.units.find((u) => u.codeHash === codeHash) || null;
   },
-  async claimUnitAndCreateOwnership({ unitId, userId }) {
+  async claimUnitAndCreateOwnership({ unitId, userId, challengeId }) {
     const unit = data.units.find((u) => u.id === unitId);
     if (!unit) throw new Error('Unit not found');
+    if (unit.status !== 'available') {
+      throw new Error('Unit no longer available');
+    }
+    if (challengeId) {
+      const challenge = data.challenges.find((c) => c.id === challengeId);
+      if (!challenge) throw new Error('Challenge not found');
+      if (challenge.consumed) throw new Error('Challenge already consumed');
+      challenge.consumed = true;
+    }
     const claimedAt = now();
     unit.status = 'claimed';
     unit.claimedBy = userId;
@@ -149,6 +158,19 @@ export const memoryRepo: Repo = {
 
   async getCharacterById(id) {
     return data.characters.find((c) => c.id === id) || null;
+  },
+  async getCharactersByIds(ids) {
+    if (!ids.length) return [];
+    const byId = new Map(data.characters.map((character) => [character.id, character]));
+    const seen = new Set<string>();
+    const results: Character[] = [];
+    for (const id of ids) {
+      if (seen.has(id)) continue;
+      seen.add(id);
+      const character = byId.get(id);
+      if (character) results.push(character);
+    }
+    return results;
   },
   async listCharacters(params) {
     const limit = params?.limit ?? data.characters.length;

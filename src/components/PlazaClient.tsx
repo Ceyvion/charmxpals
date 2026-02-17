@@ -123,7 +123,7 @@ export default function PlazaClient({ height = 420 }: PlazaClientProps) {
           ? (claims?.owned || []).filter((item): item is string => typeof item === 'string')
           : [];
         setOwnedChars(owned);
-        const initialChar = owned[0] || 'demo';
+        const initialChar = owned[0] || 'neon-city';
         selectedCharRef.current = initialChar;
         setSelectedChar(initialChar);
         const envUrl = process.env.NEXT_PUBLIC_MMO_WS_URL;
@@ -196,10 +196,19 @@ export default function PlazaClient({ height = 420 }: PlazaClientProps) {
   const handleSelectAvatar = useCallback((value: string) => {
     setSelectedChar(value);
     selectedCharRef.current = value;
+    updatePlayers((prev) => {
+      const next = new Map(prev);
+      const you = youIdRef.current ? next.get(youIdRef.current) : null;
+      if (you) {
+        you.characterId = value;
+        next.set(you.id, you);
+      }
+      return next;
+    });
     const ws = wsRef.current;
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
     ws.send(JSON.stringify({ type: 'select_avatar', characterId: value }));
-  }, []);
+  }, [updatePlayers]);
 
   // Connect WS
   useEffect(() => {
@@ -216,7 +225,7 @@ export default function PlazaClient({ height = 420 }: PlazaClientProps) {
       if (tokenRef.current) {
         ws.send(JSON.stringify({ type: 'auth', token: tokenRef.current }));
       }
-      const avatar = selectedCharRef.current || 'demo';
+      const avatar = selectedCharRef.current || 'neon-city';
       ws.send(JSON.stringify({ type: 'select_avatar', characterId: avatar }));
     };
 
@@ -282,6 +291,9 @@ export default function PlazaClient({ height = 420 }: PlazaClientProps) {
                 if (id === youIdRef.current) {
                   target.renderPos = { ...pos };
                 }
+              }
+              if (typeof (partial as any).characterId === 'string' && (partial as any).characterId) {
+                target.characterId = (partial as any).characterId as string;
               }
               if ((partial as any).rot !== undefined) {
                 target.rot = (partial as any).rot as number;

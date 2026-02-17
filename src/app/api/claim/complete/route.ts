@@ -27,16 +27,23 @@ export async function POST(request: NextRequest) {
       return Response.json({ success: false, error: 'Not authenticated' }, { status: 401 });
     }
 
-    let payload: any;
+    type CompletePayload = {
+      code?: unknown;
+      challengeId?: unknown;
+      signature?: unknown;
+    };
+
+    let payload: unknown;
     try {
       payload = await request.json();
     } catch {
       return Response.json({ success: false, error: 'Invalid payload' }, { status: 400 });
     }
 
-    const code = typeof payload?.code === 'string' ? payload.code : null;
-    const challengeId = typeof payload?.challengeId === 'string' ? payload.challengeId : null;
-    const signature = typeof payload?.signature === 'string' ? payload.signature : null;
+    const parsed: CompletePayload = typeof payload === 'object' && payload !== null ? (payload as CompletePayload) : {};
+    const code = typeof parsed.code === 'string' ? parsed.code : null;
+    const challengeId = typeof parsed.challengeId === 'string' ? parsed.challengeId : null;
+    const signature = typeof parsed.signature === 'string' ? parsed.signature : null;
     if (!code || !challengeId || !signature) {
       return Response.json({ success: false, error: 'Missing fields' }, { status: 400 });
     }
@@ -84,8 +91,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Atomically claim and create ownership; also consume the challenge
-    await repo.consumeChallenge(challenge.id);
-    const { characterId, claimedAt } = await repo.claimUnitAndCreateOwnership({ unitId: unit.id, userId });
+    const { characterId, claimedAt } = await repo.claimUnitAndCreateOwnership({ unitId: unit.id, userId, challengeId: challenge.id });
 
     return Response.json({ success: true, message: 'Successfully claimed character', characterId, claimedAt: claimedAt.toISOString() });
   } catch (error) {

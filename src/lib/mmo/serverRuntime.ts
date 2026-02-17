@@ -1,3 +1,5 @@
+import { createServer as createNetServer } from 'net';
+
 import type { PlazaServer, PlazaServerOptions } from '../../../server/mmo/plazaServer';
 import { startPlazaServer } from '../../../server/mmo/plazaServer';
 
@@ -6,6 +8,34 @@ type GlobalMmoRuntime = typeof globalThis & {
 };
 
 const globalRuntime = globalThis as GlobalMmoRuntime;
+
+function resolvePort(options: PlazaServerOptions) {
+  if (typeof options.port === 'number' && Number.isFinite(options.port)) {
+    return options.port;
+  }
+  const envPort = Number(process.env.MMO_WS_PORT || 8787);
+  return Number.isFinite(envPort) ? envPort : 8787;
+}
+
+function resolveHost(options: PlazaServerOptions) {
+  if (typeof options.host === 'string' && options.host.trim()) {
+    return options.host;
+  }
+  return '0.0.0.0';
+}
+
+function canBind(host: string, port: number) {
+  return new Promise<boolean>((resolve) => {
+    const probe = createNetServer();
+    probe.once('error', () => {
+      resolve(false);
+    });
+    probe.once('listening', () => {
+      probe.close(() => resolve(true));
+    });
+    probe.listen({ host, port });
+  });
+}
 
 function createLogger() {
   if (process.env.NODE_ENV === 'production') {
@@ -17,13 +47,28 @@ function createLogger() {
 }
 
 function isAddrInUseError(err: unknown) {
-  return Boolean(err && typeof err === 'object' && 'code' in err && (err as any).code === 'EADDRINUSE');
+  if (!err || typeof err !== 'object' || !('code' in err)) {
+    return false;
+  }
+  return (err as NodeJS.ErrnoException).code === 'EADDRINUSE';
 }
 
 export async function ensurePlazaServer(options: PlazaServerOptions = {}) {
   if (!globalRuntime.__plazaServerPromise) {
     const logger = options.logger || createLogger();
-    globalRuntime.__plazaServerPromise = startPlazaServer({ ...options, logger }).catch((err) => {
+    const port = resolvePort(options);
+    const host = resolveHost(options);
+
+    globalRuntime.__plazaServerPromise = (async () => {
+      const available = await canBind(host, port);
+      if (!available) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('[mmo] plaza server port already in use, assuming external server is running');
+        }
+        return null;
+      }
+      return startPlazaServer({ ...options, host, port, logger });
+    })().catch((err) => {
       if (isAddrInUseError(err)) {
         if (process.env.NODE_ENV !== 'production') {
           console.warn('[mmo] plaza server port already in use, assuming external server is running');
@@ -40,4 +85,3 @@ export async function ensurePlazaServer(options: PlazaServerOptions = {}) {
 export function getPlazaServerPromise() {
   return globalRuntime.__plazaServerPromise;
 }
-

@@ -56,15 +56,16 @@ export type Repo = {
 
   // Units/ownership
   findUnitByCodeHash(codeHash: string): Promise<PhysicalUnit | null>;
-  claimUnitAndCreateOwnership(params: { unitId: string; userId: string }): Promise<{ characterId: string; claimedAt: Date }>;
+  claimUnitAndCreateOwnership(params: { unitId: string; userId: string; challengeId?: string }): Promise<{ characterId: string; claimedAt: Date }>;
   listOwnershipsByUser(userId: string): Promise<Array<{ id: string; userId: string; characterId: string; source: string; cosmetics: string[]; createdAt: Date }>>;
 
   // Characters
   getCharacterById(id: string): Promise<Character | null>;
+  getCharactersByIds(ids: string[]): Promise<Character[]>;
   listCharacters(params?: { limit?: number; offset?: number }): Promise<Character[]>;
 
   // Abuse
-  logAbuse(event: { type: string; actorRef: string; metadata: any }): Promise<void>;
+  logAbuse(event: { type: string; actorRef: string; metadata: unknown }): Promise<void>;
 };
 
 const memoryFlag = process.env.USE_MEMORY_DB;

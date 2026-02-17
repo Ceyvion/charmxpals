@@ -74,7 +74,7 @@ export default function LoginPage() {
               </p>
               <div className="mt-10 space-y-8">
                 <div>
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-white/50 mb-3">What's Live</h3>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-white/50 mb-3">What&apos;s Live</h3>
                   <dl className="grid gap-6 md:grid-cols-3">
                     {[
                       { label: 'Claim Beta Rewards', detail: 'Grab your early-access collectible and test cosmetic systems.' },

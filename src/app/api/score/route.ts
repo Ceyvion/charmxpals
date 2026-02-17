@@ -1,5 +1,8 @@
 import { NextRequest } from 'next/server';
+import { getServerSession } from 'next-auth';
 import { getTopScores, submitScore } from '@/lib/leaderboard';
+import { authOptions } from '@/lib/auth';
+import { rateLimitCheck } from '@/lib/rateLimit';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -9,13 +12,42 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 30 submissions per minute per IP
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || req.ip || 'unknown';
+  const rateLimitResult = await rateLimitCheck(`score-submit:${ip}`, {
+    max: 30,
+    windowMs: 60_000,
+    prefix: 'rl',
+  });
+  if (!rateLimitResult.allowed) {
+    return Response.json(
+      { success: false, error: 'rate limit exceeded' },
+      { status: 429 }
+    );
+  }
+
+  // Require authentication
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return Response.json(
+      { success: false, error: 'unauthorized' },
+      { status: 401 }
+    );
+  }
+
   try {
     const body = await req.json();
     const mode = (body?.mode as string) || 'runner';
     const score = Number(body?.score ?? 0);
     const coins = typeof body?.coins === 'number' ? Number(body.coins) : undefined;
-    const name = typeof body?.name === 'string' ? body.name.slice(0, 32) : undefined;
-    if (!Number.isFinite(score) || score <= 0) return Response.json({ success: false, error: 'invalid score' }, { status: 400 });
+    const name = typeof body?.name === 'string'
+      ? body.name.slice(0, 32)
+      : session.user.name || session.user.email || 'Anonymous';
+
+    if (!Number.isFinite(score) || score <= 0) {
+      return Response.json({ success: false, error: 'invalid score' }, { status: 400 });
+    }
+
     const result = await submitScore({ mode, score, coins, name });
     return Response.json(result);
   } catch {

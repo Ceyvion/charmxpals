@@ -18,14 +18,17 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    let payload: any;
+    type VerifyPayload = { code?: unknown };
+
+    let payload: unknown;
     try {
       payload = await request.json();
     } catch {
       return Response.json({ error: 'Invalid payload' }, { status: 400 });
     }
 
-    const code = typeof payload?.code === 'string' ? payload.code : '';
+    const parsed: VerifyPayload = typeof payload === 'object' && payload !== null ? (payload as VerifyPayload) : {};
+    const code = typeof parsed.code === 'string' ? parsed.code : '';
     if (!code) {
       return Response.json({ error: 'Missing code' }, { status: 400 });
     }

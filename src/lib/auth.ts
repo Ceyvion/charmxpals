@@ -8,6 +8,18 @@ function hashSecret(value: string) {
   return createHash('sha256').update(value).digest();
 }
 
+function resolveNextAuthSecret() {
+  const configured = process.env.NEXTAUTH_SECRET?.trim();
+  const fallback = process.env.CODE_HASH_SECRET?.trim();
+
+  if (!configured && process.env.NODE_ENV !== 'production' && fallback) {
+    console.info('[auth] NEXTAUTH_SECRET is missing; using CODE_HASH_SECRET for local/dev session encryption.');
+    return fallback;
+  }
+
+  return configured;
+}
+
 function secureCompare(a: string, b: string): boolean {
   const bufferA = hashSecret(a);
   const bufferB = hashSecret(b);
@@ -26,6 +38,12 @@ function normalizeEmails(input: string | undefined) {
     .filter(Boolean);
 }
 
+const NEXTAUTH_SECRET = resolveNextAuthSecret();
+
+if (process.env.NODE_ENV === 'production' && !NEXTAUTH_SECRET) {
+  throw new Error('NEXTAUTH_SECRET is required in production.');
+}
+
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
@@ -34,7 +52,7 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/login',
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
       name: 'Beta Access',

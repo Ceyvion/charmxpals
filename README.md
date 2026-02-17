@@ -7,7 +7,7 @@ Welcome to CharmPals, a platform that links physical collectibles to digital exp
 - **Claim & Verify**: Securely claim your physical collectible with a unique code.
 - **Digital Twin**: View your character's stats, rarity, and unlockables.
 - **My Pals Inventory**: See your owned pals in one place (dev cookie-backed until auth lands).
-- **3D Viewer**: Animated 3D character models on each character page and in My Pals.
+- **Character Gallery**: Illustrated character art packs on each character page and in My Pals.
 - **Mini-Games**: Play exciting mini-games with your collectibles.
 - **Customization**: Unlock skins, badges, and nameplates.
 - **Compare & Leaderboards**: Compare characters and compete on leaderboards.
@@ -74,7 +74,7 @@ Update statuses in `orchestrator/plan.json` after each meaningful change to keep
 - Added `/me` inventory page ("My Pals").
 - Added secure beta login via NextAuth (email + access code) in place of the temporary dev cookie.
 - Explore/Home surfaces ownership badges on cards when available.
-- Character pages and My Pals now include an inline 3D viewer (client-only, no extra deps).
+- Character pages and My Pals now include inline character art galleries.
 - Added dev login (`/login`) and profile pages (`/u/[handle]`), plus `/logout` for convenience.
 
 ## Beta Access

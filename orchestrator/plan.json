@@ -3,6 +3,13 @@
   "vision": "Build a state-of-the-art physical–digital collectibles platform with secure claim, social loops, and engaging mini-games.",
   "now": [
     {
+      "id": "BETA-EXIT-2026-02-17",
+      "title": "Beta exit vertical slice (UI + Arena + asset expansion)",
+      "detail": "Remove user-facing 3D, ship static art-driven character pages, expand roster/assets, and add real-time 2D arena proof-of-concept with rotation/missions loop.",
+      "status": "done",
+      "area": "fullstack"
+    },
+    {
       "id": "A1",
       "title": "Secure claim flow v1 (server-first)",
       "detail": "Persist challenge nonces with TTL, verify HMAC using per-unit salt, hash codes at rest, and atomically bind ownership.",
@@ -125,6 +132,48 @@
       "id": "A1.14",
       "title": "Sunlit theme refresh",
       "detail": "Replace the dark palette with a warm cream + sky gradient system across layout and key pages.",
+      "status": "done",
+      "area": "frontend"
+    },
+    {
+      "id": "UX-LEGIBILITY-2026-02-17",
+      "title": "Legibility pass on /me",
+      "detail": "Align mission tracker and roster surfaces to light theme text tokens and remove white-on-light collisions.",
+      "status": "done",
+      "area": "frontend"
+    },
+    {
+      "id": "UX-EXPLORE-CLEANUP-2026-02-17",
+      "title": "Explore page style and motion cleanup",
+      "detail": "Align /explore visuals with claim page tokens, simplify roster/spotlight transitions, and fix desktop roster-to-spotlight layout.",
+      "status": "done",
+      "area": "frontend"
+    },
+    {
+      "id": "MMO-PLAZA-STABILITY-2026-02-17",
+      "title": "Plaza startup and handshake stability",
+      "detail": "Fix local MMO server startup command, harden WS payload decode, and prevent bundled ws bufferutil runtime failures that caused handshake timeouts.",
+      "status": "done",
+      "area": "backend"
+    },
+    {
+      "id": "MMO-TOKEN-SYNC-2026-02-17",
+      "title": "Standalone MMO token secret alignment",
+      "detail": "Load Next-style env before importing plaza server so standalone mmo server uses the same token secret and no longer rejects valid tokens with invalid_token.",
+      "status": "done",
+      "area": "backend"
+    },
+    {
+      "id": "MMO-RUNTIME-COLLISION-2026-02-17",
+      "title": "Dual-process MMO startup hardening",
+      "detail": "Avoid duplicate WS binds in local dual-process dev by probing port availability, treating occupied port as external runtime, and adding a safe combined launcher script.",
+      "status": "done",
+      "area": "backend"
+    },
+    {
+      "id": "CSS-PARSE-HOTFIX-2026-02-17",
+      "title": "Firefox CSS parse warnings cleanup",
+      "detail": "Fix invalid Tailwind arbitrary grid column syntax and remove accidental arbitrary class extraction from bracketed dev log tags.",
       "status": "done",
       "area": "frontend"
     },

@@ -41,6 +41,20 @@ const gameConfigs: GameConfig[] = [
     ],
   },
   {
+    id: 'arena',
+    title: 'Rift Arena (POC)',
+    slug: '/arena',
+    tagline: 'Real-time 2D battles inside the Harmonic Rift.',
+    intro:
+      'Lock in your avatar and drop into a live arena where pulse bursts, movement timing, and positioning decide every clash.',
+    cta: 'Queue arena',
+    roster: ['ember-heights', 'shadow-stage', 'prism-pulse'],
+    focus: [
+      { key: 'power', blurb: 'Power decides pulse-burst damage and finishing pressure.' },
+      { key: 'flow', blurb: 'Flow keeps movement smooth while dodging and re-engaging.' },
+    ],
+  },
+  {
     id: 'runner',
     title: 'Skylink Pulsegrid',
     slug: '/play/runner',

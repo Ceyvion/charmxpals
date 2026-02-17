@@ -1,0 +1,6 @@
+
+> charmxpals@0.1.0 dev
+> node ./scripts/dev-guard.mjs
+
+[dev-guard] A dev server is already running in this repo (PID 13864).
+[dev-guard] Stop it before starting another one to avoid .next chunk corruption.

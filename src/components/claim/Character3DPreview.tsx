@@ -42,57 +42,52 @@ export default function Character3DPreview({ character, unitStatus, hasUnlocked 
     setRotation({ x: 0, y: 0 });
   };
 
-  const getRarityColor = (rarity?: number) => {
-    if (!rarity) return 'from-gray-500 to-gray-600';
-    if (rarity >= 5) return 'from-yellow-400 to-orange-500';
-    if (rarity >= 4) return 'from-purple-500 to-pink-500';
-    return 'from-cyan-400 to-blue-500';
+  const getRarityTone = (rarity?: number) => {
+    if (!rarity) return { label: 'Common', bg: 'var(--cp-gray-200)', text: 'var(--cp-text-primary)', border: 'var(--cp-border)' };
+    if (rarity >= 5) return { label: 'Legendary', bg: 'var(--cp-yellow)', text: 'var(--cp-black)', border: 'var(--cp-yellow)' };
+    if (rarity >= 4) return { label: 'Epic', bg: 'var(--cp-violet)', text: 'var(--cp-white)', border: 'var(--cp-violet)' };
+    return { label: 'Rare', bg: 'var(--cp-cyan)', text: 'var(--cp-black)', border: 'var(--cp-cyan)' };
   };
 
-  const getRarityLabel = (rarity?: number) => {
-    if (!rarity) return 'Common';
-    if (rarity >= 5) return 'Legendary';
-    if (rarity >= 4) return 'Epic';
-    return 'Rare';
-  };
+  const rarity = getRarityTone(character.rarity);
+
+  const statusTone =
+    unitStatus === 'available'
+      ? { border: 'var(--cp-green)', bg: 'var(--cp-green)', iconText: 'var(--cp-black)' }
+      : unitStatus === 'claimed'
+      ? { border: 'var(--cp-yellow)', bg: 'var(--cp-yellow)', iconText: 'var(--cp-black)' }
+      : { border: 'var(--cp-red)', bg: 'var(--cp-red)', iconText: 'var(--cp-white)' };
 
   return (
     <div className="relative">
-      {/* Status Banner */}
       <div
-        className={`mb-6 rounded-2xl border-2 p-6 ${
-          unitStatus === 'available'
-            ? 'border-green-400/50 bg-gradient-to-br from-green-500/20 to-emerald-500/20'
-            : unitStatus === 'claimed'
-            ? 'border-amber-400/50 bg-gradient-to-br from-amber-500/20 to-orange-500/20'
-            : 'border-red-400/50 bg-gradient-to-br from-red-500/20 to-rose-500/20'
-        }`}
+        className="mb-6 rounded-[var(--cp-radius-lg)] border-2 bg-[var(--cp-white)] p-5"
+        style={{ borderColor: statusTone.border }}
       >
         <div className="flex items-center gap-4">
           <div
-            className={`w-12 h-12 rounded-full flex items-center justify-center ${
-              unitStatus === 'available' ? 'bg-green-400' : unitStatus === 'claimed' ? 'bg-amber-400' : 'bg-red-400'
-            }`}
+            className="flex h-10 w-10 items-center justify-center rounded-[var(--cp-radius-sm)]"
+            style={{ background: statusTone.bg, color: statusTone.iconText }}
           >
             {unitStatus === 'available' ? (
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
               </svg>
             ) : (
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             )}
           </div>
           <div>
-            <h3 className="font-bold text-white text-lg">
+            <h3 className="text-lg font-bold text-[var(--cp-text-primary)]">
               {unitStatus === 'available'
                 ? 'Available to Claim'
                 : unitStatus === 'claimed'
                 ? 'Already Claimed'
                 : 'Unavailable'}
             </h3>
-            <p className="text-white/80 text-sm">
+            <p className="text-sm text-[var(--cp-text-secondary)]">
               {unitStatus === 'available'
                 ? 'This CharmXPal is ready to be claimed'
                 : unitStatus === 'claimed'
@@ -103,83 +98,64 @@ export default function Character3DPreview({ character, unitStatus, hasUnlocked 
         </div>
       </div>
 
-      {/* 3D Card */}
       <div
         ref={cardRef}
-        className="relative preserve-3d"
+        className="relative"
         style={{ perspective: '1000px' }}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       >
         <div
-          className="relative rounded-3xl overflow-hidden transition-transform duration-300 ease-out"
+          className="cp-panel transition-transform duration-300 ease-out"
           style={{
-            transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg) scale(1.02)`,
+            transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)`,
           }}
         >
-          {/* Card Background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-pink-500 via-purple-500 to-cyan-500" />
-          <div className="absolute inset-0 bg-grid-overlay opacity-20" />
-
-          {/* Depth Layers */}
-          <div
-            className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent"
-            style={{
-              transform: `translate3d(${rotation.y * 0.5}px, ${rotation.x * 0.5}px, 0)`,
-            }}
-          />
-
-          {/* Content */}
           <div className="relative p-8">
-            {/* Top Badges */}
-            <div className="flex justify-between items-start mb-32">
-              <div className={`px-4 py-2 rounded-full bg-gradient-to-r ${getRarityColor(character.rarity)} font-black text-white text-sm`}>
-                {getRarityLabel(character.rarity)}
-              </div>
-              <div className="px-4 py-2 rounded-full bg-black/40 backdrop-blur-sm border border-white/20 font-black text-white text-lg">
+            <div className="mb-8 flex items-start justify-between">
+              <span
+                className="rounded-[var(--cp-radius-sm)] border-2 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em]"
+                style={{ background: rarity.bg, color: rarity.text, borderColor: rarity.border }}
+              >
+                {rarity.label}
+              </span>
+              <div className="cp-chip">
                 {((character.rarity ?? 3) + 2.7).toFixed(1)}
               </div>
             </div>
 
-            {/* Character Icon Placeholder */}
-            <div className="flex justify-center mb-32">
-              <div className="w-48 h-48 rounded-full bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-sm flex items-center justify-center animate-float">
+            <div className="mb-8 flex justify-center">
+              <div className="flex h-40 w-40 items-center justify-center rounded-full border-2 border-[var(--cp-border)] bg-[var(--cp-gray-100)]">
                 <div className="text-8xl">✨</div>
               </div>
             </div>
 
-            {/* Bottom Info */}
             <div className="space-y-3">
               {character.realm && (
-                <div className="inline-block px-3 py-1 rounded-full bg-black/40 backdrop-blur-sm border border-white/20">
-                  <span className="text-xs font-bold text-white uppercase tracking-wider">
-                    {character.realm}
-                  </span>
-                </div>
+                <span className="cp-chip">{character.realm}</span>
               )}
 
-              <h3 className="font-display font-black text-5xl text-white leading-tight">
+              <h3 className="font-display text-4xl font-black leading-tight text-[var(--cp-text-primary)] md:text-5xl">
                 {character.name}
               </h3>
 
               {character.title && (
-                <p className="text-xl font-bold text-white/90">{character.title}</p>
+                <p className="text-lg font-semibold text-[var(--cp-text-secondary)]">{character.title}</p>
               )}
 
               {(character.tagline || character.description) && (
-                <p className="text-white/80 leading-relaxed">
+                <p className="leading-relaxed text-[var(--cp-text-secondary)]">
                   {character.tagline || character.description}
                 </p>
               )}
 
-              {/* View Button */}
               {hasUnlocked && (
                 <Link
                   href={`/character/${character.id}`}
-                  className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-gray-900 font-black hover:bg-white/90 transition-all duration-300 hover:scale-105"
+                  className="cp-cta-primary mt-4"
                 >
                   <span>View Character</span>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
                 </Link>
@@ -187,15 +163,11 @@ export default function Character3DPreview({ character, unitStatus, hasUnlocked 
             </div>
           </div>
         </div>
-
-        {/* Glow Effect */}
-        <div className="absolute -inset-4 bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 opacity-50 blur-3xl -z-10 animate-pulse" />
       </div>
 
-      {/* Interaction Hint */}
-      <div className="text-center mt-6 opacity-60">
-        <div className="inline-flex items-center gap-2 text-white text-sm font-bold">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="mt-4 text-center">
+        <div className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--cp-text-muted)]">
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11" />
           </svg>
           <span>Drag to rotate</span>

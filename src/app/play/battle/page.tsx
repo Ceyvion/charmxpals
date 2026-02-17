@@ -362,7 +362,7 @@ export default function BattlePage() {
           </p>
         </header>
 
-        <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr),minmax(0,280px),minmax(0,1fr)]">
+        <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,280px)_minmax(0,1fr)]">
           <FighterCard
             fighter={you}
             role="you"

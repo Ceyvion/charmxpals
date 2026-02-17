@@ -100,16 +100,16 @@ function HeroSection({ primary, secondary }: { primary: CompareCharacter | null;
   const primaryName = primary?.name ?? "Your crew";
   const secondaryName = secondary?.name ?? "Choose a rival";
   return (
-    <header className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-white shadow-[0_25px_80px_rgba(15,23,42,0.35)] backdrop-blur-xl md:p-10">
+    <header className="cp-panel rounded-3xl bg-gradient-to-br from-[var(--cp-white)] via-[var(--cp-white)] to-[var(--cp-gray-100)] p-6 shadow-[0_20px_60px_rgba(10,10,10,0.08)] md:p-10">
       <div className="cp-kicker mb-3">Realm Versus</div>
-      <h1 className="font-display text-3xl font-extrabold tracking-tight md:text-5xl">Compare &amp; Amplify</h1>
-      <p className="cp-muted mt-3 max-w-2xl text-base leading-relaxed md:text-lg">
+      <h1 className="font-display text-3xl font-extrabold tracking-tight text-[var(--cp-text-primary)] md:text-5xl">Compare &amp; Amplify</h1>
+      <p className="mt-3 max-w-2xl text-base leading-relaxed text-[var(--cp-text-secondary)] md:text-lg">
         Dial in matchups, plan team synergies, and stack your squad with intent. Pick any two champions to reveal their stat spreads, realm specialties,
         and where each shines behind the spotlight.
       </p>
-      <div className="mt-6 flex flex-wrap items-center gap-3 text-sm uppercase tracking-[0.35em] text-white/60">
+      <div className="mt-6 flex flex-wrap items-center gap-3 text-sm uppercase tracking-[0.35em] text-[var(--cp-text-secondary)]">
         <span>{primaryName}</span>
-        <span className="text-white/40">vs</span>
+        <span className="text-[var(--cp-text-muted)]">vs</span>
         <span>{secondaryName}</span>
       </div>
     </header>
@@ -138,7 +138,7 @@ function MatchupBoard({
         },
       ];
   return (
-    <section className="cp-panel overflow-hidden border border-white/10 bg-gradient-to-br from-white/[0.1] via-white/[0.03] to-transparent">
+    <section className="cp-panel overflow-hidden bg-gradient-to-br from-[var(--cp-white)] via-[var(--cp-white)] to-[var(--cp-gray-100)]">
       <div className="flex flex-col gap-8 px-6 py-6 lg:px-10 lg:py-8">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center">
           <CharacterPlate character={primary} align="left" />
@@ -158,19 +158,19 @@ function MatchupBoard({
 function CharacterPlate({ character, align }: { character: CompareCharacter | null; align: "left" | "right" }) {
   if (!character) {
     return (
-      <div className="rounded-3xl border border-dashed border-white/15 bg-white/[0.04] px-5 py-6 text-white/60">
-        <div className="text-[11px] uppercase tracking-[0.32em] text-white/30">{align === "left" ? "Primary Slot" : "Rival Slot"}</div>
-        <div className="mt-3 text-lg font-semibold">{align === "left" ? "Pick a primary pal" : "Pick a rival to compare"}</div>
-        <p className="mt-2 text-sm text-white/50">Use the roster rail to drop someone into this position.</p>
+      <div className="rounded-3xl border-2 border-dashed border-[var(--cp-border)] bg-[var(--cp-gray-100)] px-5 py-6 text-[var(--cp-text-secondary)]">
+        <div className="text-[11px] uppercase tracking-[0.32em] text-[var(--cp-text-muted)]">{align === "left" ? "Primary Slot" : "Rival Slot"}</div>
+        <div className="mt-3 text-lg font-semibold text-[var(--cp-text-primary)]">{align === "left" ? "Pick a primary pal" : "Pick a rival to compare"}</div>
+        <p className="mt-2 text-sm text-[var(--cp-text-muted)]">Use the roster rail to drop someone into this position.</p>
       </div>
     );
   }
   const charmTitle = extractCharmTitle(character.coreCharm);
   return (
-    <article className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] px-6 py-6 text-white shadow-[0_25px_80px_rgba(15,23,42,0.35)]">
+    <article className="relative overflow-hidden rounded-3xl border-2 border-[var(--cp-border)] bg-[var(--cp-gray-900)] px-6 py-6 text-white shadow-[0_20px_50px_rgba(15,23,42,0.24)]">
       <div
         className="pointer-events-none absolute inset-0 opacity-90"
-        style={{ backgroundImage: `linear-gradient(135deg, ${withAlpha(character.color ?? FALLBACK_COLOR, 0.5)} 0%, rgba(15,23,42,0.9) 100%)` }}
+        style={{ backgroundImage: `linear-gradient(135deg, ${withAlpha(character.color ?? FALLBACK_COLOR, 0.64)} 0%, rgba(10,10,10,0.86) 100%)` }}
       />
       <div className="relative flex flex-col gap-4">
         <div className="flex items-start justify-between gap-4">
@@ -179,7 +179,7 @@ function CharacterPlate({ character, align }: { character: CompareCharacter | nu
             <h2 className="mt-2 text-3xl font-display font-extrabold leading-tight">{character.name}</h2>
             {character.tagline && <p className="mt-2 text-sm text-white/80">{character.tagline}</p>}
           </div>
-          <span className="rounded-full border border-white/20 bg-white/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-white">
+          <span className="rounded-full border border-white/30 bg-black/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-white">
             {rarityLabel(character.rarity)}
           </span>
         </div>
@@ -204,12 +204,14 @@ function VsDivider({
   const { playClick, playHover } = useSfx();
   const disabled = !primary || !secondary;
   return (
-    <div className="flex flex-col items-center gap-3 text-center text-xs uppercase tracking-[0.35em] text-white/60">
+    <div className="flex flex-col items-center gap-3 text-center text-xs uppercase tracking-[0.35em] text-[var(--cp-text-muted)]">
       <span>{primary?.name ?? "Primary"}</span>
       <button
         type="button"
-        className={`group relative flex h-16 w-16 items-center justify-center rounded-full border text-lg font-semibold text-white shadow-[0_15px_40px_rgba(15,23,42,0.45)] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
-          disabled ? "cursor-not-allowed border-white/10 bg-white/5 text-white/40" : "border-white/20 bg-white/10 hover:border-white/40 hover:bg-white/20"
+        className={`group relative flex h-16 w-16 items-center justify-center rounded-full border-2 text-base font-semibold shadow-[0_8px_20px_rgba(10,10,10,0.12)] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-black/20 ${
+          disabled
+            ? "cursor-not-allowed border-[var(--cp-border)] bg-[var(--cp-gray-100)] text-[var(--cp-text-muted)]"
+            : "border-[var(--cp-border)] bg-[var(--cp-white)] text-[var(--cp-text-primary)] hover:border-[var(--cp-border-strong)] hover:bg-[var(--cp-gray-100)]"
         }`}
         disabled={disabled}
         onClick={() => {
@@ -230,9 +232,9 @@ function VsDivider({
 
 function InsightCard({ insight }: { insight: Insight }) {
   return (
-    <div className="rounded-2xl border border-white/12 bg-white/[0.05] px-4 py-4 text-sm text-white backdrop-blur-sm">
-      <div className="text-[11px] uppercase tracking-[0.32em] text-white/45">{insight.difference || "SCOUTING NOTE"}</div>
-      <div className="mt-2 font-semibold text-white/85">{insight.label}</div>
+    <div className="rounded-2xl border-2 border-[var(--cp-border)] bg-[var(--cp-white)] px-4 py-4 text-sm">
+      <div className="text-[11px] uppercase tracking-[0.32em] text-[var(--cp-text-muted)]">{insight.difference || "SCOUTING NOTE"}</div>
+      <div className="mt-2 font-semibold text-[var(--cp-text-primary)]">{insight.label}</div>
     </div>
   );
 }
@@ -270,8 +272,8 @@ function RosterRail({
     <section className="cp-panel space-y-4 px-5 py-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="cp-kicker text-xs uppercase tracking-[0.28em] text-white/60">Roster Rail</div>
-          <h2 className="font-display text-2xl font-bold text-white">Slot in your pals</h2>
+          <div className="cp-kicker text-xs uppercase tracking-[0.28em]">Roster Rail</div>
+          <h2 className="font-display text-2xl font-bold text-[var(--cp-text-primary)]">Slot in your pals</h2>
         </div>
         <div className="flex items-center gap-2">
           <label className="relative">
@@ -280,13 +282,13 @@ function RosterRail({
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search..."
-              className="w-40 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/20"
+              className="w-40 rounded-full border-2 border-[var(--cp-border)] bg-[var(--cp-white)] px-4 py-2 text-sm text-[var(--cp-text-primary)] placeholder:text-[var(--cp-text-muted)] focus:border-[var(--cp-border-strong)] focus:outline-none"
             />
           </label>
           {filtered.length > LIMIT && (
             <button
               type="button"
-              className="rounded-full border border-white/20 px-3 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-white/70 hover:border-white/35 hover:text-white"
+              className="rounded-full border-2 border-[var(--cp-border)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-[var(--cp-text-secondary)] hover:border-[var(--cp-border-strong)] hover:text-[var(--cp-text-primary)]"
               onClick={() => {
                 setExpanded((value) => !value);
                 playClick();
@@ -318,7 +320,7 @@ function RosterRail({
           />
         ))}
         {visible.length === 0 && (
-          <div className="flex h-32 shrink-0 items-center justify-center rounded-2xl border border-dashed border-white/15 bg-white/[0.03] px-6 text-sm text-white/60">
+          <div className="flex h-32 shrink-0 items-center justify-center rounded-2xl border-2 border-dashed border-[var(--cp-border)] bg-[var(--cp-gray-100)] px-6 text-sm text-[var(--cp-text-muted)]">
             No roster matches—try a different search.
           </div>
         )}
@@ -344,17 +346,17 @@ function RosterCard({
 }) {
   const charmTitle = extractCharmTitle(character.coreCharm);
   return (
-    <article className="flex w-56 shrink-0 flex-col gap-4 rounded-3xl border border-white/12 bg-white/[0.04] px-4 py-4 text-white transition hover:border-white/35 hover:bg-white/[0.08]">
+    <article className="flex w-56 shrink-0 flex-col gap-4 rounded-3xl border-2 border-[var(--cp-border)] bg-[var(--cp-white)] px-4 py-4 text-[var(--cp-text-primary)] transition hover:border-[var(--cp-border-strong)] hover:bg-[var(--cp-gray-100)]">
       <div className="flex items-center gap-3">
         <CharacterAvatar name={character.name} color={character.color} art={character.art} />
         <div className="min-w-0">
           <div className="truncate text-sm font-semibold">{character.name}</div>
-          <div className="text-xs text-white/60">{character.realm ?? character.title ?? "Unknown Realm"}</div>
+          <div className="text-xs text-[var(--cp-text-muted)]">{character.realm ?? character.title ?? "Unknown Realm"}</div>
         </div>
       </div>
-      <div className="flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.28em] text-white/50">
-        <span className="rounded-full border border-white/15 bg-white/[0.06] px-2 py-1">{rarityLabel(character.rarity)}</span>
-        {charmTitle && <span className="rounded-full border border-white/12 bg-white/[0.04] px-2 py-1">{charmTitle}</span>}
+      <div className="flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.28em] text-[var(--cp-text-muted)]">
+        <span className="rounded-full border border-[var(--cp-border)] bg-[var(--cp-gray-100)] px-2 py-1">{rarityLabel(character.rarity)}</span>
+        {charmTitle && <span className="rounded-full border border-[var(--cp-border)] bg-[var(--cp-gray-100)] px-2 py-1">{charmTitle}</span>}
       </div>
       <div className="flex items-center gap-2">
         <RosterPill label="Primary" active={isPrimary} onClick={onSelectPrimary} onHover={onHover} />
@@ -379,13 +381,15 @@ function RosterPill({
 }) {
   const gradient =
     variant === "primary"
-      ? "linear-gradient(135deg,rgba(250,204,21,0.65),rgba(236,72,153,0.65))"
-      : "linear-gradient(135deg,rgba(99,102,241,0.65),rgba(56,189,248,0.65))";
+      ? "linear-gradient(135deg,rgba(245,158,11,0.95),rgba(220,38,38,0.95))"
+      : "linear-gradient(135deg,rgba(79,70,229,0.95),rgba(8,145,178,0.95))";
   return (
     <button
       type="button"
-      className={`flex-1 rounded-full border px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.32em] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30 ${
-        active ? "border-white/75 text-white shadow-[0_12px_30px_rgba(15,23,42,0.45)]" : "border-white/20 text-white/70 hover:border-white/35 hover:text-white"
+      className={`flex-1 rounded-full border-2 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.32em] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-black/20 ${
+        active
+          ? "border-[var(--cp-border-strong)] text-[var(--cp-white)] shadow-[0_10px_24px_rgba(15,23,42,0.28)]"
+          : "border-[var(--cp-border)] text-[var(--cp-text-secondary)] hover:border-[var(--cp-border-strong)] hover:text-[var(--cp-text-primary)]"
       }`}
       style={active ? { backgroundImage: gradient } : undefined}
       onClick={onClick}
@@ -418,7 +422,7 @@ function StatsPanel({
 }) {
   if (!primary || !secondary) {
     return (
-      <section className="cp-panel border border-dashed border-white/15 bg-transparent p-10 text-center text-sm text-white/60">
+      <section className="cp-panel border-dashed bg-[var(--cp-white)] p-10 text-center text-sm text-[var(--cp-text-secondary)]">
         Pick two champions to unlock a stat-by-stat breakdown.
       </section>
     );
@@ -426,23 +430,23 @@ function StatsPanel({
 
   return (
     <section className="cp-panel overflow-hidden">
-      <div className="border-b border-white/10 px-4 py-5 sm:px-6">
-        <div className="cp-kicker mb-3 text-xs uppercase tracking-[0.3em] text-white/60">Stat Showdown</div>
+      <div className="border-b border-[var(--cp-border)] px-4 py-5 sm:px-6">
+        <div className="cp-kicker mb-3 text-xs uppercase tracking-[0.3em]">Stat Showdown</div>
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="font-display text-2xl font-bold text-white sm:text-3xl">Attribute Spread</h2>
+            <h2 className="font-display text-2xl font-bold text-[var(--cp-text-primary)] sm:text-3xl">Attribute Spread</h2>
             <p className="cp-muted mt-2 max-w-xl text-sm">
               Bars pulse based on realm performance. Hover or tap each row for exact values; advantage badges show who dominates the category.
             </p>
           </div>
-          <div className="flex flex-col items-end text-right text-xs uppercase tracking-[0.32em] text-white/60">
+          <div className="flex flex-col items-end text-right text-xs uppercase tracking-[0.32em] text-[var(--cp-text-secondary)]">
             <span>{primary.name}</span>
-            <span className="text-white/35">vs</span>
+            <span className="text-[var(--cp-text-muted)]">vs</span>
             <span>{secondary.name}</span>
           </div>
         </div>
       </div>
-      <div className="divide-y divide-white/12">
+      <div className="divide-y divide-[var(--cp-border)]">
         {comparison.map((entry) => (
           <StatRow key={entry.key} entry={entry} primary={primary} secondary={secondary} />
         ))}
@@ -487,23 +491,23 @@ function StatRow({ entry, primary, secondary }: { entry: StatComparison; primary
   return (
     <div
       key={key}
-      className="group relative grid gap-4 px-4 py-4 transition-colors duration-200 hover:bg-white/[0.06] sm:grid-cols-[minmax(0,220px)_minmax(0,1fr)] sm:px-6"
+      className="group relative grid gap-4 px-4 py-4 transition-colors duration-200 hover:bg-[var(--cp-gray-100)] sm:grid-cols-[minmax(0,220px)_minmax(0,1fr)] sm:px-6"
     >
       <div className="flex flex-col justify-center gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="text-xs uppercase tracking-[0.32em] text-white/50">{label}</div>
-          <div className="flex gap-2 text-sm text-white/70">
+          <div className="text-xs uppercase tracking-[0.32em] text-[var(--cp-text-muted)]">{label}</div>
+          <div className="flex gap-2 text-sm text-[var(--cp-text-secondary)]">
             <span>{primaryValue}</span>
-            <span className="text-white/40">/</span>
+            <span className="text-[var(--cp-text-muted)]">/</span>
             <span>{secondaryValue}</span>
           </div>
         </div>
-        <span className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/[0.05] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-white/70">
+        <span className="inline-flex items-center justify-center rounded-full border border-[var(--cp-border)] bg-[var(--cp-gray-100)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-[var(--cp-text-secondary)]">
           {deltaBadge}
         </span>
       </div>
       <div className="grid gap-2">
-        <div className="relative h-10 overflow-hidden rounded-full border border-white/10 bg-white/[0.03]">
+        <div className="relative h-10 overflow-hidden rounded-full border border-[var(--cp-border)] bg-[var(--cp-gray-100)]">
           <span
             className="absolute inset-y-0 left-0 rounded-full"
             style={{
@@ -520,7 +524,7 @@ function StatRow({ entry, primary, secondary }: { entry: StatComparison; primary
               boxShadow: "0 12px 35px rgba(244, 114, 182, 0.32)",
             }}
           />
-          <div className="absolute inset-0 flex items-center justify-between px-4 text-[11px] font-semibold uppercase tracking-[0.3em] text-white/80">
+          <div className="absolute inset-0 flex items-center justify-between px-4 text-[11px] font-semibold uppercase tracking-[0.3em] text-[var(--cp-text-primary)]">
             <span>{primary.name}</span>
             <span>{secondary.name}</span>
           </div>
@@ -538,42 +542,42 @@ function LorePanel({ primary, secondary }: { primary: CompareCharacter | null; s
   return (
     <section className="grid gap-6 md:grid-cols-2">
       {cards.map((character) => (
-        <article key={character.id} className="cp-panel flex flex-col gap-4 border border-white/10 bg-white/[0.04] p-6 text-white">
+        <article key={character.id} className="cp-panel flex flex-col gap-4 p-6">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="cp-kicker text-xs uppercase tracking-[0.28em] text-white/60">{character.realm ?? "Unknown Realm"}</div>
-              <h3 className="font-display text-2xl font-bold">{character.name}</h3>
+              <div className="cp-kicker text-xs uppercase tracking-[0.28em]">{character.realm ?? "Unknown Realm"}</div>
+              <h3 className="font-display text-2xl font-bold text-[var(--cp-text-primary)]">{character.name}</h3>
             </div>
             <Link
               href={`/character/${character.slug ?? character.id}`}
-              className="rounded-full border border-white/15 bg-white/[0.08] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-white hover:bg-white/[0.14]"
+              className="rounded-full border-2 border-[var(--cp-border)] bg-[var(--cp-white)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-[var(--cp-text-secondary)] transition-colors hover:border-[var(--cp-border-strong)] hover:text-[var(--cp-text-primary)]"
             >
               Full Profile
             </Link>
           </div>
-          {character.tagline && <p className="text-sm text-white/70">{character.tagline}</p>}
-          <dl className="grid gap-3 text-sm text-white/80">
+          {character.tagline && <p className="text-sm text-[var(--cp-text-secondary)]">{character.tagline}</p>}
+          <dl className="grid gap-3 text-sm text-[var(--cp-text-secondary)]">
             {character.vibe && (
               <div>
-                <dt className="text-xs uppercase tracking-[0.3em] text-white/40">Realm vibe</dt>
+                <dt className="text-xs uppercase tracking-[0.3em] text-[var(--cp-text-muted)]">Realm vibe</dt>
                 <dd>{character.vibe}</dd>
               </div>
             )}
             {character.coreCharm && (
               <div>
-                <dt className="text-xs uppercase tracking-[0.3em] text-white/40">Core charm</dt>
+                <dt className="text-xs uppercase tracking-[0.3em] text-[var(--cp-text-muted)]">Core charm</dt>
                 <dd>{character.coreCharm}</dd>
               </div>
             )}
             {character.danceStyle && (
               <div>
-                <dt className="text-xs uppercase tracking-[0.3em] text-white/40">Signature style</dt>
+                <dt className="text-xs uppercase tracking-[0.3em] text-[var(--cp-text-muted)]">Signature style</dt>
                 <dd>{character.danceStyle}</dd>
               </div>
             )}
             {character.personality && (
               <div>
-                <dt className="text-xs uppercase tracking-[0.3em] text-white/40">Personality</dt>
+                <dt className="text-xs uppercase tracking-[0.3em] text-[var(--cp-text-muted)]">Personality</dt>
                 <dd>{character.personality}</dd>
               </div>
             )}
@@ -697,16 +701,16 @@ function CharacterAvatar({
   const media = art.thumbnail || art.portrait;
   if (media) {
     return (
-      <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-white/15 bg-white/10">
+      <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border-2 border-[var(--cp-border)] bg-[var(--cp-gray-100)]">
         <Image src={media} alt={name} fill sizes="40px" className="object-cover" priority={false} unoptimized />
-        <span className="absolute inset-0 border border-white/20 mix-blend-screen" aria-hidden />
+        <span className="absolute inset-0 border border-black/10" aria-hidden />
       </span>
     );
   }
   return (
     <span
-      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 text-sm font-semibold text-white"
-      style={{ background: `linear-gradient(135deg, ${withAlpha(accent, 0.6)}, rgba(15,23,42,0.8))` }}
+      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 border-[var(--cp-border)] text-sm font-semibold text-white"
+      style={{ background: `linear-gradient(135deg, ${withAlpha(accent, 0.85)}, rgba(10,10,10,0.82))` }}
     >
       {name.slice(0, 2).toUpperCase()}
     </span>

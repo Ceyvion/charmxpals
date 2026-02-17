@@ -27,10 +27,15 @@ export default async function ExplorePage() {
         {enriched.length > 0 ? (
           <ExploreClient characters={enriched} ownedIds={owned} />
         ) : (
-          <div className="mt-8 text-center p-8 border border-white/10 rounded-2xl bg-white/5">
+          <div className="cp-panel mt-8 rounded-2xl p-8 text-center">
             <p className="cp-muted">No characters yet. Seed data or use memory mode.</p>
             <div className="mt-4">
-              <Link href="/claim" className="px-6 py-3 bg-white text-gray-900 rounded-lg font-semibold">Claim instead</Link>
+              <Link
+                href="/claim"
+                className="inline-flex rounded-lg border-2 border-[var(--cp-border)] bg-[var(--cp-white)] px-6 py-3 text-[var(--cp-text-secondary)] font-semibold transition-colors hover:border-[var(--cp-border-strong)] hover:text-[var(--cp-text-primary)]"
+              >
+                Claim instead
+              </Link>
             </div>
           </div>
         )}

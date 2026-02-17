@@ -26,7 +26,14 @@ type RateLimitResult = {
   resetAt: number;
 };
 
+function hasRedisConfig() {
+  return Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+}
+
 function getSharedRedis(): Redis | null {
+  if (!hasRedisConfig()) {
+    return null;
+  }
   if (sharedRedis === undefined) {
     try {
       sharedRedis = getRedis();
@@ -82,7 +89,7 @@ export async function rateLimitCheck(keyPart: string, cfg: RateLimitConfig): Pro
     try {
       return await redisRateLimit(key, cfg, now, client);
     } catch (error) {
-      if (!loggedRedisFallback) {
+      if (!loggedRedisFallback && process.env.NODE_ENV !== 'test') {
         console.warn('[rateLimit] Redis fallback', error);
         loggedRedisFallback = true;
       }

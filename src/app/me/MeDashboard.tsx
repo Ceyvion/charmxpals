@@ -1,15 +1,7 @@
-"use client";
-
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
-import { motion } from 'framer-motion';
 import BetaWelcome from '@/components/BetaWelcome';
 import BetaChecklist from '@/components/BetaChecklist';
-import Cosmetics from '@/app/character/[id]/Cosmetics';
 import { betaChecklistTasks } from '@/data/betaChecklist';
-
-const CharacterViewer3D = dynamic(() => import('@/components/CharacterViewer3D'), { ssr: false });
 
 type CharacterDisplay = {
   id: string;
@@ -17,7 +9,8 @@ type CharacterDisplay = {
   title?: string | null;
   tagline?: string | null;
   stats: Record<string, number>;
-  modelUrl: string | null;
+  artRefs: Record<string, string>;
+  color?: string | null;
   ownedAtIso: string | null;
 };
 
@@ -60,70 +53,58 @@ export default function MeDashboard({
   newestPalName,
   initialChecklistProgress,
 }: MeDashboardProps) {
-  const [checklistSnapshot, setChecklistSnapshot] = useState<ChecklistSnapshot>(initialChecklistProgress);
-
-  useEffect(() => {
-    setChecklistSnapshot(initialChecklistProgress);
-  }, [initialChecklistProgress]);
-
-  const completedMissions = useMemo(() => {
-    return betaChecklistTasks.reduce((count, task) => (checklistSnapshot.progress[task.id] ? count + 1 : count), 0);
-  }, [checklistSnapshot]);
-
-  const checklistPercent = useMemo(() => {
-    if (betaChecklistTasks.length === 0) return 0;
-    return (completedMissions / betaChecklistTasks.length) * 100;
-  }, [completedMissions]);
-
-  const quickActions = useMemo<QuickAction[]>(() => {
-    return [
-      {
-        id: 'claim',
-        label: 'Claim a Pal',
-        href: '/claim',
-        tagline: 'Scan or enter a fresh code.',
-      },
-      {
-        id: 'play',
-        label: 'Play Mini-Game',
-        href: '/play',
-        tagline: 'Chase today’s high score.',
-      },
-      {
-        id: 'plaza',
-        label: 'Enter Plaza',
-        href: '/plaza',
-        tagline: 'Link up in the social hub.',
-      },
-      {
-        id: 'compare',
-        label: 'Compare Crew',
-        href: '/compare',
-        tagline: 'Stack stats head-to-head.',
-      },
-      {
-        id: 'feedback',
-        label: 'Drop Feedback',
-        href: 'mailto:charmxpals.contact@gmail.com',
-        tagline: 'Share discoveries in beta.',
-        external: true,
-      },
-    ];
-  }, []);
-
-  const todaysStory = useMemo<PalStory>(() => {
-    return createPalStory({
-      ownedCount,
-      newestPalName,
-      lastClaimAtIso,
-      checklistPercent,
-      characters,
-    });
-  }, [ownedCount, newestPalName, lastClaimAtIso, checklistPercent, characters]);
-
-  const handleChecklistUpdate = useCallback((snapshot: ChecklistSnapshot) => {
-    setChecklistSnapshot(snapshot);
-  }, []);
+  const completedMissions = betaChecklistTasks.reduce(
+    (count, task) => (initialChecklistProgress.progress[task.id] ? count + 1 : count),
+    0,
+  );
+  const checklistPercent =
+    betaChecklistTasks.length === 0 ? 0 : (completedMissions / betaChecklistTasks.length) * 100;
+  const quickActions: QuickAction[] = [
+    {
+      id: 'claim',
+      label: 'Claim a Pal',
+      href: '/claim',
+      tagline: 'Scan or enter a fresh code.',
+    },
+    {
+      id: 'play',
+      label: 'Play Mini-Game',
+      href: '/play',
+      tagline: 'Chase today’s high score.',
+    },
+    {
+      id: 'plaza',
+      label: 'Enter Plaza',
+      href: '/plaza',
+      tagline: 'Link up in the social hub.',
+    },
+    {
+      id: 'arena',
+      label: 'Fight in Arena',
+      href: '/arena',
+      tagline: 'Queue live 2D battles.',
+    },
+    {
+      id: 'compare',
+      label: 'Compare Crew',
+      href: '/compare',
+      tagline: 'Stack stats head-to-head.',
+    },
+    {
+      id: 'feedback',
+      label: 'Drop Feedback',
+      href: 'mailto:charmxpals.contact@gmail.com',
+      tagline: 'Share discoveries in beta.',
+      external: true,
+    },
+  ];
+  const todaysStory = createPalStory({
+    ownedCount,
+    newestPalName,
+    lastClaimAtIso,
+    checklistPercent,
+    characters,
+  });
 
   return (
     <>
@@ -177,16 +158,16 @@ export default function MeDashboard({
 
           <div className="grid gap-4 md:grid-cols-3">
             <div className="md:col-span-2 rounded-2xl border border-white/12 bg-white/6 px-5 py-6 backdrop-blur-[32px]">
-              <div className="text-[11px] uppercase tracking-[0.28em] text-white/55">What&apos;s new with your pals</div>
+              <div className="text-[11px] uppercase tracking-[0.28em] text-white/75">What&apos;s new with your pals</div>
               <h2 className="mt-2 font-display text-2xl font-semibold text-white md:text-3xl">{todaysStory.headline}</h2>
-              <p className="mt-3 text-sm leading-relaxed text-white/70 md:text-base">{todaysStory.summary}</p>
+              <p className="mt-3 text-sm leading-relaxed text-white/85 md:text-base">{todaysStory.summary}</p>
             </div>
             <div className="space-y-3">
               {todaysStory.beats.map((beat) => {
                 const beatBody = (
                   <>
-                    <div className="text-[11px] uppercase tracking-[0.28em] text-white/55">{beat.label}</div>
-                    <p className="mt-2 text-sm text-white/75">{beat.detail}</p>
+                    <div className="text-[11px] uppercase tracking-[0.28em] text-white/70">{beat.label}</div>
+                    <p className="mt-2 text-sm text-white/85">{beat.detail}</p>
                   </>
                 );
 
@@ -207,7 +188,7 @@ export default function MeDashboard({
                     className="block rounded-2xl border border-white/12 bg-white/6 px-5 py-5 transition hover:border-white/30 hover:bg-white/12"
                   >
                     {beatBody}
-                    <span className="mt-3 inline-flex text-xs font-semibold uppercase tracking-[0.28em] text-white/70">
+                    <span className="mt-3 inline-flex text-xs font-semibold uppercase tracking-[0.28em] text-white/85">
                       Open ↗
                     </span>
                   </a>
@@ -218,7 +199,7 @@ export default function MeDashboard({
                     className="block rounded-2xl border border-white/12 bg-white/6 px-5 py-5 transition hover:border-white/30 hover:bg-white/12"
                   >
                     {beatBody}
-                    <span className="mt-3 inline-flex text-xs font-semibold uppercase tracking-[0.28em] text-white/70">
+                    <span className="mt-3 inline-flex text-xs font-semibold uppercase tracking-[0.28em] text-white/85">
                       Jump ⇢
                     </span>
                   </Link>
@@ -240,8 +221,7 @@ export default function MeDashboard({
         <div id="beta-checklist">
           <BetaChecklist
             userId={userId}
-            initialProgress={checklistSnapshot}
-            onProgressUpdate={handleChecklistUpdate}
+            initialProgress={initialChecklistProgress}
           />
         </div>
       </div>
@@ -250,41 +230,56 @@ export default function MeDashboard({
         <div className="space-y-8">
           {characters.map((c) => {
             const statsEntries = Object.entries(c.stats ?? {});
+            const preview =
+              c.artRefs?.portrait ||
+              c.artRefs?.card ||
+              c.artRefs?.thumbnail ||
+              c.artRefs?.banner ||
+              c.artRefs?.full ||
+              null;
             return (
               <div key={c.id} className="cp-panel p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h2 className="text-2xl font-extrabold text-white font-display">{c.name}</h2>
-                    {c.title && <div className="text-white/75 text-sm font-medium">{c.title}</div>}
-                    {c.tagline && <div className="text-white/60 text-sm">{c.tagline}</div>}
+                    <h2 className="text-2xl font-extrabold text-[color:var(--cp-text-primary)] font-display">{c.name}</h2>
+                    {c.title && <div className="text-[color:var(--cp-text-secondary)] text-sm font-medium">{c.title}</div>}
+                    {c.tagline && <div className="text-[color:var(--cp-text-muted)] text-sm">{c.tagline}</div>}
                   </div>
                   <div className="flex gap-2">
                     <span className="cp-chip">Owned</span>
-                    <Link href={`/character/${c.id}`} className="px-4 py-2 bg-white text-gray-900 rounded-lg text-sm font-semibold">Open</Link>
+                    <Link
+                      href={`/character/${c.id}`}
+                      className="px-4 py-2 rounded-lg text-sm font-semibold border border-[var(--cp-border)] bg-[var(--cp-gray-100)] text-[color:var(--cp-text-primary)] hover:border-[var(--cp-border-strong)]"
+                    >
+                      Open
+                    </Link>
                   </div>
                 </div>
-                <div className="grid lg:grid-cols-5 gap-6 items-start">
-                  <div className="lg:col-span-3">
-                    {c.modelUrl ? (
-                      <CharacterViewer3D modelUrl={c.modelUrl} height={320} />
+                <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)] items-start">
+                  <div className="overflow-hidden rounded-2xl border border-[var(--cp-border)] bg-[var(--cp-gray-100)]">
+                    {preview ? (
+                      <img src={preview} alt={c.name} className="h-56 w-full object-cover" loading="lazy" decoding="async" />
                     ) : (
-                      <div className="flex h-80 items-center justify-center rounded-xl border border-white/15 bg-white/5 text-white/60">
-                        Model preview coming soon.
+                      <div className="flex h-56 items-center justify-center bg-gradient-to-br from-cyan-200/40 to-rose-200/40 text-xl font-black tracking-[0.14em] text-[color:var(--cp-text-secondary)]">
+                        {c.name.slice(0, 2).toUpperCase()}
                       </div>
                     )}
+                    <div className="border-t border-[var(--cp-border)] px-3 py-2 text-[10px] uppercase tracking-[0.28em] text-[color:var(--cp-text-muted)]">
+                      Profile Art
+                    </div>
                   </div>
-                  <div className="lg:col-span-2 space-y-6">
+                  <div className="space-y-6">
                     <div>
-                      <h3 className="text-xl font-bold text-white font-display mb-3">Stats</h3>
+                      <h3 className="text-xl font-bold text-[color:var(--cp-text-primary)] font-display mb-3">Stats</h3>
                       {statsEntries.length > 0 ? (
                         <div className="space-y-3">
                           {statsEntries.map(([key, value]) => {
                             const v = Math.max(0, Math.min(100, Number(value)));
                             return (
                               <div key={key}>
-                                <div className="flex items-center justify-between text-xs text-white/70 mb-1">
+                                <div className="flex items-center justify-between text-xs text-[color:var(--cp-text-secondary)] mb-1">
                                   <span className="capitalize">{key}</span>
-                                  <span className="font-semibold text-white">{v}</span>
+                                  <span className="font-semibold text-[color:var(--cp-text-primary)]">{v}</span>
                                 </div>
                                 <div className="cp-bar">
                                   <div className="cp-bar-fill" style={{ width: `${v}%` }} />
@@ -294,12 +289,8 @@ export default function MeDashboard({
                           })}
                         </div>
                       ) : (
-                        <div className="text-sm text-white/60">Stats coming soon for this pal.</div>
+                        <div className="text-sm text-[color:var(--cp-text-muted)]">Stats coming soon for this pal.</div>
                       )}
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-white font-display mb-3">Outfits</h3>
-                      <Cosmetics characterId={c.id} />
                     </div>
                   </div>
                 </div>
@@ -322,21 +313,9 @@ export default function MeDashboard({
 function AmbientBackdrop() {
   return (
     <>
-      <motion.div
-        className="pointer-events-none absolute -top-40 left-[-15%] h-[460px] w-[460px] rounded-full bg-gradient-to-br from-rose-500/30 via-purple-500/20 to-sky-400/20 blur-3xl"
-        animate={{ rotate: 360 }}
-        transition={{ duration: 42, repeat: Infinity, ease: 'linear' }}
-      />
-      <motion.div
-        className="pointer-events-none absolute -bottom-52 right-[-10%] h-[520px] w-[520px] rounded-full bg-gradient-to-br from-sky-400/25 via-fuchsia-400/15 to-amber-300/10 blur-3xl"
-        animate={{ rotate: -360 }}
-        transition={{ duration: 56, repeat: Infinity, ease: 'linear' }}
-      />
-      <motion.div
-        className="pointer-events-none absolute inset-x-1/2 top-8 h-72 w-72 -translate-x-1/2 rounded-full bg-gradient-to-br from-white/10 via-fuchsia-200/10 to-transparent blur-3xl"
-        animate={{ scale: [1, 1.12, 0.96, 1] }}
-        transition={{ duration: 24, repeat: Infinity, ease: [0.6, 0.05, 0.01, 0.99] }}
-      />
+      <div className="pointer-events-none absolute -top-40 left-[-15%] h-[460px] w-[460px] rounded-full bg-gradient-to-br from-rose-500/30 via-purple-500/20 to-sky-400/20 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-52 right-[-10%] h-[520px] w-[520px] rounded-full bg-gradient-to-br from-sky-400/25 via-fuchsia-400/15 to-amber-300/10 blur-3xl" />
+      <div className="pointer-events-none absolute inset-x-1/2 top-8 h-72 w-72 -translate-x-1/2 rounded-full bg-gradient-to-br from-white/10 via-fuchsia-200/10 to-transparent blur-3xl" />
     </>
   );
 }
@@ -364,12 +343,12 @@ function createPalStory({
   if (ownedCount === 0) {
     return {
       headline: 'Stage is ready when you are',
-      summary: 'Redeem your first physical pal to light up the dashboard with stats, cosmetics, and daily beats tailored to you.',
+      summary: 'Redeem your first physical pal to light up the dashboard with stats, art packs, and daily beats tailored to you.',
       beats: [
         {
           id: 'claim',
           label: 'Next step',
-          detail: 'Scan or enter a code to claim your first pal and unlock the viewer.',
+          detail: 'Scan or enter a code to claim your first pal and unlock profile art.',
           href: '/claim',
         },
         {
@@ -397,11 +376,11 @@ function createPalStory({
 
   let headline = `${palName} is holding the spotlight`;
   let summary =
-    'Spin the viewer, tweak an outfit, and capture any rough edges while the lights are on.';
+    'Review the profile art, tweak loadout details, and capture rough edges while the lights are on.';
 
   if (daysSinceClaim !== null && daysSinceClaim <= 2) {
     headline = `${palName} just landed on your stage`;
-    summary = 'Give them a full spin in 3D, try on cosmetics, and note anything that breaks the arrival magic.';
+    summary = 'Review every profile asset, try on cosmetics, and note anything that breaks the arrival magic.';
   } else if (checklistRounded < 100 && checklistRounded >= 40) {
     headline = 'Beta missions are halfway there';
     summary = `You’re ${checklistRounded}% through the checklist. Knock out the next tasks to unlock bonus drops.`;
@@ -419,7 +398,7 @@ function createPalStory({
       label: 'Spotlight beat',
       detail: timeAgo
         ? `${palName} arrived ${timeAgo}. Equip a look or rename them while the energy is fresh.`
-        : `Open ${palName} in the viewer and check their idle loops for any jitter.`,
+        : `Open ${palName} and validate portrait/card/banner quality.`,
       href: newestPal ? `/character/${newestPal.id}` : '/me',
     },
   ];

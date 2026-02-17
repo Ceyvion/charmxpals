@@ -37,7 +37,6 @@ export default function ClaimSuccessAnimation({ character, claimedAt }: Props) {
 
   return (
     <div className="relative">
-      {/* Confetti Effect */}
       {showConfetti && (
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {Array.from({ length: 50 }).map((_, i) => (
@@ -47,7 +46,7 @@ export default function ClaimSuccessAnimation({ character, claimedAt }: Props) {
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `-20px`,
-                backgroundColor: ['#ff7ce3', '#8b6dff', '#52e1ff', '#ffb76a', '#8bffb0'][i % 5],
+                backgroundColor: ['#FF3B30', '#AF52DE', '#00D4AA', '#FFD60A', '#30D158'][i % 5],
                 animationDelay: `${Math.random() * 0.5}s`,
                 animationDuration: `${2 + Math.random() * 2}s`,
               }}
@@ -56,7 +55,6 @@ export default function ClaimSuccessAnimation({ character, claimedAt }: Props) {
         </div>
       )}
 
-      {/* Success Card */}
       <div
         className={`relative transition-all duration-1000 ${
           animationPhase === 'entrance'
@@ -66,120 +64,92 @@ export default function ClaimSuccessAnimation({ character, claimedAt }: Props) {
             : 'opacity-100 scale-100 rotate-0'
         }`}
       >
-        {/* Pulsing Rings */}
         {animationPhase === 'pulse' && (
           <>
-            <div className="absolute -inset-8 border-4 border-green-400/50 rounded-full animate-pulse-ring" />
-            <div className="absolute -inset-12 border-4 border-green-400/30 rounded-full animate-pulse-ring" style={{ animationDelay: '0.2s' }} />
-            <div className="absolute -inset-16 border-4 border-green-400/20 rounded-full animate-pulse-ring" style={{ animationDelay: '0.4s' }} />
+            <div className="absolute -inset-4 rounded-[var(--cp-radius-lg)] border-2 border-[var(--cp-green)] opacity-60 animate-pulse-ring" />
+            <div className="absolute -inset-7 rounded-[var(--cp-radius-lg)] border-2 border-[var(--cp-green)] opacity-40 animate-pulse-ring" style={{ animationDelay: '0.2s' }} />
           </>
         )}
 
-        <div className="relative rounded-3xl overflow-hidden">
-          {/* Background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500" />
-          <div className="absolute inset-0 bg-grid-overlay opacity-20" />
-
-          {/* Shimmer Effect */}
-          <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-transparent animate-sheen" />
-
-          {/* Content */}
-          <div className="relative p-8 md:p-12 text-center space-y-8">
-            {/* Success Icon */}
+        <div className="cp-panel border-[var(--cp-green)] p-8 text-center md:p-10">
+          <div className="space-y-7">
             <div className="flex justify-center">
               <div className="relative">
-                <div className="w-32 h-32 rounded-full bg-white flex items-center justify-center animate-bounce">
-                  <svg className="w-16 h-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-[var(--cp-green)] text-[var(--cp-black)]">
+                  <svg className="h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
                   </svg>
-                </div>
-                {/* Orbiting Stars */}
-                <div className="absolute top-0 left-1/2 w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center animate-spin-slow" style={{ transformOrigin: '0 70px' }}>
-                  <span className="text-lg">⭐</span>
-                </div>
-                <div className="absolute top-0 left-1/2 w-8 h-8 bg-pink-400 rounded-full flex items-center justify-center animate-spin-slower" style={{ transformOrigin: '0 80px', animationDelay: '0.5s' }}>
-                  <span className="text-lg">✨</span>
                 </div>
               </div>
             </div>
 
-            {/* Success Message */}
             <div className="space-y-3">
-              <h2 className="font-display font-black text-5xl md:text-6xl text-white leading-tight">
+              <h2 className="font-display text-5xl font-black leading-tight text-[var(--cp-text-primary)] md:text-6xl">
                 Claimed!
               </h2>
-              <p className="text-2xl font-bold text-white/90">
+              <p className="text-2xl font-bold text-[var(--cp-text-primary)]">
                 {character.name} is now yours
               </p>
               {character.title && (
-                <p className="text-lg text-white/80">{character.title}</p>
+                <p className="text-lg text-[var(--cp-text-secondary)]">{character.title}</p>
               )}
             </div>
 
-            {/* Character Info */}
-            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
+            <div className="inline-flex items-center gap-2 rounded-[var(--cp-radius-sm)] border-2 border-[var(--cp-border)] bg-[var(--cp-gray-100)] px-4 py-2">
               {character.realm && (
                 <>
-                  <span className="text-sm font-bold text-white uppercase tracking-wider">
-                    {character.realm}
-                  </span>
-                  <span className="text-white/50">•</span>
+                  <span className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--cp-text-secondary)]">{character.realm}</span>
+                  <span className="text-[var(--cp-text-muted)]">•</span>
                 </>
               )}
-              <span className="text-sm font-bold text-white">
+              <span className="text-sm font-bold text-[var(--cp-text-primary)]">
                 Rarity: {((character.rarity ?? 3) + 2.7).toFixed(1)}
               </span>
             </div>
 
-            {/* Claimed At */}
             {claimedAt && (
-              <p className="text-sm text-white/70">
+              <p className="text-sm text-[var(--cp-text-secondary)]">
                 Claimed {new Date(claimedAt).toLocaleString()}
               </p>
             )}
 
-            {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
               <Link
                 href={`/character/${character.id}`}
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-white text-gray-900 font-black hover:bg-white/90 transition-all duration-300 hover:scale-105"
+                className="cp-cta-primary"
               >
                 <span>View Character</span>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
               </Link>
 
               <Link
                 href="/me"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl border-2 border-white/30 bg-white/10 backdrop-blur-sm text-white font-black hover:bg-white/20 hover:border-white/50 transition-all duration-300"
+                className="cp-cta-ghost"
               >
                 <span>My Collection</span>
               </Link>
             </div>
 
-            {/* Share Encouragement */}
-            <div className="pt-4 border-t border-white/20">
-              <p className="text-white/80 text-sm mb-3">
+            <div className="border-t-2 border-[var(--cp-border)] pt-4">
+              <p className="mb-3 text-sm text-[var(--cp-text-secondary)]">
                 Share your new CharmXPal with friends!
               </p>
               <div className="flex justify-center gap-3">
-                <button className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm flex items-center justify-center transition-all duration-300 hover:scale-110">
-                  <span>🐦</span>
+                <button className="flex h-9 w-9 items-center justify-center rounded-[var(--cp-radius-sm)] border-2 border-[var(--cp-border)] bg-[var(--cp-gray-100)] text-[var(--cp-text-secondary)] transition-colors hover:border-[var(--cp-border-strong)] hover:bg-[var(--cp-white)]">
+                  <span>X</span>
                 </button>
-                <button className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm flex items-center justify-center transition-all duration-300 hover:scale-110">
-                  <span>📘</span>
+                <button className="flex h-9 w-9 items-center justify-center rounded-[var(--cp-radius-sm)] border-2 border-[var(--cp-border)] bg-[var(--cp-gray-100)] text-[var(--cp-text-secondary)] transition-colors hover:border-[var(--cp-border-strong)] hover:bg-[var(--cp-white)]">
+                  <span>F</span>
                 </button>
-                <button className="w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm flex items-center justify-center transition-all duration-300 hover:scale-110">
-                  <span>📱</span>
+                <button className="flex h-9 w-9 items-center justify-center rounded-[var(--cp-radius-sm)] border-2 border-[var(--cp-border)] bg-[var(--cp-gray-100)] text-[var(--cp-text-secondary)] transition-colors hover:border-[var(--cp-border-strong)] hover:bg-[var(--cp-white)]">
+                  <span>IG</span>
                 </button>
               </div>
             </div>
           </div>
         </div>
-
-        {/* Outer Glow */}
-        <div className="absolute -inset-4 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500 opacity-50 blur-3xl -z-10" />
       </div>
     </div>
   );

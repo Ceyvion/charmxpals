@@ -1,12 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
+
 import CharacterStats from '@/components/CharacterStats';
 import RevealOnView from '@/components/RevealOnView';
-
-const CharacterViewer3D = dynamic(() => import('@/components/CharacterViewer3D'), { ssr: false });
 
 type Character = {
   id: string;
@@ -19,6 +17,7 @@ type Character = {
   title?: string | null;
   tagline?: string | null;
   codeSeries?: string | null;
+  slug?: string | null;
   vibe?: string | null;
   danceStyle?: string | null;
   coreCharm?: string | null;
@@ -26,106 +25,40 @@ type Character = {
   color?: string | null;
 };
 
-type Skin = {
-  id: string;
-  name: string;
-  rarity: 'Common' | 'Rare' | 'Epic' | 'Legendary' | 'Mythic';
-  preview: string;
-  colors: {
-    primary: string;
-    secondary: string;
-    accent: string;
-  };
-  effects?: string[];
-  locked?: boolean;
-  price?: number;
-};
-
 type TraitHighlight = {
   id: string;
   label: string;
-  title: string;
-  helper: string;
+  value: string;
 };
-
-const SKINS: Skin[] = [
-  {
-    id: 'default',
-    name: 'Origin Protocol',
-    rarity: 'Common',
-    preview: '/api/placeholder/200/300',
-    colors: { primary: '#8B6DFF', secondary: '#FF7CE3', accent: '#52E1FF' },
-    effects: []
-  },
-  {
-    id: 'neon-dream',
-    name: 'Neon Dream',
-    rarity: 'Rare',
-    preview: '/api/placeholder/200/300',
-    colors: { primary: '#00FFFF', secondary: '#FF00FF', accent: '#FFFF00' },
-    effects: ['Glow trails', 'Neon aura'],
-    locked: true,
-    price: 100
-  },
-  {
-    id: 'chrome-luxe',
-    name: 'Chrome Luxe',
-    rarity: 'Epic',
-    preview: '/api/placeholder/200/300',
-    colors: { primary: '#C0C0C0', secondary: '#FFD700', accent: '#FFFFFF' },
-    effects: ['Metallic sheen', 'Mirror finish', 'Light refraction'],
-    locked: true,
-    price: 250
-  },
-  {
-    id: 'void-walker',
-    name: 'Void Walker',
-    rarity: 'Legendary',
-    preview: '/api/placeholder/200/300',
-    colors: { primary: '#0A0A0A', secondary: '#6B00FF', accent: '#FF0080' },
-    effects: ['Shadow tendrils', 'Void particles', 'Dimension shift', 'Reality glitch'],
-    locked: true,
-    price: 500
-  },
-  {
-    id: 'quantum-flux',
-    name: 'Quantum Flux',
-    rarity: 'Mythic',
-    preview: '/api/placeholder/200/300',
-    colors: { primary: '#FF00FF', secondary: '#00FFFF', accent: '#FFFF00' },
-    effects: ['Holographic body', 'Particle storm', 'Time distortion', 'Quantum entanglement', 'Reality breach'],
-    locked: true,
-    price: 1000
-  }
-];
 
 const rarityPalette = [
   {
     test: (rarity: number) => rarity >= 5,
     label: 'Legendary',
     gradient: 'from-yellow-300 via-orange-400 to-yellow-600',
-    accent: '#fbbf24'
+    accent: '#fbbf24',
   },
   {
     test: (rarity: number) => rarity >= 4,
     label: 'Epic',
     gradient: 'from-purple-300 via-fuchsia-400 to-purple-600',
-    accent: '#a855f7'
+    accent: '#a855f7',
   },
   {
     test: () => true,
     label: 'Rare',
     gradient: 'from-sky-300 via-blue-400 to-indigo-500',
-    accent: '#38bdf8'
-  }
+    accent: '#38bdf8',
+  },
 ];
 
 function pickPrimaryArt(artRefs?: Record<string, string>): string | null {
   if (!artRefs) return null;
   return (
+    artRefs.signature ||
+    artRefs.banner ||
     artRefs.full ||
     artRefs.portrait ||
-    artRefs.banner ||
     artRefs.card ||
     artRefs.thumbnail ||
     Object.values(artRefs)[0] ||
@@ -133,347 +66,278 @@ function pickPrimaryArt(artRefs?: Record<string, string>): string | null {
   );
 }
 
+function pickSignatureArt(artRefs?: Record<string, string>): string | null {
+  if (!artRefs) return null;
+  return (
+    artRefs.signature ||
+    artRefs.banner ||
+    artRefs.portrait ||
+    artRefs.card ||
+    artRefs.thumbnail ||
+    artRefs.full ||
+    Object.values(artRefs)[0] ||
+    null
+  );
+}
+
+function pickGallery(artRefs?: Record<string, string>): Array<{ key: string; src: string }> {
+  if (!artRefs) return [];
+  const preferredOrder = ['signature', 'banner', 'portrait', 'card', 'thumbnail', 'full', 'sprite'];
+  const seen = new Set<string>();
+  const gallery: Array<{ key: string; src: string }> = [];
+  for (const key of preferredOrder) {
+    const value = artRefs[key];
+    if (!value || seen.has(value)) continue;
+    seen.add(value);
+    gallery.push({ key, src: value });
+  }
+  for (const [key, value] of Object.entries(artRefs)) {
+    if (!value || seen.has(value)) continue;
+    seen.add(value);
+    gallery.push({ key, src: value });
+  }
+  return gallery;
+}
+
+function buildArtCandidates(artRefs?: Record<string, string>, slug?: string | null): string[] {
+  const candidates: string[] = [];
+  const push = (value: string | null | undefined) => {
+    if (value) candidates.push(value);
+  };
+
+  if (artRefs) {
+    push(artRefs.signature);
+    push(artRefs.banner);
+    push(artRefs.portrait);
+    push(artRefs.card);
+    push(artRefs.thumbnail);
+    push(artRefs.full);
+    push(artRefs.sprite);
+    for (const value of Object.values(artRefs)) push(value);
+  }
+
+  if (slug) {
+    const base = `/assets/characters/${slug}`;
+    push(`${base}/signature.png`);
+    push(`${base}/banner.png`);
+    push(`${base}/portrait.png`);
+    push(`${base}/card.png`);
+    push(`${base}/thumb.png`);
+  }
+
+  push('/card-placeholder.svg');
+  return [...new Set(candidates)];
+}
+
 function getRarityDetails(rarity: number) {
   return rarityPalette.find((entry) => entry.test(rarity)) ?? rarityPalette[rarityPalette.length - 1];
 }
 
 function buildTraitHighlights(character: Character): TraitHighlight[] {
-  const blueprint: Array<{ id: string; key: keyof Character; label: string; helper: string }> = [
-    {
-      id: 'coreCharm',
-      key: 'coreCharm',
-      label: 'Core Charm',
-      helper: 'Signature charm energy that powers every performance.'
-    },
-    {
-      id: 'danceStyle',
-      key: 'danceStyle',
-      label: 'Dance Style',
-      helper: 'Preferred rhythm and movement when the beat drops.'
-    },
-    {
-      id: 'vibe',
-      key: 'vibe',
-      label: 'Stage Vibe',
-      helper: 'Atmosphere they bring to a session with the crew.'
-    },
-    {
-      id: 'personality',
-      key: 'personality',
-      label: 'Personality',
-      helper: 'How teammates describe them off-stage.'
-    },
-    {
-      id: 'codeSeries',
-      key: 'codeSeries',
-      label: 'Code Series',
-      helper: 'Internal designation tracing their prototype lineage.'
-    }
+  const rows: Array<{ id: string; label: string; value: string | null | undefined }> = [
+    { id: 'coreCharm', label: 'Core Charm', value: character.coreCharm },
+    { id: 'danceStyle', label: 'Dance Style', value: character.danceStyle },
+    { id: 'vibe', label: 'Stage Vibe', value: character.vibe },
+    { id: 'personality', label: 'Personality', value: character.personality },
+    { id: 'codeSeries', label: 'Code Series', value: character.codeSeries },
+    { id: 'realm', label: 'Realm', value: character.realm },
   ];
-
-  return blueprint
-    .map((item) => {
-      const value = character[item.key];
-      if (!value) return null;
-      return {
-        id: item.id,
-        label: item.label,
-        title: String(value),
-        helper: item.helper
-      };
-    })
-    .filter((item): item is TraitHighlight => Boolean(item));
+  return rows
+    .filter((row) => Boolean(row.value))
+    .map((row) => ({
+      id: row.id,
+      label: row.label,
+      value: String(row.value),
+    }));
 }
 
-export default function CharacterPageClient({ character, modelUrl }: { character: Character; modelUrl: string }) {
+export default function CharacterPageClient({ character }: { character: Character }) {
   const rarity = useMemo(() => getRarityDetails(character.rarity), [character.rarity]);
-  const heroArt = useMemo(() => pickPrimaryArt(character.artRefs), [character.artRefs]);
+  const artCandidates = useMemo(() => buildArtCandidates(character.artRefs, character.slug), [character.artRefs, character.slug]);
+  const heroArt = useMemo(() => pickPrimaryArt(character.artRefs) ?? artCandidates[0] ?? null, [character.artRefs, artCandidates]);
+  const defaultSignatureArt = useMemo(() => pickSignatureArt(character.artRefs) ?? artCandidates[0] ?? null, [character.artRefs, artCandidates]);
+  const gallery = useMemo(() => pickGallery(character.artRefs), [character.artRefs]);
   const highlights = useMemo(() => buildTraitHighlights(character), [character]);
-  const [activeTraitId, setActiveTraitId] = useState<string | null>(highlights[0]?.id ?? null);
-  const activeTrait = useMemo(
-    () => highlights.find((trait) => trait.id === activeTraitId) ?? highlights[0] ?? null,
-    [highlights, activeTraitId]
-  );
   const stats = useMemo(() => character.stats ?? {}, [character.stats]);
-  const featuredSkins = useMemo(() => SKINS.slice(0, 4), []);
-
-  const rarityBadge = (
-    <span className={`inline-flex items-center px-4 py-1 rounded-full text-xs font-semibold bg-gradient-to-r ${rarity.gradient}`}>
-      {rarity.label}
-    </span>
-  );
-
-  const realmLabel = character.realm ? character.realm.toUpperCase() : 'UNKNOWN REALM';
   const accentColor = character.color ?? rarity.accent;
-  const fallbackHeroBackground = `radial-gradient(circle at top, ${accentColor}22, transparent 55%), #fffaf5`;
+  const realmLabel = character.realm ? character.realm.toUpperCase() : 'UNKNOWN REALM';
+  const [signatureIndex, setSignatureIndex] = useState(0);
+
+  useEffect(() => {
+    setSignatureIndex(0);
+  }, [character.id]);
+
+  const signatureArt = artCandidates[signatureIndex] ?? defaultSignatureArt;
 
   return (
-    <div className="min-h-screen bg-transparent text-white">
-      <section className="relative min-h-[80vh] overflow-hidden">
+    <div className="min-h-screen bg-[var(--cp-bg)] text-[var(--cp-text-primary)]">
+      <section className="relative overflow-hidden cp-section-dark">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
             backgroundImage: heroArt
-              ? `linear-gradient(120deg, rgba(255,255,255,0.92) 15%, rgba(255,248,236,0.75) 38%, rgba(255,255,255,0.35) 65%), url(${heroArt})`
-              : fallbackHeroBackground
+              ? `linear-gradient(120deg, rgba(10,10,10,0.93) 10%, rgba(10,10,10,0.84) 42%, rgba(10,10,10,0.74) 70%, rgba(10,10,10,0.88) 100%), url(${heroArt})`
+              : `radial-gradient(circle at 12% 22%, ${accentColor}55, transparent 46%), linear-gradient(140deg, rgba(8,13,26,0.9), rgba(13,25,48,0.75))`,
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#fff7ec] via-[#fff7ec]/80 to-transparent" />
-        <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-[#fff7ec]/70 to-transparent" />
-
-        <div className="relative max-w-6xl mx-auto px-6 md:px-10 lg:px-16 py-20 lg:py-28 grid gap-16 lg:grid-cols-[1.2fr,0.8fr] items-start">
-          <RevealOnView className="space-y-8">
-            <div className="flex flex-wrap items-center gap-4 text-sm uppercase tracking-[0.35em] text-white/60">
+        <div className="relative mx-auto grid max-w-6xl gap-10 px-6 py-14 md:px-10 lg:grid-cols-[1.15fr_0.85fr] lg:py-20">
+          <RevealOnView className="space-y-7">
+            <div className="flex flex-wrap items-center gap-4 text-xs uppercase tracking-[0.32em] text-[var(--cp-gray-400)] md:text-sm">
               <span>{realmLabel}</span>
-              <span className="h-px w-12 bg-white/30" />
+              <span className="h-px w-10 bg-[var(--cp-gray-700)]" />
               <span>Champion Profile</span>
             </div>
 
             <div>
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-tight drop-shadow-[0_8px_30px_rgba(0,0,0,0.35)]">
-                {character.name}
-              </h1>
-              {character.title && (
-                <p className="mt-3 text-xl text-white/70 uppercase tracking-[0.25em]">{character.title}</p>
-              )}
+              <h1 className="font-display text-6xl font-black leading-[0.86] tracking-tight text-[var(--cp-white)] md:text-7xl">{character.name}</h1>
+              {character.title && <p className="mt-3 text-sm uppercase tracking-[0.28em] text-[var(--cp-gray-400)] md:text-base">{character.title}</p>}
             </div>
 
             <div className="flex flex-wrap items-center gap-4">
-              {rarityBadge}
-              <span className="text-sm font-semibold text-white/70">
-                Power Index <span className="text-white">{(character.rarity + 2.7).toFixed(1)}</span>
+              <span className={`inline-flex items-center rounded-[var(--cp-radius-sm)] border-2 border-[var(--cp-black)] bg-gradient-to-r px-3 py-1 text-xs font-black ${rarity.gradient} text-[var(--cp-black)]`}>
+                {rarity.label}
+              </span>
+              <span className="text-sm font-semibold text-[var(--cp-gray-300)]">
+                Power Index <span className="text-[var(--cp-white)]">{(character.rarity + 2.7).toFixed(1)}</span>
               </span>
             </div>
 
-            {character.tagline && (
-              <p className="text-2xl md:text-3xl italic text-white/80 max-w-3xl leading-relaxed">“{character.tagline}”</p>
-            )}
+            {character.tagline && <p className="max-w-3xl text-2xl italic text-[var(--cp-gray-100)] md:text-3xl">“{character.tagline}”</p>}
 
             {character.description && (
-              <div className="max-w-3xl text-base md:text-lg leading-7 text-white/80 space-y-4">
-                {character.description.split('\n').map((paragraph, index) => (
-                  <p key={index}>{paragraph.trim()}</p>
-                ))}
-              </div>
+              <p className="max-w-3xl text-sm leading-7 text-[var(--cp-gray-300)] md:text-base">
+                {character.description}
+              </p>
             )}
 
-            <div className="flex flex-wrap gap-4 pt-4">
-              <Link
-                href="/play"
-                className="group inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-amber-400 via-orange-300 to-sky-300 text-sm font-semibold uppercase tracking-widest transition-all hover:shadow-[0_10px_35px_rgba(110,206,242,0.28)]"
-              >
-                Battle Mode
-                <span className="transition-transform group-hover:translate-x-1">→</span>
+            <div className="flex flex-wrap gap-3 pt-2">
+              <Link href="/arena" className="cp-cta-primary">
+                Battle Arena
               </Link>
-              <Link
-                href="/explore"
-                className="inline-flex items-center gap-3 px-6 py-3 rounded-full border border-white/20 text-sm font-semibold uppercase tracking-widest hover:bg-white/10 transition-colors"
-              >
-                Back to roster
+              <Link href="/play" className="cp-cta-ghost">
+                Game Hub
+              </Link>
+              <Link href="/explore" className="cp-cta-ghost">
+                Back to Roster
               </Link>
             </div>
           </RevealOnView>
 
           <RevealOnView>
-            <div className="relative rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden shadow-[0_25px_60px_rgba(110,206,242,0.2)]">
-              <div className="absolute -inset-1 rounded-[26px]" style={{ background: `linear-gradient(140deg, ${accentColor}44, transparent 55%)` }} />
-              <div className="relative p-6">
-                <div className="flex items-center justify-between mb-4 text-xs uppercase tracking-[0.3em] text-white/60">
-                  <span>Holo Model</span>
-                  <span>Interactive</span>
+            <div className="overflow-hidden rounded-[var(--cp-radius-lg)] border-2 border-[var(--cp-gray-700)] bg-[rgba(10,10,10,0.7)]">
+              <div className="border-b-2 border-[var(--cp-gray-700)] px-4 py-3 text-[11px] uppercase tracking-[0.3em] text-[var(--cp-gray-400)]">Signature Art</div>
+              {signatureArt ? (
+                <img
+                  src={signatureArt}
+                  alt={character.name}
+                  className="h-[62vh] min-h-[420px] w-full object-cover object-center"
+                  loading="eager"
+                  decoding="async"
+                  onError={() => {
+                    setSignatureIndex((index) => {
+                      if (index >= artCandidates.length - 1) return index;
+                      return index + 1;
+                    });
+                  }}
+                />
+              ) : (
+                <div className="flex h-[420px] items-center justify-center bg-[var(--cp-gray-900)] text-5xl font-black text-[var(--cp-gray-400)]">
+                  {character.name.slice(0, 2).toUpperCase()}
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-white/70 overflow-hidden">
-                  <CharacterViewer3D modelUrl={modelUrl} height={420} />
-                </div>
-              </div>
+              )}
             </div>
           </RevealOnView>
         </div>
       </section>
 
-      <section className="border-t border-black/5 bg-white/50">
-        <div className="max-w-6xl mx-auto px-6 md:px-10 lg:px-16 py-20 grid gap-12 lg:grid-cols-[1.05fr,0.95fr]">
-          <RevealOnView className="rounded-3xl border border-white/10 bg-black/40 backdrop-blur-xl p-8">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-3xl font-bold tracking-tight">Performance Metrics</h2>
-              <div className="h-px flex-1 mx-6 bg-white/10" />
-              <span className="text-xs uppercase tracking-[0.4em] text-white/60">Stats</span>
+      <section className="border-t-2 border-[var(--cp-border)] bg-[var(--cp-bg)]">
+        <div className="mx-auto grid max-w-6xl gap-10 px-6 py-14 md:px-10 lg:grid-cols-[1.1fr_0.9fr]">
+          <RevealOnView className="cp-panel p-8">
+            <div className="mb-7 flex items-center justify-between">
+              <h2 className="font-display text-3xl font-bold tracking-tight text-[var(--cp-text-primary)]">Performance Metrics</h2>
+              <span className="text-[11px] uppercase tracking-[0.3em] text-[var(--cp-text-muted)]">Stats</span>
             </div>
             {Object.keys(stats).length > 0 ? (
-              <CharacterStats stats={stats} />
+              <div className="rounded-[var(--cp-radius-lg)] border-2 border-[var(--cp-gray-700)] bg-[var(--cp-black)] p-4">
+                <CharacterStats stats={stats} />
+              </div>
             ) : (
-              <p className="text-white/60 text-sm">
-                Detailed performance metrics are coming online soon for this champion.
-              </p>
+              <p className="text-sm text-[var(--cp-text-muted)]">Detailed metrics are syncing for this character.</p>
             )}
           </RevealOnView>
 
           <RevealOnView className="space-y-6">
-            <div className="rounded-3xl border border-white/10 bg-black/40 backdrop-blur-xl p-8">
-              <h3 className="text-2xl font-bold tracking-tight mb-6">Identity Highlights</h3>
-              <div className="space-y-5">
-                {(character.coreCharm || character.personality || character.danceStyle || character.vibe) ? (
-                  <>
-                    {character.coreCharm && (
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.35em] text-white/50 mb-2">Core Charm</p>
-                        <p className="text-lg font-semibold text-white">{character.coreCharm}</p>
-                      </div>
-                    )}
-                    {character.danceStyle && (
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.35em] text-white/50 mb-2">Dance Style</p>
-                        <p className="text-lg text-white/90">{character.danceStyle}</p>
-                      </div>
-                    )}
-                    {character.vibe && (
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.35em] text-white/50 mb-2">Stage Vibe</p>
-                        <p className="text-lg text-white/90">{character.vibe}</p>
-                      </div>
-                    )}
-                    {character.personality && (
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.35em] text-white/50 mb-2">Personality</p>
-                        <p className="text-lg text-white/90">{character.personality}</p>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <p className="text-white/60 text-sm">This champion is still keeping their secrets close.</p>
-                )}
-              </div>
+            <div className="cp-panel p-8">
+              <h3 className="font-display text-2xl font-semibold text-[var(--cp-text-primary)]">Identity Highlights</h3>
+              {highlights.length > 0 ? (
+                <dl className="mt-6 space-y-4">
+                  {highlights.map((trait) => (
+                    <div key={trait.id} className="rounded-[var(--cp-radius-md)] border-2 border-[var(--cp-border)] bg-[var(--cp-gray-100)] px-4 py-4">
+                      <dt className="text-[11px] uppercase tracking-[0.3em] text-[var(--cp-text-muted)]">{trait.label}</dt>
+                      <dd className="mt-2 text-base leading-relaxed text-[var(--cp-text-primary)]">{trait.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : (
+                <p className="mt-4 text-sm text-[var(--cp-text-muted)]">Profile metadata is still being expanded for this champion.</p>
+              )}
             </div>
 
-            <div className="rounded-3xl border border-white/10 bg-black/40 backdrop-blur-xl p-8">
-              <h3 className="text-2xl font-bold tracking-tight mb-6">Support Links</h3>
-              <div className="space-y-4 text-sm text-white/70">
-                <p className="leading-relaxed">
-                  Dive deeper into this champion’s origin stories, cosmetics, and crew synergy. These resources update
-                  as new drops hit the plaza.
-                </p>
-                <div className="grid sm:grid-cols-2 gap-3 text-sm uppercase tracking-[0.2em]">
-                  <Link href="/claim" className="rounded-xl border border-white/15 px-4 py-3 text-center hover:bg-white/10 transition-colors">
-                    Claim Codes
-                  </Link>
-                  <Link href="/friends" className="rounded-xl border border-white/15 px-4 py-3 text-center hover:bg-white/10 transition-colors">
-                    Crew Synergy
-                  </Link>
-                  <Link href="/compare" className="rounded-xl border border-white/15 px-4 py-3 text-center hover:bg-white/10 transition-colors">
-                    Stat Compare
-                  </Link>
-                  <Link href="/plaza" className="rounded-xl border border-white/15 px-4 py-3 text-center hover:bg-white/10 transition-colors">
-                    Plaza Events
-                  </Link>
-                </div>
+            <div className="cp-panel p-8">
+              <h3 className="font-display text-2xl font-semibold text-[var(--cp-text-primary)]">Quick Links</h3>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <Link href="/claim" className="rounded-[var(--cp-radius-md)] border-2 border-[var(--cp-border)] bg-[var(--cp-white)] px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.16em] text-[var(--cp-text-secondary)] transition-colors hover:border-[var(--cp-border-strong)] hover:text-[var(--cp-text-primary)]">
+                  Claim Codes
+                </Link>
+                <Link href="/compare" className="rounded-[var(--cp-radius-md)] border-2 border-[var(--cp-border)] bg-[var(--cp-white)] px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.16em] text-[var(--cp-text-secondary)] transition-colors hover:border-[var(--cp-border-strong)] hover:text-[var(--cp-text-primary)]">
+                  Stat Compare
+                </Link>
+                <Link href="/plaza" className="rounded-[var(--cp-radius-md)] border-2 border-[var(--cp-border)] bg-[var(--cp-white)] px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.16em] text-[var(--cp-text-secondary)] transition-colors hover:border-[var(--cp-border-strong)] hover:text-[var(--cp-text-primary)]">
+                  Social Plaza
+                </Link>
+                <Link href="/arena" className="rounded-[var(--cp-radius-md)] border-2 border-[var(--cp-border)] bg-[var(--cp-white)] px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.16em] text-[var(--cp-text-secondary)] transition-colors hover:border-[var(--cp-border-strong)] hover:text-[var(--cp-text-primary)]">
+                  Rift Arena
+                </Link>
               </div>
             </div>
           </RevealOnView>
         </div>
       </section>
 
-      {highlights.length > 0 && (
-        <section className="bg-white/40 py-16 border-t border-black/5">
-          <div className="max-w-6xl mx-auto px-6 md:px-10 lg:px-16">
-            <RevealOnView className="rounded-3xl border border-white/10 bg-black/40 backdrop-blur-xl p-10 space-y-10">
-              <div className="flex items-end justify-between flex-wrap gap-6">
+      {gallery.length > 0 && (
+        <section className="border-t-2 border-[var(--cp-border)] bg-[var(--cp-gray-100)] py-14">
+          <div className="mx-auto max-w-6xl px-6 md:px-10">
+            <RevealOnView className="space-y-6">
+              <div className="flex items-end justify-between gap-4">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.35em] text-white/50 mb-3">Signature Traits</p>
-                  <h2 className="text-3xl font-bold tracking-tight">Abilities & Flair</h2>
+                  <p className="text-xs uppercase tracking-[0.34em] text-[var(--cp-text-muted)]">Asset Set</p>
+                  <h2 className="font-display text-3xl font-bold text-[var(--cp-text-primary)]">Character Gallery</h2>
                 </div>
-                <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.35em] text-white/40">
-                  <span>SELECT A TRAIT</span>
-                </div>
+                <span className="rounded-[var(--cp-radius-sm)] border-2 border-[var(--cp-border)] bg-[var(--cp-white)] px-3 py-1 text-xs uppercase tracking-[0.2em] text-[var(--cp-text-secondary)]">
+                  {gallery.length} assets
+                </span>
               </div>
-
-              <div className="flex flex-wrap gap-4">
-                {highlights.map((trait) => (
-                  <button
-                    key={trait.id}
-                    onClick={() => setActiveTraitId(trait.id)}
-                    className={`group relative overflow-hidden rounded-2xl border px-5 py-4 text-left transition-all ${
-                      activeTrait?.id === trait.id
-                        ? 'border-white/80 bg-white/10'
-                        : 'border-white/10 bg-white/5 hover:border-white/40 hover:bg-white/10'
-                    }`}
-                  >
-                    <div
-                      className="absolute inset-0 opacity-40 group-hover:opacity-60 transition-opacity"
-                      style={{
-                        background: `linear-gradient(140deg, ${accentColor}33, transparent 60%)`
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {gallery.map((item) => (
+                  <div key={item.key} className="cp-card overflow-hidden">
+                    <img
+                      src={item.src}
+                      alt={`${character.name} ${item.key}`}
+                      className="h-44 w-full object-cover"
+                      loading="lazy"
+                      decoding="async"
+                      onError={(event) => {
+                        event.currentTarget.src = '/card-placeholder.svg';
                       }}
                     />
-                    <div className="relative space-y-2">
-                      <p className="text-xs uppercase tracking-[0.3em] text-white/50">{trait.label}</p>
-                      <p className="text-lg font-semibold">{trait.title}</p>
-                      {activeTrait?.id === trait.id && <p className="text-sm text-white/70">{trait.helper}</p>}
-                    </div>
-                  </button>
+                    <div className="border-t-2 border-[var(--cp-border)] px-3 py-2 text-[11px] uppercase tracking-[0.28em] text-[var(--cp-text-muted)]">{item.key}</div>
+                  </div>
                 ))}
               </div>
-
-              {activeTrait && (
-                <div className="rounded-3xl border border-white/10 bg-white/5 p-8">
-                  <p className="text-xs uppercase tracking-[0.35em] text-white/50 mb-3">{activeTrait.label}</p>
-                  <h3 className="text-2xl font-semibold mb-4">{activeTrait.title}</h3>
-                  <p className="text-sm text-white/70 leading-relaxed">
-                    {activeTrait.helper} As their legend grows, new animations and highlights will be unlocked here.
-                  </p>
-                </div>
-              )}
             </RevealOnView>
           </div>
         </section>
       )}
-
-      <section className="bg-white/50 border-t border-black/5">
-        <div className="max-w-6xl mx-auto px-6 md:px-10 lg:px-16 py-20 space-y-10">
-          <RevealOnView className="flex flex-col gap-6">
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.35em] text-white/50 mb-3">Featured Skins</p>
-                <h2 className="text-3xl font-bold tracking-tight">Style Library</h2>
-              </div>
-              <Link
-                href="/claim"
-                className="inline-flex items-center gap-3 px-5 py-2 rounded-full border border-white/20 text-xs font-semibold uppercase tracking-[0.3em] hover:bg-white/10 transition-colors"
-              >
-                Visit Skin Shop →
-              </Link>
-            </div>
-
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {featuredSkins.map((skin) => (
-                <RevealOnView key={skin.id} className="relative rounded-3xl overflow-hidden border border-white/10 bg-white/5">
-                  <div
-                    className="h-48 bg-cover bg-center"
-                    style={{
-                      backgroundImage: `linear-gradient(140deg, rgba(5,5,16,0.4), rgba(5,5,16,0.6)), linear-gradient(120deg, ${skin.colors.primary}, ${skin.colors.secondary}, ${skin.colors.accent})`
-                    }}
-                  />
-                  <div className="p-5 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-lg font-semibold">{skin.name}</p>
-                      <span className="text-xs uppercase tracking-[0.35em] text-white/50">{skin.rarity}</span>
-                    </div>
-                    {skin.effects && skin.effects.length > 0 && (
-                      <ul className="space-y-1 text-sm text-white/60">
-                        {skin.effects.slice(0, 3).map((effect, index) => (
-                          <li key={index}>• {effect}</li>
-                        ))}
-                      </ul>
-                    )}
-                    <div className="flex items-center justify-between text-xs uppercase tracking-[0.25em] text-white/50">
-                      {skin.locked ? <span>Locked</span> : <span>Unlocked</span>}
-                      {skin.price && <span>{skin.price} 💎</span>}
-                    </div>
-                  </div>
-                </RevealOnView>
-              ))}
-            </div>
-          </RevealOnView>
-        </div>
-      </section>
     </div>
   );
 }

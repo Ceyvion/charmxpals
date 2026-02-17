@@ -1,0 +1,12 @@
+
+> charmxpals@0.1.0 dev
+> node ./scripts/dev-guard.mjs
+
+[dev-guard] Found stale .next server chunk references. Cleared .next cache.
+  ▲ Next.js 14.2.15
+  - Local:        http://localhost:3000
+  - Environments: .env.local, .env
+
+ ✓ Starting...
+ ✓ Ready in 1942ms
+[?25h

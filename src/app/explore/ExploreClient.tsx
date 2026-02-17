@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import RevealOnView from '@/components/RevealOnView';
 import { worldTagline } from '@/data/characterLore';
 import { useSfx } from '@/lib/sfx';
 
@@ -130,17 +129,17 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
 
   return (
     <div>
-      <div className="mb-6">
+      <div className="mb-7">
         <div className="cp-kicker mb-1">Build Your Crew</div>
-        <h1 className="font-display text-3xl font-extrabold leading-tight md:text-5xl">Recruit Across Dimensions</h1>
+        <h1 className="font-display text-3xl font-extrabold leading-tight text-[var(--cp-text-primary)] md:text-5xl">Recruit Across Dimensions</h1>
         <p className="cp-muted mt-2 max-w-prose">
           {worldTagline} Preview every champion before you scan—compare realms, study Core Charms, and line up the next unlock without jumping between
           tabs.
         </p>
       </div>
 
-      <div className="sticky top-16 z-10">
-        <div className="cp-panel flex flex-wrap items-center gap-2 p-3">
+      <div className="sticky top-20 z-20 mb-8">
+        <div className="cp-panel grid gap-3 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,auto)] lg:items-center">
           <div className="cp-rarity-filter-set">
             <button
               type="button"
@@ -148,8 +147,6 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
               data-active={filter === 'all' ? 'true' : 'false'}
               data-tone="aqua"
               className="cp-rarity-filter"
-              data-magnetic="toggle"
-              data-magnetic-color="aqua"
               onMouseEnter={playHover}
               onFocus={playHover}
               onClick={() => {
@@ -165,8 +162,6 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
               data-active={filter === 'legendary' ? 'true' : 'false'}
               data-tone="sunrise"
               className="cp-rarity-filter"
-              data-magnetic="toggle"
-              data-magnetic-color="sunrise"
               onMouseEnter={playHover}
               onFocus={playHover}
               onClick={() => {
@@ -182,8 +177,6 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
               data-active={filter === 'epic' ? 'true' : 'false'}
               data-tone="violet"
               className="cp-rarity-filter"
-              data-magnetic="toggle"
-              data-magnetic-color="violet"
               onMouseEnter={playHover}
               onFocus={playHover}
               onClick={() => {
@@ -199,8 +192,6 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
               data-active={filter === 'rare' ? 'true' : 'false'}
               data-tone="mint"
               className="cp-rarity-filter"
-              data-magnetic="toggle"
-              data-magnetic-color="mint"
               onMouseEnter={playHover}
               onFocus={playHover}
               onClick={() => {
@@ -211,17 +202,17 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
               <span>Rare</span>
             </button>
           </div>
-          <div className="flex w-full flex-col gap-2 sm:ml-auto sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by name…"
-              className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-white placeholder-white/70 sm:min-w-[200px] sm:flex-1"
+              className="cp-search w-full sm:min-w-[220px]"
               onFocus={playHover}
             />
             <select
               value={sortBy}
-              className="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-white sm:w-auto"
+              className="cp-search w-full pr-10 sm:w-auto"
               onFocus={playHover}
               onChange={(e) => {
                 setSortBy(e.target.value as typeof sortBy);
@@ -231,36 +222,40 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
               <option value="rarity">Sort: Rarity</option>
               <option value="name">Sort: Name</option>
             </select>
-            <Link href="/claim" className="w-full rounded-lg bg-white px-4 py-2 text-center font-semibold text-gray-900 sm:w-auto">
+            <Link
+              href="/claim"
+              className="inline-flex w-full items-center justify-center rounded-[var(--cp-radius-md)] border-2 border-[var(--cp-black)] bg-[var(--cp-black)] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--cp-white)] transition-colors hover:bg-[var(--cp-gray-900)] sm:w-auto"
+            >
               Scan &amp; Claim
             </Link>
           </div>
         </div>
       </div>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1.4fr),minmax(320px,1fr)]">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.3fr)_minmax(320px,1fr)]">
         <div className="order-1 space-y-8 lg:order-1">
           {sections.map((section) => (
-            <RevealOnView key={section.key}>
+            <section key={section.key}>
               <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
                 <div>
                   <div className="cp-kicker">{RARITY_META[section.key].label}</div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/50">{RARITY_META[section.key].description}</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-[var(--cp-text-muted)]">{RARITY_META[section.key].description}</p>
                 </div>
                 <span className="cp-pill">{section.characters.length}</span>
               </div>
               <ul className="space-y-3">
-                {section.characters.map((character, index) => {
+                {section.characters.map((character) => {
                   const media = pickMedia(character.artRefs);
-                  const accent = character.color || 'rgba(255, 255, 255, 0.45)';
+                  const accent = character.color || 'rgba(0, 122, 255, 0.45)';
                   const isActive = selected?.id === character.id;
                   const owned = ownedSet.has(character.id);
-                  const magnetTint = section.key === 'legendary' ? 'sunrise' : section.key === 'epic' ? 'violet' : 'aqua';
                   return (
                     <li key={character.id}>
                       <div
-                        className={`group relative flex cursor-pointer items-stretch gap-4 overflow-hidden rounded-3xl border border-white/12 bg-white/[0.04] px-4 py-4 transition duration-200 hover:border-white/30 hover:bg-white/[0.08] focus-within:border-white/40 focus-within:bg-white/[0.1] cp-roster-item ${
-                          isActive ? 'border-white/40 bg-white/[0.12] shadow-[0_26px_70px_rgba(28,10,56,0.45)]' : ''
+                        className={`group relative flex cursor-pointer items-stretch gap-4 overflow-hidden rounded-[var(--cp-radius-lg)] border-2 px-4 py-4 transition-colors duration-150 focus-within:border-[var(--cp-border-strong)] ${
+                          isActive
+                            ? 'border-[var(--cp-border-strong)] bg-[var(--cp-gray-100)]'
+                            : 'border-[var(--cp-border)] bg-[var(--cp-white)] hover:border-[var(--cp-border-strong)] hover:bg-[var(--cp-gray-100)]'
                         }`}
                         role="button"
                         tabIndex={0}
@@ -268,10 +263,6 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
                         data-roster-item
                         data-active={isActive ? 'true' : 'false'}
                         data-rarity={section.key}
-                        data-magnetic="roster"
-                        data-magnetic-color={magnetTint}
-                        data-ripple
-                        style={{ '--stagger': String(index) } as CSSProperties}
                         onClick={() => {
                           setSelectedId(character.id);
                           playClick();
@@ -286,49 +277,69 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
                       >
                         <span
                           aria-hidden="true"
-                          className="absolute left-0 top-0 h-full w-1"
+                          className="absolute bottom-3 left-0 top-3 w-1 rounded-full opacity-75"
                           style={{ background: accent }}
                         />
                         <div className="flex flex-1 items-center gap-4">
-                          <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-white/10 bg-white/10">
+                          <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-[var(--cp-radius-md)] border border-[var(--cp-border)] bg-[var(--cp-gray-100)]">
                             {media ? (
                               <img src={media} alt={character.name} className="h-full w-full object-cover" loading="lazy" decoding="async" />
                             ) : (
-                              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-white/15 via-white/5 to-transparent text-sm font-bold uppercase tracking-[0.2em] text-white/60">
+                              <div className="flex h-full w-full items-center justify-center bg-[var(--cp-gray-100)] text-sm font-bold uppercase tracking-[0.2em] text-[var(--cp-text-muted)]">
                                 {character.name.slice(0, 2)}
                               </div>
                             )}
                           </div>
                           <div className="min-w-0">
                             {character.realm && (
-                              <div className="cp-kicker text-[10px] tracking-[0.24em] text-white/60">{character.realm}</div>
+                              <div className="cp-kicker text-[10px] tracking-[0.24em]">{character.realm}</div>
                             )}
                             <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="truncate font-display text-lg font-extrabold text-white" data-roster-name>
+                              <h3 className="truncate font-display text-lg font-extrabold text-[var(--cp-text-primary)]" data-roster-name>
                                 {character.name}
                               </h3>
-                              <span className="rounded-full border border-white/10 bg-white/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">
+                              <span className="rounded-[var(--cp-radius-sm)] border border-[var(--cp-border)] bg-[var(--cp-gray-100)] px-2 py-0.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--cp-text-secondary)]">
                                 {RARITY_META[section.key].label}
                               </span>
                             </div>
-                            {character.title && <p className="text-xs text-white/60">{character.title}</p>}
+                            {character.title && <p className="text-xs text-[var(--cp-text-secondary)]">{character.title}</p>}
                             {(character.tagline || character.description) && (
-                              <p className="line-clamp-2 text-sm text-white/60">{character.tagline || character.description}</p>
+                              <p className="line-clamp-2 text-sm text-[var(--cp-text-muted)]">{character.tagline || character.description}</p>
                             )}
+                            <div className="mt-3 flex flex-wrap gap-2 sm:hidden">
+                              <Link
+                                href={`/character/${character.id}`}
+                                className="inline-flex items-center justify-center rounded-[var(--cp-radius-sm)] border border-[var(--cp-border)] bg-[var(--cp-white)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--cp-text-secondary)] transition-colors hover:border-[var(--cp-border-strong)] hover:text-[var(--cp-text-primary)]"
+                                onClick={(event) => event.stopPropagation()}
+                              >
+                                Profile
+                              </Link>
+                              <Link
+                                href="/play"
+                                className="inline-flex items-center justify-center rounded-[var(--cp-radius-sm)] border border-[var(--cp-border)] bg-[var(--cp-white)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--cp-text-secondary)] transition-colors hover:border-[var(--cp-border-strong)] hover:text-[var(--cp-text-primary)]"
+                                onClick={(event) => event.stopPropagation()}
+                              >
+                                Play Mode
+                              </Link>
+                            </div>
                           </div>
                         </div>
-                        <div className="flex w-[140px] shrink-0 flex-col items-end justify-center gap-2 text-sm">
-                          {owned && <span className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-200">Owned</span>}
+                        <div className="hidden w-[140px] shrink-0 flex-col items-end justify-center gap-2 text-sm sm:flex">
+                          {owned && (
+                            <span className="rounded-[var(--cp-radius-sm)] bg-[rgba(48,209,88,0.16)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-[rgba(18,111,46,1)]">
+                              Owned
+                            </span>
+                          )}
                           <Link
                             href={`/character/${character.id}`}
-                            className="text-white/80 transition hover:text-white"
+                            className="inline-flex min-w-[6.5rem] items-center justify-center rounded-[var(--cp-radius-sm)] border border-[var(--cp-border)] bg-[var(--cp-white)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--cp-text-secondary)] transition-colors hover:border-[var(--cp-border-strong)] hover:text-[var(--cp-text-primary)]"
                             onClick={(event) => event.stopPropagation()}
                           >
                             Profile
                           </Link>
                           <Link
                             href="/play"
-                            className="text-white/60 transition hover:text-white"
+                            className="inline-flex min-w-[6.5rem] items-center justify-center rounded-[var(--cp-radius-sm)] border border-[var(--cp-border)] bg-[var(--cp-white)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--cp-text-secondary)] transition-colors hover:border-[var(--cp-border-strong)] hover:text-[var(--cp-text-primary)]"
                             onClick={(event) => event.stopPropagation()}
                           >
                             Play Mode
@@ -344,7 +355,7 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
                   );
                 })}
               </ul>
-            </RevealOnView>
+            </section>
           ))}
 
           {filtered.length === 0 && (
@@ -376,110 +387,113 @@ type SpotlightCardProps = {
 };
 
 function SpotlightCard({ character, media, owned, variant }: SpotlightCardProps) {
+  const rarity = getRarity(character.rarity);
+  const rarityLabel = RARITY_META[rarity].label;
+  const accent = character.color || 'rgba(0, 122, 255, 0.25)';
+
   return (
     <div
-      className={`relative overflow-hidden rounded-3xl border border-white/12 bg-white/[0.05] ${
-        variant === 'mobile' ? 'shadow-lg' : ''
+      className={`relative overflow-hidden rounded-[var(--cp-radius-lg)] border-2 border-[var(--cp-border)] bg-[var(--cp-white)] ${
+        variant === 'mobile' ? 'shadow-[0_10px_34px_rgba(10,10,10,0.06)]' : ''
       }`}
     >
       <div
-        className="pointer-events-none absolute -top-20 left-[-30%] h-72 w-72 rounded-full opacity-30 blur-3xl"
-        style={{ background: character.color || 'rgba(127, 234, 255, 0.45)' }}
+        className="pointer-events-none absolute inset-x-0 top-0 h-28 opacity-80"
+        style={{ background: `linear-gradient(115deg, ${accent}, rgba(250,250,250,0))` }}
       />
-      <div className="pointer-events-none absolute -bottom-12 right-[-20%] h-60 w-60 rounded-full bg-pink-400/30 opacity-40 blur-3xl" />
       <div className="relative p-6 md:p-8">
         <div className="flex flex-col gap-5 md:flex-row md:items-start">
-          <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-3xl border border-white/10 bg-white/10 shadow-lg md:h-32 md:w-32">
+          <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-[var(--cp-radius-lg)] border-2 border-[var(--cp-border)] bg-[var(--cp-gray-100)] md:h-32 md:w-32">
             {media ? (
               <img src={media} alt={character.name} className="h-full w-full object-cover" loading="lazy" decoding="async" />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-white/10 via-white/5 to-transparent text-lg font-bold uppercase tracking-[0.2em] text-white/60">
+              <div className="flex h-full w-full items-center justify-center bg-[var(--cp-gray-100)] text-lg font-bold uppercase tracking-[0.2em] text-[var(--cp-text-muted)]">
                 {character.name.slice(0, 2)}
               </div>
             )}
           </div>
           <div className="min-w-0 flex-1">
-            {character.realm && <div className="cp-kicker text-white/70">{character.realm}</div>}
-            <h2 className="font-display text-2xl font-extrabold leading-tight text-white md:text-3xl" data-spotlight-name>
+            {character.realm && <div className="cp-kicker">{character.realm}</div>}
+            <h2 className="font-display text-2xl font-extrabold leading-tight text-[var(--cp-text-primary)] md:text-3xl" data-spotlight-name>
               {character.name}
             </h2>
-            <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-white/70">
-              <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em]">
-                {RARITY_META[getRarity(character.rarity)].label}
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+              <span className="rounded-[var(--cp-radius-sm)] border border-[var(--cp-border)] bg-[var(--cp-gray-100)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--cp-text-secondary)]">
+                {rarityLabel}
               </span>
               {owned && (
-                <span className="rounded-full bg-emerald-400/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-100">
+                <span className="rounded-[var(--cp-radius-sm)] bg-[rgba(48,209,88,0.16)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[rgba(18,111,46,1)]">
                   You own this
                 </span>
               )}
               {character.codeSeries && (
-                <span className="text-xs uppercase tracking-[0.24em] text-white/60">Series: {character.codeSeries}</span>
+                <span className="text-xs uppercase tracking-[0.2em] text-[var(--cp-text-muted)]">Series: {character.codeSeries}</span>
               )}
             </div>
-            {character.title && <p className="mt-2 text-sm text-white/70">{character.title}</p>}
+            {character.title && <p className="mt-2 text-sm text-[var(--cp-text-secondary)]">{character.title}</p>}
           </div>
         </div>
 
         {(character.tagline || character.description) && (
-          <p className="cp-muted mt-6 text-base leading-relaxed">{character.tagline || character.description}</p>
+          <p className="mt-6 text-base leading-relaxed text-[var(--cp-text-secondary)]">{character.tagline || character.description}</p>
         )}
 
         <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
           {character.coreCharm && (
             <div>
-              <dt className="text-xs uppercase tracking-[0.26em] text-white/50">Core Charm</dt>
-              <dd className="mt-1 text-white/80">{character.coreCharm}</dd>
+              <dt className="text-xs uppercase tracking-[0.26em] text-[var(--cp-text-muted)]">Core Charm</dt>
+              <dd className="mt-1 text-[var(--cp-text-primary)]">{character.coreCharm}</dd>
             </div>
           )}
           {character.danceStyle && (
             <div>
-              <dt className="text-xs uppercase tracking-[0.26em] text-white/50">Signature Moves</dt>
-              <dd className="mt-1 text-white/80">{character.danceStyle}</dd>
+              <dt className="text-xs uppercase tracking-[0.26em] text-[var(--cp-text-muted)]">Signature Moves</dt>
+              <dd className="mt-1 text-[var(--cp-text-primary)]">{character.danceStyle}</dd>
             </div>
           )}
           {character.vibe && (
             <div className="sm:col-span-2">
-              <dt className="text-xs uppercase tracking-[0.26em] text-white/50">Realm Vibe</dt>
-              <dd className="mt-1 text-white/80">{character.vibe}</dd>
+              <dt className="text-xs uppercase tracking-[0.26em] text-[var(--cp-text-muted)]">Realm Vibe</dt>
+              <dd className="mt-1 text-[var(--cp-text-primary)]">{character.vibe}</dd>
             </div>
           )}
           {character.personality && (
             <div className="sm:col-span-2">
-              <dt className="text-xs uppercase tracking-[0.26em] text-white/50">Personality</dt>
-              <dd className="mt-1 text-white/80">{character.personality}</dd>
+              <dt className="text-xs uppercase tracking-[0.26em] text-[var(--cp-text-muted)]">Personality</dt>
+              <dd className="mt-1 text-[var(--cp-text-primary)]">{character.personality}</dd>
             </div>
           )}
         </dl>
 
         {Object.keys(character.stats ?? {}).length > 0 && (
           <div className="mt-6">
-            <div className="text-xs uppercase tracking-[0.28em] text-white/50">Crew Stats</div>
+            <div className="text-xs uppercase tracking-[0.28em] text-[var(--cp-text-muted)]">Crew Stats</div>
             <div className="mt-3 space-y-3">
               {Object.entries(character.stats!)
                 .sort((a, b) => b[1] - a[1])
                 .map(([label, value]) => (
-                  <div key={label} className="flex items-center gap-3 text-sm text-white">
-                    <span className="w-28 uppercase tracking-[0.22em] text-white/60">{label}</span>
-                    <div className="h-2 flex-1 rounded-full bg-white/10">
-                      <div className="h-2 rounded-full bg-white/80" style={{ width: `${Math.min(100, Math.max(0, value))}%` }} />
+                  <div key={label} className="flex items-center gap-3 text-sm text-[var(--cp-text-primary)]">
+                    <span className="w-28 uppercase tracking-[0.22em] text-[var(--cp-text-muted)]">{label}</span>
+                    <div className="cp-stat-bar flex-1">
+                      <div className="cp-stat-bar-fill" style={{ width: `${Math.min(100, Math.max(0, value))}%` }} />
                     </div>
-                    <span className="w-10 text-right text-white/70">{Math.round(value)}</span>
+                    <span className="w-10 text-right text-[var(--cp-text-secondary)]">{Math.round(value)}</span>
                   </div>
                 ))}
             </div>
           </div>
         )}
 
-        <div className="mt-8 flex flex-wrap gap-3">
+        <div className="mt-8 flex flex-wrap gap-3 border-t border-[var(--cp-border)] pt-6">
           <Link
             href={`/character/${character.id}`}
-            className="w-full rounded-xl bg-white px-5 py-2 text-center font-semibold text-gray-900 transition hover:-translate-y-0.5 hover:shadow-lg md:w-auto"
+            className="inline-flex w-full items-center justify-center rounded-[var(--cp-radius-md)] border-2 border-[var(--cp-black)] bg-[var(--cp-black)] px-5 py-2 text-center text-xs font-black uppercase tracking-[0.14em] text-[var(--cp-white)] transition-colors hover:bg-[var(--cp-gray-900)] md:w-auto"
           >
             Open full profile
           </Link>
           <Link
             href="/play"
-            className="w-full rounded-xl border border-white/20 px-5 py-2 text-center font-semibold text-white transition hover:bg-white/10 md:w-auto"
+            className="inline-flex w-full items-center justify-center rounded-[var(--cp-radius-md)] border-2 border-[var(--cp-border-strong)] px-5 py-2 text-center text-xs font-black uppercase tracking-[0.14em] text-[var(--cp-text-primary)] transition-colors hover:bg-[var(--cp-gray-100)] md:w-auto"
           >
             Launch battle prep
           </Link>

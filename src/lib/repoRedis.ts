@@ -328,8 +328,44 @@ export const repoRedis: Repo = {
     return parseUnit(raw);
   },
 
-  async claimUnitAndCreateOwnership({ unitId, userId }) {
+  async claimUnitAndCreateOwnership({ unitId, userId, challengeId }) {
     await ensureReady();
+    const claimedAtIso = new Date().toISOString();
+    const claimedAtDate = new Date(claimedAtIso);
+
+    if (challengeId) {
+      const ownershipId = uuid();
+      const lua = `
+        local unit = redis.call("HGET", KEYS[1], ARGV[1])
+        if not unit then return {0, "unit_not_found"} end
+        local unitObj = cjson.decode(unit)
+        if unitObj.status ~= "available" then return {0, "unit_unavailable"} end
+        local challenge = redis.call("HGET", KEYS[2], ARGV[2])
+        if not challenge then return {0, "challenge_not_found"} end
+        local challengeObj = cjson.decode(challenge)
+        if challengeObj.consumed then return {0, "challenge_consumed"} end
+        challengeObj.consumed = true
+        redis.call("HSET", KEYS[2], ARGV[2], cjson.encode(challengeObj))
+        unitObj.status = "claimed"
+        unitObj.claimedBy = ARGV[3]
+        unitObj.claimedAt = ARGV[4]
+        redis.call("HSET", KEYS[1], ARGV[1], cjson.encode(unitObj))
+        local ownership = cjson.encode({id=ARGV[5], userId=ARGV[3], characterId=unitObj.characterId, source="claim", cosmetics={}, createdAt=ARGV[4]})
+        redis.call("LPUSH", KEYS[3], ownership)
+        return {1, unitObj.characterId, ARGV[4]}
+      `;
+      const result = (await redis.eval(
+        lua,
+        [KEYS.units, KEYS.challenges, ownershipKey(userId)],
+        [unitId, challengeId, userId, claimedAtIso, ownershipId],
+      )) as unknown;
+      if (Array.isArray(result) && Number(result[0]) === 1) {
+        return { characterId: String(result[1]), claimedAt: new Date(String(result[2])) };
+      }
+      const reason = Array.isArray(result) ? String(result[1]) : 'claim_failed';
+      throw new Error(reason);
+    }
+
     const raw = await redis.hget(KEYS.units, unitId);
     if (!raw) throw new Error('Unit not found');
     const stored = parseJson<StoredUnit>(raw);
@@ -340,8 +376,6 @@ export const repoRedis: Repo = {
 
     stored.status = 'claimed';
     stored.claimedBy = userId;
-    const claimedAtIso = new Date().toISOString();
-    const claimedAtDate = new Date(claimedAtIso);
     stored.claimedAt = claimedAtIso;
 
     await redis.hset(KEYS.units, { [unitId]: JSON.stringify(stored) });
@@ -380,6 +414,23 @@ export const repoRedis: Repo = {
     await ensureReady();
     const raw = await redis.hget(KEYS.characters, id);
     return toCharacter(raw);
+  },
+
+  async getCharactersByIds(ids) {
+    await ensureReady();
+    if (!ids.length) return [];
+    const uniqueIds = Array.from(new Set(ids.filter(Boolean)));
+    if (!uniqueIds.length) return [];
+    const raw = (await redis.hmget(KEYS.characters, ...uniqueIds)) as Record<string, unknown> | null;
+    const seen = new Set<string>();
+    const results: Character[] = [];
+    for (const id of ids) {
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      const parsed = toCharacter(raw ? (raw as Record<string, unknown>)[id] : null);
+      if (parsed) results.push(parsed);
+    }
+    return results;
   },
 
   async listCharacters(params) {

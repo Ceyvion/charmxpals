@@ -4,6 +4,11 @@ import { rateLimitCheck } from '@/lib/rateLimit';
 import { getClientIp } from '@/lib/ip';
 
 export async function GET(request: NextRequest) {
+  // Block in production
+  if (process.env.NODE_ENV === 'production') {
+    return Response.json({ error: 'Not found' }, { status: 404 });
+  }
+
   try {
     const ip = getClientIp(request.url, request.headers);
     const rl = await rateLimitCheck(`${ip}:dev-user`, { windowMs: 60_000, max: 20, prefix: 'dev' });

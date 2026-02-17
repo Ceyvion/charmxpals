@@ -26,7 +26,12 @@ async function waitForExpect(fn: () => void, timeout = 1_000, interval = 20) {
   }
 }
 
-async function openClient(server: PlazaServer, userId: string, sessionId: string): Promise<TestClient> {
+async function openClient(
+  server: PlazaServer,
+  userId: string,
+  sessionId: string,
+  options: { binaryHandshake?: boolean } = {}
+): Promise<TestClient> {
   const exp = Math.floor(Date.now() / 1000) + 60;
   const token = signToken(
     {
@@ -41,11 +46,19 @@ async function openClient(server: PlazaServer, userId: string, sessionId: string
   );
   const ws = new WebSocket(`${server.url}?token=${encodeURIComponent(token)}`);
   const events: Array<{ type: string; payload: any }> = [];
+  const send = (payload: unknown) => {
+    const encoded = Buffer.from(JSON.stringify(payload), 'utf8');
+    if (options.binaryHandshake) {
+      ws.send(Uint8Array.from(encoded));
+      return;
+    }
+    ws.send(encoded.toString('utf8'));
+  };
 
   ws.on('open', () => {
-    ws.send(JSON.stringify({ type: 'hello', build: 'test' }));
-    ws.send(JSON.stringify({ type: 'auth', token }));
-    ws.send(JSON.stringify({ type: 'select_avatar', characterId: 'demo' }));
+    send({ type: 'hello', build: 'test' });
+    send({ type: 'auth', token });
+    send({ type: 'select_avatar', characterId: 'demo' });
   });
 
   await new Promise<void>((resolve, reject) => {
@@ -145,5 +158,14 @@ describe('plaza server', () => {
     client.ws.close();
     await waitForExpect(() => expect(localServer.getPlayerCount()).toBe(0));
     await localServer.dispose();
+  });
+
+  it('accepts handshake frames delivered as binary payloads', async () => {
+    const client = await openClient(server, 'user-bin', 'session-bin', { binaryHandshake: true });
+
+    await waitForExpect(() => expect(server.getPlayerCount()).toBe(1));
+
+    client.ws.close();
+    await waitForExpect(() => expect(server.getPlayerCount()).toBe(0));
   });
 });

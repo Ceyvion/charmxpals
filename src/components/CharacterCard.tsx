@@ -162,21 +162,17 @@ export default function CharacterCard({ c, owned = false }: { c: CharacterBasic;
       data-flipped={flipped ? "true" : "false"}
     >
       <div ref={tiltRef} className="cp-card-tilt" style={{ transform: tiltTransform }}>
-        <span className="cp-card-ambient" aria-hidden />
         <div className="cp-card-holo">
           <div className="cp-card-face cp-card-front">
             <div className="cp-card-media">
               {media ? (
-                <>
-                  <img
-                    src={media}
-                    alt={c.name}
-                    loading="lazy"
-                    decoding="async"
-                    className="cp-card-art"
-                  />
-                  <div className="cp-card-media-shine" />
-                </>
+                <img
+                  src={media}
+                  alt={c.name}
+                  loading="lazy"
+                  decoding="async"
+                  className="cp-card-art"
+                />
               ) : (
                 <div className="cp-card-media-fallback">
                   <span>{c.name.slice(0, 2)}</span>
@@ -191,22 +187,22 @@ export default function CharacterCard({ c, owned = false }: { c: CharacterBasic;
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   {c.realm && (
-                    <div className="cp-kicker text-[10px] tracking-[0.24em] uppercase text-white/60">
+                    <div className="cp-kicker text-[10px] tracking-[0.24em] uppercase text-[var(--cp-gray-400)]">
                       {c.realm}
                     </div>
                   )}
-                  <h3 className="text-white text-xl font-display font-extrabold truncate">
+                  <h3 className="text-[var(--cp-white)] text-xl font-display font-extrabold truncate">
                     {c.name}
                   </h3>
-                  {c.title && <div className="text-white/80 text-xs font-medium mt-0.5">{c.title}</div>}
+                  {c.title && <div className="text-[var(--cp-gray-300)] text-xs font-medium mt-0.5">{c.title}</div>}
                 </div>
                 <span className="cp-chip">{r.label}</span>
               </div>
               {frontDescription && (
-                <p className="cp-muted text-sm line-clamp-2 mt-3">{frontDescription}</p>
+                <p className="text-sm text-[var(--cp-gray-500)] line-clamp-2 mt-3">{frontDescription}</p>
               )}
               {c.codeSeries && (
-                <p className="text-[10px] uppercase tracking-[0.18em] text-white/50 mt-3">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-[var(--cp-gray-600)] mt-3">
                   Series {c.codeSeries}
                 </p>
               )}
@@ -214,18 +210,12 @@ export default function CharacterCard({ c, owned = false }: { c: CharacterBasic;
                 <Link
                   href={`/character/${c.id}`}
                   className="cp-card-button cp-card-button-primary"
-                  data-magnetic="card"
-                  data-magnetic-color="aqua"
-                  data-ripple
                 >
                   View Profile
                 </Link>
                 <Link
                   href="/play"
                   className="cp-card-button cp-card-button-ghost"
-                  data-magnetic="card"
-                  data-magnetic-color="volt"
-                  data-ripple
                 >
                   Battle Demo
                 </Link>
@@ -236,7 +226,7 @@ export default function CharacterCard({ c, owned = false }: { c: CharacterBasic;
             <div className="cp-card-back-inner">
               <div className="cp-card-back-grid">
                 <div>
-                  <span className="cp-card-back-label">Rarity Pulse</span>
+                  <span className="cp-card-back-label">Rarity</span>
                   <span className="cp-card-back-value">{r.label}</span>
                 </div>
                 <div>
@@ -259,18 +249,12 @@ export default function CharacterCard({ c, owned = false }: { c: CharacterBasic;
                 <Link
                   href={`/character/${c.id}`}
                   className="cp-card-button cp-card-button-primary"
-                  data-magnetic="card"
-                  data-magnetic-color="violet"
-                  data-ripple
                 >
                   Full Lore
                 </Link>
                 <Link
                   href="/claim"
                   className="cp-card-button cp-card-button-ghost"
-                  data-magnetic="card"
-                  data-magnetic-color="sunrise"
-                  data-ripple
                 >
                   Claim Codes
                 </Link>
@@ -278,8 +262,6 @@ export default function CharacterCard({ c, owned = false }: { c: CharacterBasic;
             </div>
           </div>
         </div>
-        <span className="cp-card-energy" aria-hidden />
-        {rarity === "legendary" && <span className="cp-card-glitch" aria-hidden />}
       </div>
       {!hoverable && (
         <button
@@ -287,9 +269,6 @@ export default function CharacterCard({ c, owned = false }: { c: CharacterBasic;
           className="cp-card-toggle"
           onClick={handleToggle}
           aria-pressed={flipped}
-          data-magnetic="card-toggle"
-          data-magnetic-color="mint"
-          data-ripple
         >
           {flipped ? "Show Front" : "Show Stats"}
         </button>

@@ -1,0 +1,21 @@
+
+> charmxpals@0.1.0 dev
+> node ./scripts/dev-guard.mjs
+
+  ▲ Next.js 14.2.15
+  - Local:        http://localhost:3000
+  - Environments: .env.local, .env
+
+ ✓ Starting...
+ ✓ Ready in 1470ms
+ ○ Compiling / ...
+Browserslist: browsers data (caniuse-lite) is 6 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ ✓ Compiled / in 2.3s (926 modules)
+ ✓ Compiled in 357ms (316 modules)
+[next-auth][warn][NEXTAUTH_URL] 
+https://next-auth.js.org/warnings#nextauth_url
+ GET / 200 in 4985ms
+ ✓ Compiled in 236ms (316 modules)
+[?25h

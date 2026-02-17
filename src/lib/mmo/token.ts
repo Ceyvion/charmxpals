@@ -1,6 +1,6 @@
 import { createHmac } from 'crypto';
 
-type AnyObj = Record<string, any>;
+type TokenPayload = Record<string, unknown>;
 
 function b64url(input: Buffer | string) {
   return Buffer.from(input)
@@ -10,7 +10,7 @@ function b64url(input: Buffer | string) {
     .replace(/\//g, '_');
 }
 
-export function signToken(payload: AnyObj, opts?: { secret?: string }) {
+export function signToken(payload: TokenPayload, opts?: { secret?: string }) {
   const secret = opts?.secret || process.env.MMO_WS_SECRET || process.env.CODE_HASH_SECRET || 'dev-secret';
   const header = { alg: 'HS256', typ: 'JWT' };
   const body = { iat: Math.floor(Date.now() / 1000), ...payload };
@@ -27,6 +27,6 @@ export type MmoSessionClaims = {
   exp: number; // exp in seconds
   nonce: string;
   scope?: string[]; // e.g., ['plaza:join']
-  owned?: string[]; // characterIds allowed
+  owned?: string[]; // avatar identifiers allowed (character slug preferred)
+  mode?: 'plaza' | 'arena';
 };
-

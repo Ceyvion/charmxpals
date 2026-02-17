@@ -2,12 +2,21 @@ import { createServer, Server as HttpServer } from 'http';
 import { parse } from 'url';
 import { createHmac, randomUUID } from 'crypto';
 import { EventEmitter } from 'events';
-import WebSocket, { WebSocketServer } from 'ws';
+import type WebSocket from 'ws';
 
 import type { MmoSessionClaims } from '../../src/lib/mmo/token';
 import { filterProfanity } from '../../src/lib/profanity';
 
 type Vec2 = { x: number; y: number };
+type GameMode = 'plaza' | 'arena';
+type ArenaMapId = 'neon-grid' | 'crystal-rift' | 'voltage-foundry';
+type ArenaConfig = {
+  mapId: ArenaMapId;
+  modifiers: string[];
+  targetKills: number;
+  rotationEndsAt: number;
+  rotationLabel: string;
+};
 
 type HandshakeInfo = {
   build?: string;
@@ -21,6 +30,7 @@ type ClientState = {
   sessionId: string;
   displayName: string;
   characterId: string;
+  mode: GameMode;
   pos: Vec2;
   rot: number;
   axes: Vec2;
@@ -33,6 +43,10 @@ type ClientState = {
   emoteHistory: number[];
   handshakeTimer: NodeJS.Timeout | null;
   createdAt: number;
+  hp: number;
+  kills: number;
+  deaths: number;
+  lastAbilityAt: number;
 };
 
 export type PlazaServerOptions = {
@@ -63,14 +77,43 @@ const defaultOptions = {
   snapshotMs: 100,
 };
 
-const HANDSHAKE_TIMEOUT_MS = 5_000;
-const CHAT_WINDOW_MS = 10_000;
+const HANDSHAKE_TIMEOUT_MS = 5000;
+const CHAT_WINDOW_MS = 10000;
 const CHAT_MAX = 5;
-const EMOTE_WINDOW_MS = 4_000;
+const EMOTE_WINDOW_MS = 4000;
 const EMOTE_MAX = 6;
-const INSTANCE_ID = 'plaza-1';
-const MOTD = 'Signal Plaza is live — drop in and vibe.';
+const ABILITY_COOLDOWN_MS = 850;
+const ABILITY_RANGE = 2.2;
+const ABILITY_DAMAGE = 35;
+const ARENA_KILL_TARGET = 8;
+const ARENA_ROTATION_WINDOW_MS = 20 * 60 * 1000;
+const ARENA_MAP_ROTATION: ArenaMapId[] = ['neon-grid', 'crystal-rift', 'voltage-foundry'];
+const ARENA_MODIFIER_POOL = [
+  'Low-grav sidesteps',
+  'Pulse cooldown -15%',
+  'Center lane shield disabled',
+  'Dash drift +10%',
+  'Edge knockback amplified',
+  'Recovery nodes active',
+];
+
+const PLAZA_INSTANCE_ID = 'plaza-1';
+const ARENA_INSTANCE_ID = 'arena-1';
+const PLAZA_MOTD = 'Signal Plaza is live — drop in and vibe.';
+const ARENA_MOTD = 'Rift Arena online — cast pulse and hold center.';
 const WS_READY_STATE_OPEN = 1;
+
+let wsModulePromise: Promise<typeof import('ws')> | null = null;
+
+async function loadWsModule() {
+  if (!wsModulePromise) {
+    if (!process.env.WS_NO_BUFFER_UTIL) {
+      process.env.WS_NO_BUFFER_UTIL = '1';
+    }
+    wsModulePromise = import('ws');
+  }
+  return wsModulePromise;
+}
 
 function decodeBase64Url(input: string) {
   let normalized = input.replace(/-/g, '+').replace(/_/g, '/');
@@ -90,7 +133,7 @@ function verifyToken(token: string, secret: string): MmoSessionClaims | null {
     const now = Math.floor(Date.now() / 1000);
     if (typeof parsed.exp === 'number' && parsed.exp < now) return null;
     return parsed;
-  } catch (err) {
+  } catch {
     return null;
   }
 }
@@ -103,6 +146,38 @@ function consumeRateLimit(history: number[], windowMs: number, max: number) {
   return true;
 }
 
+function decodeWsPayload(raw: unknown): string | null {
+  if (raw && typeof raw === 'object' && 'data' in raw) {
+    return decodeWsPayload((raw as { data: unknown }).data);
+  }
+  if (typeof raw === 'string') return raw;
+  if (Buffer.isBuffer(raw)) return raw.toString('utf8');
+  if (raw instanceof ArrayBuffer) return Buffer.from(raw).toString('utf8');
+  if (ArrayBuffer.isView(raw)) {
+    return Buffer.from(raw.buffer, raw.byteOffset, raw.byteLength).toString('utf8');
+  }
+  if (Array.isArray(raw)) {
+    const chunks: Buffer[] = [];
+    for (const chunk of raw) {
+      if (Buffer.isBuffer(chunk)) {
+        chunks.push(chunk);
+        continue;
+      }
+      if (chunk instanceof ArrayBuffer) {
+        chunks.push(Buffer.from(chunk));
+        continue;
+      }
+      if (ArrayBuffer.isView(chunk)) {
+        chunks.push(Buffer.from(chunk.buffer, chunk.byteOffset, chunk.byteLength));
+        continue;
+      }
+      return null;
+    }
+    return Buffer.concat(chunks).toString('utf8');
+  }
+  return null;
+}
+
 function sanitizeDisplayName(userId: string) {
   const base = (userId || '').split('@')[0];
   const compact = base.replace(/[^a-zA-Z0-9]/g, '');
@@ -112,7 +187,42 @@ function sanitizeDisplayName(userId: string) {
 
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
 
+function modeFromClaims(claims: MmoSessionClaims): GameMode {
+  const scope = Array.isArray(claims.scope) ? claims.scope : [];
+  if (scope.includes('arena:join') || claims.mode === 'arena') return 'arena';
+  return 'plaza';
+}
+
+function spawnForMode(mode: GameMode): Vec2 {
+  if (mode === 'arena') {
+    return { x: Math.random() * 20 - 10, y: Math.random() * 12 - 6 };
+  }
+  return { x: Math.random() * 8 - 4, y: Math.random() * 4 - 2 };
+}
+
+function buildArenaConfig(now = Date.now()): ArenaConfig {
+  const windowIndex = Math.floor(now / ARENA_ROTATION_WINDOW_MS);
+  const mapId = ARENA_MAP_ROTATION[windowIndex % ARENA_MAP_ROTATION.length];
+  const rotationEndsAt = (windowIndex + 1) * ARENA_ROTATION_WINDOW_MS;
+  const modifiers: string[] = [];
+  for (let i = 0; i < 3; i += 1) {
+    const idx = (windowIndex * 2 + i) % ARENA_MODIFIER_POOL.length;
+    const next = ARENA_MODIFIER_POOL[idx];
+    if (!modifiers.includes(next)) {
+      modifiers.push(next);
+    }
+  }
+  return {
+    mapId,
+    modifiers,
+    targetKills: ARENA_KILL_TARGET,
+    rotationEndsAt,
+    rotationLabel: `Cycle ${windowIndex % 1000}`,
+  };
+}
+
 export async function startPlazaServer(options: PlazaServerOptions = {}): Promise<PlazaServer> {
+  const { WebSocketServer } = await loadWsModule();
   const opts = { ...defaultOptions, ...options };
   const httpServer: HttpServer = createServer();
   const wss = new WebSocketServer({ server: httpServer });
@@ -132,10 +242,17 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
     }
   };
 
-  const broadcast = (payload: unknown, excludeId?: string) => {
+  const broadcast = (
+    payload: unknown,
+    options: {
+      excludeId?: string;
+      mode?: GameMode;
+    } = {},
+  ) => {
     const serialized = JSON.stringify(payload);
     clients.forEach((client, id) => {
-      if (excludeId && id === excludeId) return;
+      if (options.excludeId && id === options.excludeId) return;
+      if (options.mode && client.mode !== options.mode) return;
       if (client.ws.readyState === WS_READY_STATE_OPEN) {
         try {
           client.ws.send(serialized);
@@ -158,6 +275,9 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
     pos: { ...client.pos },
     rot: client.rot,
     cosmetics: client.cosmetics,
+    hp: client.hp,
+    kills: client.kills,
+    deaths: client.deaths,
   });
 
   const finalizeJoin = (client: ClientState) => {
@@ -170,16 +290,28 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
 
     clients.set(client.sessionId, client);
     emitPlayerCount();
+
     const you = toPlayerState(client.sessionId, client);
     const others = Array.from(clients.entries())
-      .filter(([id]) => id !== client.sessionId)
-      .map(([id, ctx]) => toPlayerState(id, ctx));
+      .filter(([id, other]) => id !== client.sessionId && other.mode === client.mode)
+      .map(([id, context]) => toPlayerState(id, context));
 
     safeSend(client.ws, { type: 'auth_ok', sessionId: client.sessionId });
     safeSend(client.ws, { type: 'joined', you, others });
 
-    events.emit('join', you);
-    broadcast({ type: 'event', event: 'join', data: { player: you } }, client.sessionId);
+    if (client.mode === 'arena') {
+      const arenaConfig = buildArenaConfig();
+      safeSend(client.ws, {
+        type: 'event',
+        event: 'system',
+        data: {
+          message: `Map ${arenaConfig.mapId} | ${arenaConfig.modifiers.join(' | ')}`,
+        },
+      });
+    }
+
+    events.emit('join', { ...you, mode: client.mode });
+    broadcast({ type: 'event', event: 'join', data: { player: you } }, { excludeId: client.sessionId, mode: client.mode });
   };
 
   const handleEmote = (client: ClientState, emote: string) => {
@@ -188,7 +320,97 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
       safeSend(client.ws, { type: 'event', event: 'system', data: { message: 'emote_rate_limited' } });
       return;
     }
-    broadcast({ type: 'event', event: 'emote', data: { id: client.sessionId, emote } });
+    broadcast({ type: 'event', event: 'emote', data: { id: client.sessionId, emote } }, { mode: client.mode });
+  };
+
+  const handleAbilityCast = (client: ClientState, ability: string) => {
+    if (!client.joined || client.mode !== 'arena') return;
+    const now = Date.now();
+    if (now - client.lastAbilityAt < ABILITY_COOLDOWN_MS) {
+      safeSend(client.ws, { type: 'event', event: 'system', data: { message: 'ability_cooldown' } });
+      return;
+    }
+    client.lastAbilityAt = now;
+
+    const victims: Array<{ id: string; displayName: string; hp: number }> = [];
+    clients.forEach((target, targetId) => {
+      if (targetId === client.sessionId) return;
+      if (!target.joined || target.mode !== 'arena') return;
+      const dx = target.pos.x - client.pos.x;
+      const dy = target.pos.y - client.pos.y;
+      const distanceSq = dx * dx + dy * dy;
+      if (distanceSq > ABILITY_RANGE * ABILITY_RANGE) return;
+
+      target.hp = clamp(target.hp - ABILITY_DAMAGE, 0, 100);
+      victims.push({
+        id: targetId,
+        displayName: target.displayName,
+        hp: target.hp,
+      });
+
+      if (target.hp <= 0) {
+        target.deaths += 1;
+        client.kills += 1;
+        target.hp = 100;
+        target.pos = spawnForMode('arena');
+        target.axes = { x: 0, y: 0 };
+
+        broadcast(
+          {
+            type: 'event',
+            event: 'score',
+            data: {
+              killerId: client.sessionId,
+              killer: client.displayName,
+              victimId: targetId,
+              victim: target.displayName,
+              kills: client.kills,
+              deaths: target.deaths,
+            },
+          },
+          { mode: 'arena' },
+        );
+      }
+    });
+
+    if (client.kills >= ARENA_KILL_TARGET) {
+      const winnerName = client.displayName;
+      broadcast(
+        {
+          type: 'event',
+          event: 'match_end',
+          data: {
+            winnerId: client.sessionId,
+            winner: winnerName,
+            targetKills: ARENA_KILL_TARGET,
+            message: `${winnerName} hit ${ARENA_KILL_TARGET} eliminations. Arena reset.`,
+          },
+        },
+        { mode: 'arena' },
+      );
+      clients.forEach((arenaClient) => {
+        if (arenaClient.mode !== 'arena') return;
+        arenaClient.kills = 0;
+        arenaClient.deaths = 0;
+        arenaClient.hp = 100;
+        arenaClient.pos = spawnForMode('arena');
+        arenaClient.axes = { x: 0, y: 0 };
+      });
+    }
+
+    broadcast(
+      {
+        type: 'event',
+        event: 'combat',
+        data: {
+          actorId: client.sessionId,
+          actor: client.displayName,
+          ability: ability || 'pulse',
+          victims,
+        },
+      },
+      { mode: 'arena' },
+    );
   };
 
   wss.on('connection', (ws, req) => {
@@ -208,6 +430,7 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
       return;
     }
 
+    const mode = modeFromClaims(verified);
     const sessionId = verified.sid || randomUUID();
     const userId = verified.sub || 'user';
     const displayName = sanitizeDisplayName(userId);
@@ -218,8 +441,9 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
       userId,
       sessionId,
       displayName,
-      characterId: ownedChars[0] || 'demo',
-      pos: { x: Math.random() * 8 - 4, y: Math.random() * 4 - 2 },
+      characterId: ownedChars[0] || 'neon-city',
+      mode,
+      pos: spawnForMode(mode),
       rot: 0,
       axes: { x: 0, y: 0 },
       lastInputSeq: 0,
@@ -231,6 +455,10 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
       emoteHistory: [],
       handshakeTimer: null,
       createdAt: Date.now(),
+      hp: 100,
+      kills: 0,
+      deaths: 0,
+      lastAbilityAt: 0,
     };
 
     client.handshakeTimer = setTimeout(() => {
@@ -242,15 +470,24 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
 
     sockets.set(ws, client);
 
-    safeSend(ws, { type: 'welcome', motd: MOTD, instanceId: INSTANCE_ID, snapshotInterval: snapshotMs });
+    const arenaConfig = mode === 'arena' ? buildArenaConfig() : null;
+    safeSend(ws, {
+      type: 'welcome',
+      motd: mode === 'arena' ? ARENA_MOTD : PLAZA_MOTD,
+      instanceId: mode === 'arena' ? ARENA_INSTANCE_ID : PLAZA_INSTANCE_ID,
+      snapshotInterval: snapshotMs,
+      ...(arenaConfig ? { arena: arenaConfig } : {}),
+    });
 
     ws.on('message', (raw: unknown) => {
       const context = sockets.get(ws);
       if (!context) return;
 
       let msg: any;
+      const payload = decodeWsPayload(raw);
+      if (!payload) return;
       try {
-        msg = JSON.parse(String(raw));
+        msg = JSON.parse(payload);
       } catch {
         return;
       }
@@ -274,9 +511,11 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
               return;
             }
             context.claims = reverified;
+            context.mode = modeFromClaims(reverified);
           }
           const scope = Array.isArray(context.claims.scope) ? context.claims.scope : [];
-          if (scope.length > 0 && !scope.includes('plaza:join')) {
+          const hasValidScope = scope.length === 0 || scope.includes('plaza:join') || scope.includes('arena:join');
+          if (!hasValidScope) {
             safeSend(ws, { type: 'auth_error', reason: 'insufficient_scope' });
             ws.close(1008, 'insufficient_scope');
             return;
@@ -284,6 +523,10 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
           finalizeJoin(context);
           break;
         }
+        case 'join_instance':
+          break;
+        case 'arena_ready':
+          break;
         case 'select_avatar': {
           const selected = typeof msg.characterId === 'string' ? msg.characterId : '';
           const owned = Array.isArray(context.claims.owned) ? context.claims.owned : [];
@@ -306,6 +549,9 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
           }
           break;
         }
+        case 'ability_cast':
+          handleAbilityCast(context, typeof msg.ability === 'string' ? msg.ability : 'pulse');
+          break;
         case 'chat': {
           if (!context.joined) break;
           const text = typeof msg.text === 'string' ? msg.text.trim().slice(0, 240) : '';
@@ -315,11 +561,14 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
             break;
           }
           const { clean, flagged } = filterProfanity(text);
-          broadcast({
-            type: 'event',
-            event: 'chat',
-            data: { id: context.sessionId, displayName: context.displayName, text: clean, flagged },
-          });
+          broadcast(
+            {
+              type: 'event',
+              event: 'chat',
+              data: { id: context.sessionId, displayName: context.displayName, text: clean, flagged },
+            },
+            { mode: context.mode },
+          );
           break;
         }
         case 'ping':
@@ -340,8 +589,8 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
       }
       if (context.joined && clients.delete(context.sessionId)) {
         emitPlayerCount();
-        events.emit('leave', context.sessionId);
-        broadcast({ type: 'event', event: 'leave', data: { id: context.sessionId } });
+        events.emit('leave', { id: context.sessionId, mode: context.mode });
+        broadcast({ type: 'event', event: 'leave', data: { id: context.sessionId } }, { mode: context.mode });
       }
     });
 
@@ -361,19 +610,38 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
     clients.forEach((client) => {
       const dx = client.axes.x * speed * (dt / 1000);
       const dy = client.axes.y * speed * (dt / 1000);
-      client.pos.x = clamp(client.pos.x + dx, -10, 10);
-      client.pos.y = clamp(client.pos.y + dy, -6, 6);
+      const xBound = client.mode === 'arena' ? 14 : 10;
+      const yBound = client.mode === 'arena' ? 8 : 6;
+      client.pos.x = clamp(client.pos.x + dx, -xBound, xBound);
+      client.pos.y = clamp(client.pos.y + dy, -yBound, yBound);
       if (dx || dy) client.rot = Math.atan2(dy, dx) || client.rot;
     });
 
     if (now - lastSnapshot >= snapshotMs) {
       lastSnapshot = now;
-      const players = Array.from(clients.entries()).map(([id, ctx]) => ({
-        id,
-        pos: { ...ctx.pos },
-        rot: ctx.rot,
-      }));
-      broadcast({ type: 'state', t: now, seqAck: 0, players });
+      const plazaPlayers: Array<{ id: string; characterId: string; pos: Vec2; rot: number; hp: number; kills: number; deaths: number }> = [];
+      const arenaPlayers: Array<{ id: string; characterId: string; pos: Vec2; rot: number; hp: number; kills: number; deaths: number }> = [];
+
+      clients.forEach((client, id) => {
+        const row = {
+          id,
+          characterId: client.characterId,
+          pos: { ...client.pos },
+          rot: client.rot,
+          hp: client.hp,
+          kills: client.kills,
+          deaths: client.deaths,
+        };
+        if (client.mode === 'arena') arenaPlayers.push(row);
+        else plazaPlayers.push(row);
+      });
+
+      if (plazaPlayers.length > 0) {
+        broadcast({ type: 'state', t: now, seqAck: 0, players: plazaPlayers }, { mode: 'plaza' });
+      }
+      if (arenaPlayers.length > 0) {
+        broadcast({ type: 'state', t: now, seqAck: 0, players: arenaPlayers }, { mode: 'arena' });
+      }
     }
   }, tickMs);
 

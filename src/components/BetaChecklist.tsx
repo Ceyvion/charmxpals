@@ -162,41 +162,41 @@ export default function BetaChecklist({ userId, initialProgress, onProgressUpdat
   }, [persist, updatedAtIso]);
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] p-6 md:p-8 shadow-[0_28px_120px_rgba(64,0,128,0.35)]">
-      <div className="pointer-events-none absolute -top-20 -right-12 h-48 w-48 rounded-full bg-gradient-to-br from-fuchsia-500/25 via-purple-500/15 to-transparent blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 left-8 h-56 w-56 rounded-full bg-gradient-to-br from-sky-500/20 to-emerald-400/10 blur-3xl" />
+    <div className="cp-panel relative overflow-hidden rounded-3xl p-6 md:p-8 shadow-[0_26px_80px_rgba(15,23,42,0.08)]">
+      <div className="pointer-events-none absolute -top-20 -right-12 h-48 w-48 rounded-full bg-gradient-to-br from-fuchsia-300/35 via-violet-300/20 to-transparent blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 left-8 h-56 w-56 rounded-full bg-gradient-to-br from-cyan-300/30 to-emerald-300/20 blur-3xl" />
       <div className="relative z-10 space-y-8">
         <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/70">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[var(--cp-border)] bg-[var(--cp-gray-100)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--cp-text-muted)]">
               Mission tracker
             </div>
-            <h2 className="text-3xl font-display font-extrabold text-white leading-tight">
+            <h2 className="text-3xl font-display font-extrabold leading-tight text-[color:var(--cp-text-primary)]">
               Core missions, zero fluff
             </h2>
-            <p className="max-w-xl text-sm text-white/70">
+            <p className="max-w-xl text-sm text-[color:var(--cp-text-secondary)]">
               Beta Progress: {percent}% ({completedCount}/{betaChecklistTasks.length} complete). Work through each target and log issues as you go—we sync progress across devices when you’re signed in.
             </p>
           </div>
-          <div className="shrink-0 rounded-2xl border border-white/10 bg-white/6 px-5 py-4 text-right shadow-inner shadow-black/20">
-            <div className="text-sm font-semibold uppercase tracking-wide text-white/60">Mission tracker</div>
-            <div className="mt-1 text-3xl font-display font-extrabold text-white">{percent}%</div>
-            <div className="text-xs text-white/50">{completedCount} of {betaChecklistTasks.length} complete</div>
-            <div className="mt-2 text-[11px] uppercase tracking-[0.28em] text-white/40">
+          <div className="shrink-0 rounded-2xl border border-[var(--cp-border)] bg-[var(--cp-gray-100)] px-5 py-4 text-right shadow-inner shadow-black/5">
+            <div className="text-sm font-semibold uppercase tracking-wide text-[color:var(--cp-text-secondary)]">Mission tracker</div>
+            <div className="mt-1 text-3xl font-display font-extrabold text-[color:var(--cp-text-primary)]">{percent}%</div>
+            <div className="text-xs text-[color:var(--cp-text-secondary)]">{completedCount} of {betaChecklistTasks.length} complete</div>
+            <div className="mt-2 text-[11px] uppercase tracking-[0.28em] text-[color:var(--cp-text-muted)]">
               {formattedUpdatedAt ? `Synced ${formattedUpdatedAt}` : isLoading ? 'Syncing…' : 'Not synced yet'}
             </div>
           </div>
         </header>
 
-        <div className="relative h-2 w-full overflow-hidden rounded-full bg-white/10">
+        <div className="relative h-2 w-full overflow-hidden rounded-full bg-[var(--cp-gray-200)]">
           <div
-            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-pink-400 via-fuchsia-400 to-sky-400 shadow-[0_0_20px_rgba(244,114,182,0.45)] transition-all duration-500 ease-out"
+            className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-[var(--cp-red)] via-[var(--cp-yellow)] to-[var(--cp-cyan)] shadow-[0_0_18px_rgba(255,59,48,0.22)] transition-all duration-500 ease-out"
             style={{ width: `${percent}%` }}
           />
         </div>
 
         {errorMessage ? (
-          <div className="rounded-2xl border border-amber-400/40 bg-amber-400/15 px-4 py-3 text-xs text-amber-100">
+          <div className="rounded-2xl border border-amber-300 bg-amber-100 px-4 py-3 text-xs text-amber-900">
             {errorMessage}
           </div>
         ) : null}
@@ -206,7 +206,7 @@ export default function BetaChecklist({ userId, initialProgress, onProgressUpdat
             const checked = Boolean(progress[task.id]);
             const orderBadge = String(index + 1).padStart(2, '0');
             const linkClasses =
-              'inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-white/80 hover:text-white';
+              'inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-[color:var(--cp-text-primary)] hover:text-[var(--cp-red)]';
             const ctaLabel = getCtaLabel(task, checked);
 
             return (
@@ -214,8 +214,8 @@ export default function BetaChecklist({ userId, initialProgress, onProgressUpdat
                 key={task.id}
                 className={`group relative overflow-hidden rounded-2xl border px-5 py-5 transition-all duration-300 ${
                   checked
-                    ? 'border-emerald-400/60 bg-gradient-to-br from-emerald-400/15 via-emerald-400/8 to-transparent shadow-[0_24px_60px_rgba(16,185,129,0.18)]'
-                    : 'border-white/12 bg-white/[0.04] hover:border-white/30 hover:bg-white/[0.08]'
+                    ? 'border-emerald-300 bg-gradient-to-br from-emerald-50 via-emerald-50 to-transparent shadow-[0_20px_40px_rgba(16,185,129,0.1)]'
+                    : 'border-[var(--cp-border)] bg-[var(--cp-white)] hover:border-[var(--cp-border-strong)] hover:bg-[var(--cp-gray-100)]'
                 }`}
               >
                 <div className="flex items-start gap-4">
@@ -224,8 +224,8 @@ export default function BetaChecklist({ userId, initialProgress, onProgressUpdat
                     onClick={() => toggleTask(task.id)}
                     className={`flex h-9 w-9 items-center justify-center rounded-xl border transition duration-200 ${
                       checked
-                        ? 'border-white bg-white text-gray-900 shadow-[0_10px_30px_rgba(255,255,255,0.35)]'
-                        : 'border-white/20 bg-white/5 text-white/40 group-hover:border-white/40'
+                        ? 'border-emerald-500 bg-emerald-500 text-white shadow-[0_10px_24px_rgba(16,185,129,0.3)]'
+                        : 'border-[var(--cp-border)] bg-[var(--cp-gray-100)] text-[color:var(--cp-text-muted)] group-hover:border-[var(--cp-border-strong)]'
                     }`}
                     aria-pressed={checked}
                     aria-label={checked ? `Mark ${task.title} as incomplete` : `Mark ${task.title} as done`}
@@ -233,18 +233,18 @@ export default function BetaChecklist({ userId, initialProgress, onProgressUpdat
                     {checked ? (
                       <span className="text-sm font-bold">✓</span>
                     ) : (
-                      <span className="text-[10px] font-semibold tracking-[0.2em] text-white/50">{orderBadge}</span>
+                      <span className="text-[10px] font-semibold tracking-[0.2em] text-[color:var(--cp-text-secondary)]">{orderBadge}</span>
                     )}
                   </button>
                   <div className="space-y-3">
                     <div>
                       <div className="flex items-center gap-2">
-                        <div className="text-lg font-semibold text-white">{task.title}</div>
+                        <div className="text-lg font-semibold text-[color:var(--cp-text-primary)]">{task.title}</div>
                         {checked ? <span className="cp-chip text-[10px]">Done</span> : null}
                       </div>
-                      <div className="mt-1 text-sm leading-relaxed text-white/70">{task.description}</div>
+                      <div className="mt-1 text-sm leading-relaxed text-[color:var(--cp-text-secondary)]">{task.description}</div>
                       {task.tip && (
-                        <div className="mt-2 text-xs italic text-white/60">
+                        <div className="mt-2 text-xs italic text-[color:var(--cp-text-muted)]">
                           Pro tip: {task.tip}
                         </div>
                       )}
@@ -265,31 +265,31 @@ export default function BetaChecklist({ userId, initialProgress, onProgressUpdat
                   </div>
                 </div>
                 {!checked && (
-                  <div className="pointer-events-none absolute -right-16 top-1/2 h-24 w-24 -translate-y-1/2 rounded-full bg-gradient-to-br from-pink-500/15 to-purple-500/5 blur-2xl transition group-hover:opacity-100 opacity-0" />
+                  <div className="pointer-events-none absolute -right-16 top-1/2 h-24 w-24 -translate-y-1/2 rounded-full bg-gradient-to-br from-pink-300/30 to-violet-300/10 blur-2xl transition group-hover:opacity-100 opacity-0" />
                 )}
                 {checked && (
-                  <div className="pointer-events-none absolute -left-12 top-4 h-16 w-16 rounded-full bg-gradient-to-br from-emerald-400/25 to-emerald-400/5 blur-xl" />
+                  <div className="pointer-events-none absolute -left-12 top-4 h-16 w-16 rounded-full bg-gradient-to-br from-emerald-300/50 to-emerald-200/10 blur-xl" />
                 )}
               </div>
             );
           })}
         </div>
 
-        <div className="flex flex-col gap-3 text-xs text-white/60 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3 text-xs text-[color:var(--cp-text-secondary)] md:flex-row md:items-center md:justify-between">
           <button
             type="button"
             onClick={reset}
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 font-semibold uppercase tracking-wide text-white/70 hover:border-white/30 hover:text-white disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--cp-border)] bg-[var(--cp-gray-100)] px-4 py-1.5 font-semibold uppercase tracking-wide text-[color:var(--cp-text-secondary)] hover:border-[var(--cp-border-strong)] hover:text-[color:var(--cp-text-primary)] disabled:opacity-60"
             disabled={isSaving}
           >
             <span className="text-[10px]">⟲</span>
             Reset progress
           </button>
-          <div className="flex items-center gap-3 text-white/70">
-            {isSaving ? <span className="text-[10px] uppercase tracking-[0.3em] text-white/50">Syncing…</span> : null}
+          <div className="flex items-center gap-3 text-[color:var(--cp-text-secondary)]">
+            {isSaving ? <span className="text-[10px] uppercase tracking-[0.3em] text-[color:var(--cp-text-muted)]">Syncing…</span> : null}
             <span>
               Snap screenshots, clips, and repro steps—send them to{' '}
-              <a href="mailto:charmxpals.contact@gmail.com" className="text-white/80 hover:text-white">charmxpals.contact@gmail.com</a>.
+              <a href="mailto:charmxpals.contact@gmail.com" className="text-[color:var(--cp-text-primary)] hover:text-[var(--cp-red)]">charmxpals.contact@gmail.com</a>.
             </span>
           </div>
         </div>

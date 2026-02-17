@@ -24,10 +24,10 @@ export const betaChecklistTasks: BetaChecklistTask[] = [
   },
   {
     id: 'viewer',
-    title: 'Open the 3D viewer',
-    description: 'Rotate/zoom and note rendering issues.',
-    href: '/me',
-    tip: 'Test on multiple devices/screens if you can.',
+    title: 'Review character art gallery',
+    description: 'Open profile art and check portrait/card/banner assets.',
+    href: '/explore',
+    tip: 'Flag stretched crops, broken links, or missing files.',
   },
   {
     id: 'mini-game',

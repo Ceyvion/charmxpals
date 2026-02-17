@@ -1,26 +1,27 @@
 "use client";
 
 const stats = [
-  { value: '2.4K', label: 'Pals claimed' },
-  { value: '850+', label: 'Active players' },
-  { value: '12K+', label: 'Games played' },
-  { value: '99.8%', label: 'Uptime' },
+  { value: '2.4K', label: 'Pals claimed', color: 'var(--cp-red)' },
+  { value: '850+', label: 'Active players', color: 'var(--cp-cyan)' },
+  { value: '12K+', label: 'Games played', color: 'var(--cp-yellow)' },
+  { value: '99.8%', label: 'Uptime', color: 'var(--cp-green)' },
 ];
 
 export default function LiveStatsMarquee() {
   return (
-    <section className="relative py-10 border-y border-white/10 overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,_rgba(125,231,255,0.12),_rgba(0,0,0,0)_55%),_radial-gradient(circle_at_80%_0%,_rgba(255,185,154,0.12),_rgba(0,0,0,0)_55%)]" />
-
-      <div className="cp-container max-w-6xl relative z-10">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <section className="relative py-12 md:py-16 border-y-2 border-[var(--cp-border)] overflow-hidden bg-[var(--cp-white)]">
+      <div className="cp-container max-w-7xl relative z-10">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {stats.map((stat) => (
-            <div key={stat.label} className="cp-stat-card">
-              <div className="h-0.5 w-10 rounded-full bg-gradient-to-r from-cyan-300/70 to-amber-200/70 mb-3" />
-              <div className="text-2xl md:text-3xl font-display font-black text-white">
+            <div key={stat.label} className="cp-stat-card text-center md:text-left">
+              <div
+                className="h-1 w-10 rounded-[var(--cp-radius-sm)] mb-4 mx-auto md:mx-0"
+                style={{ background: stat.color }}
+              />
+              <div className="text-3xl md:text-4xl font-display font-black text-[var(--cp-text-primary)]">
                 {stat.value}
               </div>
-              <div className="text-[0.65rem] uppercase tracking-[0.28em] text-white/55 mt-1">
+              <div className="text-[0.65rem] uppercase tracking-[0.28em] text-[var(--cp-text-muted)] mt-1.5">
                 {stat.label}
               </div>
             </div>
