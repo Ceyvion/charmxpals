@@ -88,7 +88,6 @@ export default async function MePage() {
 
   return (
     <MeDashboard
-      userId={userId}
       userDisplayName={userDisplayName}
       ownedCount={ownedCount}
       characters={characters}

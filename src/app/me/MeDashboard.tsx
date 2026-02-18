@@ -18,7 +18,6 @@ type CharacterDisplay = {
 };
 
 type MeDashboardProps = {
-  userId: string;
   userDisplayName: string;
   ownedCount: number;
   characters: CharacterDisplay[];
@@ -77,7 +76,6 @@ function pickPreview(artRefs?: Record<string, string>): string | null {
 /* ── Component ── */
 
 export default function MeDashboard({
-  userId,
   userDisplayName,
   ownedCount,
   characters,
@@ -94,6 +92,16 @@ export default function MeDashboard({
     () => characters.find((c) => c.id === selectedId) ?? characters[0] ?? null,
     [characters, selectedId],
   );
+
+  useEffect(() => {
+    if (characters.length === 0) {
+      if (selectedId !== null) setSelectedId(null);
+      return;
+    }
+    if (!selectedId || !characters.some((character) => character.id === selectedId)) {
+      setSelectedId(characters[0].id);
+    }
+  }, [characters, selectedId]);
 
   const accentColor = useMemo(() => {
     if (selectedCharacter?.color) return selectedCharacter.color;
@@ -122,7 +130,9 @@ export default function MeDashboard({
 
   const lastClaimRelative = useMemo(() => {
     if (!lastClaimAtIso) return null;
-    return formatRelativeShort(new Date(lastClaimAtIso), new Date());
+    const parsedDate = new Date(lastClaimAtIso);
+    if (Number.isNaN(parsedDate.getTime())) return null;
+    return formatRelativeShort(parsedDate, new Date());
   }, [lastClaimAtIso]);
 
   return (
@@ -166,6 +176,11 @@ export default function MeDashboard({
                   {lastClaimRelative && (
                     <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">
                       Last claim {lastClaimRelative}
+                    </span>
+                  )}
+                  {newestPalName && (
+                    <span className="max-w-[220px] truncate text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">
+                      Newest {newestPalName}
                     </span>
                   )}
                 </div>
@@ -408,7 +423,10 @@ function CharacterShowcase({
               Stats
             </p>
             {statsEntries.map(([key, value]) => {
-              const v = Math.max(0, Math.min(100, Number(value)));
+              const numericValue = Number(value);
+              const v = Number.isFinite(numericValue)
+                ? Math.max(0, Math.min(100, numericValue))
+                : 0;
               const color = STAT_COLORS[key] ?? accentColor;
               return (
                 <div key={key}>
