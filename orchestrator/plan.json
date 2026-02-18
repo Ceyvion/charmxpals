@@ -159,7 +159,7 @@
     {
       "id": "UX-LEGACY-CHARACTER-RECOVERY-2026-02-17",
       "title": "Legacy character profile + art recovery",
-      "detail": "Restore missing legacy roster lore/art mappings and harden character profile routing to resolve id, slug, and lore-backed identifiers.",
+      "detail": "Restore missing legacy roster lore/art mappings, generate dedicated per-character art folders, and harden profile routing to resolve id, slug, and lore-backed identifiers.",
       "status": "done",
       "area": "fullstack"
     },

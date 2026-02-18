@@ -79,7 +79,7 @@ describe('resolveCharacterByIdentifier', () => {
     const repo = createRepo([]);
     const character = await resolveCharacterByIdentifier(repo, 'shadow-mantis');
     expect(character?.name).toBe('Shadow Mantis');
-    expect(character?.artRefs?.thumbnail).toBe('/assets/characters/shadow-stage/thumb.png');
+    expect(character?.artRefs?.thumbnail).toBe('/assets/characters/shadow-mantis/thumb.png');
   });
 
   it('resolves every requested legacy identifier with non-placeholder art', async () => {

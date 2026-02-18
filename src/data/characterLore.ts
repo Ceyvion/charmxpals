@@ -21,8 +21,8 @@ type StatKey = 'rhythm' | 'style' | 'power' | 'flow' | 'teamwork';
 
 export const worldTagline = 'When the music calls, the worlds collide.';
 
-function artRefsFor(slug: string, assetSlug: string = slug): Record<string, string> {
-  const base = `/assets/characters/${assetSlug}`;
+function artRefsFor(slug: string): Record<string, string> {
+  const base = `/assets/characters/${slug}`;
   return {
     signature: `${base}/signature.png`,
     thumbnail: `${base}/thumb.png`,
@@ -325,7 +325,7 @@ const legacyCharacterLore: CharacterLore[] = [
       teamwork: 71,
     },
     order: 201,
-    artRefs: artRefsFor('shadow-mantis', 'shadow-stage'),
+    artRefs: artRefsFor('shadow-mantis'),
   },
   {
     series: 'Legacy Apex',
@@ -349,7 +349,7 @@ const legacyCharacterLore: CharacterLore[] = [
       teamwork: 76,
     },
     order: 202,
-    artRefs: artRefsFor('storm-leviathan', 'storm-spine'),
+    artRefs: artRefsFor('storm-leviathan'),
   },
   {
     series: 'Legacy Apex',
@@ -373,7 +373,7 @@ const legacyCharacterLore: CharacterLore[] = [
       teamwork: 79,
     },
     order: 203,
-    artRefs: artRefsFor('tidal-serpent', 'rhythm-reef'),
+    artRefs: artRefsFor('tidal-serpent'),
   },
   {
     series: 'Legacy Vanguard',
@@ -397,7 +397,7 @@ const legacyCharacterLore: CharacterLore[] = [
       teamwork: 68,
     },
     order: 204,
-    artRefs: artRefsFor('aero-falcon', 'cloudline-harbor'),
+    artRefs: artRefsFor('aero-falcon'),
   },
   {
     series: 'Legacy Vanguard',
@@ -421,7 +421,7 @@ const legacyCharacterLore: CharacterLore[] = [
       teamwork: 80,
     },
     order: 205,
-    artRefs: artRefsFor('aurora-stag', 'aurora-circuit'),
+    artRefs: artRefsFor('aurora-stag'),
   },
   {
     series: 'Legacy Vanguard',
@@ -445,7 +445,7 @@ const legacyCharacterLore: CharacterLore[] = [
       teamwork: 78,
     },
     order: 206,
-    artRefs: artRefsFor('frost-wolf', 'glacier-hall'),
+    artRefs: artRefsFor('frost-wolf'),
   },
   {
     series: 'Legacy Vanguard',
@@ -469,7 +469,7 @@ const legacyCharacterLore: CharacterLore[] = [
       teamwork: 88,
     },
     order: 207,
-    artRefs: artRefsFor('vine-warden', 'moss-ruins'),
+    artRefs: artRefsFor('vine-warden'),
   },
   {
     series: 'Legacy Vanguard',
@@ -493,7 +493,7 @@ const legacyCharacterLore: CharacterLore[] = [
       teamwork: 72,
     },
     order: 208,
-    artRefs: artRefsFor('volt-lynx', 'thunder-steppe'),
+    artRefs: artRefsFor('volt-lynx'),
   },
   {
     series: 'Legacy Sentinel',
@@ -517,7 +517,7 @@ const legacyCharacterLore: CharacterLore[] = [
       teamwork: 75,
     },
     order: 209,
-    artRefs: artRefsFor('crystal-nymph', 'crystal-kingdom'),
+    artRefs: artRefsFor('crystal-nymph'),
   },
   {
     series: 'Legacy Sentinel',
@@ -541,7 +541,7 @@ const legacyCharacterLore: CharacterLore[] = [
       teamwork: 84,
     },
     order: 210,
-    artRefs: artRefsFor('quartz-sentinel', 'slate-hollows'),
+    artRefs: artRefsFor('quartz-sentinel'),
   },
   {
     series: 'Legacy Sentinel',
@@ -565,7 +565,7 @@ const legacyCharacterLore: CharacterLore[] = [
       teamwork: 86,
     },
     order: 211,
-    artRefs: artRefsFor('terra-golem', 'terra-tempo'),
+    artRefs: artRefsFor('terra-golem'),
   },
 ];
 

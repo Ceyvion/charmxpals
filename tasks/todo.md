@@ -26,6 +26,26 @@
 - Residual risk:
   - Legacy entries currently reuse curated art packs from related active realms (deterministic and non-placeholder) rather than bespoke one-off generated art per character.
 
+## Legacy Character Dedicated Art Plan (2026-02-17)
+
+- [x] Generate dedicated portrait art for each restored legacy character using the image generation workflow.
+- [x] Publish full per-character asset packs under `public/assets/characters/<slug>/` with required files (`signature`, `thumb`, `card`, `portrait`, `banner`, `sprite`).
+- [x] Repoint legacy lore mappings so each character resolves to its own slug folder (no shared fallback packs).
+- [x] Re-run targeted tests and production build verification.
+- [x] Document outcomes and any remaining risk.
+
+### Legacy Character Dedicated Art Review (2026-02-17)
+
+- Generated 11 dedicated portrait sources with `$imagegen` batch flow into `output/imagegen/legacy-characters/raw/`.
+- Created full asset packs for each slug:
+  - `shadow-mantis`, `storm-leviathan`, `tidal-serpent`, `aero-falcon`, `aurora-stag`, `frost-wolf`, `vine-warden`, `volt-lynx`, `crystal-nymph`, `quartz-sentinel`, `terra-golem`.
+- Updated `src/data/characterLore.ts` legacy entries to use direct slug art refs (for example `artRefsFor('shadow-mantis')`) instead of shared pack aliases.
+- Verification:
+  - `npm run test -- src/lib/characterLookup.test.ts` passes (4 tests).
+  - `npm run build` passes.
+- Residual risk:
+  - Derived assets (`thumb`, `card`, `banner`, `sprite`) are currently generated from each portrait source via deterministic resizing/cropping; if you want stylistically distinct per-file variants, run an additional image pass per asset type.
+
 - [x] Remove all user-facing 3D surfaces from home, character, and inventory experiences.
 - [x] Redesign character profile page around static art, stats, and battle CTAs.
 - [x] Expand roster dataset beyond initial beta set and wire deterministic local asset refs.
