@@ -1,8 +1,9 @@
 import Link from 'next/link';
 
-import { getRepo, type Character } from '@/lib/repo';
+import { getRepo } from '@/lib/repo';
 import { getSafeServerSession } from '@/lib/serverSession';
 import { getBetaChecklistProgress } from '@/lib/betaChecklistStore';
+import { withCharacterLore, type CharacterWithLore } from '@/lib/characterLore';
 import MeDashboard from './MeDashboard';
 
 export default async function MePage() {
@@ -34,10 +35,15 @@ export default async function MePage() {
 
   const repo = await getRepo();
   const ownerships = await repo.listOwnershipsByUser(userId);
-  const ownedRecords: Array<{ character: Character; ownedAt: Date | null }> = [];
+  const ownedRecords: Array<{ character: CharacterWithLore; ownedAt: Date | null }> = [];
   const characterIds = ownerships.map((ownership) => ownership.characterId);
   const ownedCharacters = await repo.getCharactersByIds(characterIds);
-  const characterById = new Map(ownedCharacters.map((character) => [character.id, character]));
+  const characterById = new Map<string, CharacterWithLore>();
+  for (const character of ownedCharacters) {
+    const enriched = withCharacterLore(character);
+    if (!enriched) continue;
+    characterById.set(character.id, enriched);
+  }
   for (const ownership of ownerships) {
     const character = characterById.get(ownership.characterId);
     if (!character) continue;

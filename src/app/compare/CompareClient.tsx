@@ -406,7 +406,6 @@ type StatComparison = {
   label: string;
   primaryValue: number;
   secondaryValue: number;
-  maxValue: number;
   leader: "primary" | "secondary" | "tie";
   delta: number;
 };
@@ -436,7 +435,7 @@ function StatsPanel({
           <div>
             <h2 className="font-display text-2xl font-bold text-[var(--cp-text-primary)] sm:text-3xl">Attribute Spread</h2>
             <p className="cp-muted mt-2 max-w-xl text-sm">
-              Bars pulse based on realm performance. Hover or tap each row for exact values; advantage badges show who dominates the category.
+              Each stat lane mirrors both dancers from a center axis so strengths read instantly without overlapping bars or hidden values.
             </p>
           </div>
           <div className="flex flex-col items-end text-right text-xs uppercase tracking-[0.32em] text-[var(--cp-text-secondary)]">
@@ -456,77 +455,64 @@ function StatsPanel({
 }
 
 function StatRow({ entry, primary, secondary }: { entry: StatComparison; primary: CompareCharacter; secondary: CompareCharacter }) {
-  const { key, label, delta, leader, maxValue, primaryValue, secondaryValue } = entry;
-  const primaryAccent = withAlpha(primary.color ?? FALLBACK_COLOR, 0.85);
-  const secondaryAccent = withAlpha(secondary.color ?? "#f472b6", 0.85);
+  const { key, label, delta, leader, primaryValue, secondaryValue } = entry;
+  const primaryAccent = withAlpha(primary.color ?? FALLBACK_COLOR, 0.92);
+  const secondaryAccent = withAlpha(secondary.color ?? "#f472b6", 0.92);
 
-  const leftWidth = maxValue === 0 ? 0 : Math.max(0, Math.min(1, primaryValue / maxValue));
-  const rightWidth = maxValue === 0 ? 0 : Math.max(0, Math.min(1, secondaryValue / maxValue));
-
-  const leftPercent = (() => {
-    if (leftWidth <= 0) {
-      if (leader === "primary") return 42;
-      if (leader === "tie") return 28;
-      return 0;
-    }
-    const minPercent = leader === "primary" ? 42 : leader === "tie" ? 28 : 12;
-    return Math.min(100, Math.max(leftWidth * 100, minPercent));
-  })();
-
-  const rightPercent = (() => {
-    if (rightWidth <= 0) {
-      if (leader === "secondary") return 42;
-      if (leader === "tie") return 28;
-      return 0;
-    }
-    const minPercent = leader === "secondary" ? 42 : leader === "tie" ? 28 : 12;
-    return Math.min(100, Math.max(rightWidth * 100, minPercent));
-  })();
+  const primaryHalfWidth = primaryValue <= 0 ? 0 : Math.max((primaryValue / 100) * 50, 6);
+  const secondaryHalfWidth = secondaryValue <= 0 ? 0 : Math.max((secondaryValue / 100) * 50, 6);
 
   const deltaBadge =
     leader === "tie"
-      ? "Locked in sync"
+      ? `${label} stays even`
       : `${leader === "primary" ? primary.name : secondary.name} +${Math.abs(delta)} ${label}`.replace(/\s{2,}/g, " ");
 
+  const leaderAccent = leader === "secondary" ? secondaryAccent : primaryAccent;
+  const badgeTone = leader === "tie" ? "border-[var(--cp-border)] bg-[var(--cp-gray-100)] text-[var(--cp-text-secondary)]" : "text-[var(--cp-text-primary)]";
+  const badgeStyle = leader === "tie" ? undefined : { background: withAlpha(leaderAccent, 0.12), borderColor: withAlpha(leaderAccent, 0.34) };
+
   return (
-    <div
-      key={key}
-      className="group relative grid gap-4 px-4 py-4 transition-colors duration-200 hover:bg-[var(--cp-gray-100)] sm:grid-cols-[minmax(0,220px)_minmax(0,1fr)] sm:px-6"
-    >
-      <div className="flex flex-col justify-center gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="text-xs uppercase tracking-[0.32em] text-[var(--cp-text-muted)]">{label}</div>
-          <div className="flex gap-2 text-sm text-[var(--cp-text-secondary)]">
-            <span>{primaryValue}</span>
-            <span className="text-[var(--cp-text-muted)]">/</span>
-            <span>{secondaryValue}</span>
-          </div>
+    <div key={key} className="group relative grid gap-4 px-4 py-5 transition-colors duration-200 hover:bg-[var(--cp-gray-100)] sm:grid-cols-[minmax(0,220px)_minmax(0,1fr)] sm:px-6">
+      <div className="flex flex-col justify-center gap-2">
+        <div className="text-xs uppercase tracking-[0.32em] text-[var(--cp-text-muted)]">{label}</div>
+        <div className="flex items-center gap-2 text-sm text-[var(--cp-text-secondary)]">
+          <span>{primaryValue}</span>
+          <span className="text-[var(--cp-text-muted)]">vs</span>
+          <span>{secondaryValue}</span>
         </div>
-        <span className="inline-flex items-center justify-center rounded-full border border-[var(--cp-border)] bg-[var(--cp-gray-100)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-[var(--cp-text-secondary)]">
+        <span
+          className={`inline-flex w-fit items-center rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.28em] ${badgeTone}`}
+          style={badgeStyle}
+        >
           {deltaBadge}
         </span>
       </div>
       <div className="grid gap-2">
-        <div className="relative h-10 overflow-hidden rounded-full border border-[var(--cp-border)] bg-[var(--cp-gray-100)]">
+        <div className="relative h-14 overflow-hidden rounded-2xl border border-[var(--cp-border)] bg-[linear-gradient(135deg,var(--cp-white),var(--cp-gray-100))]">
           <span
-            className="absolute inset-y-0 left-0 rounded-full"
+            className="absolute inset-y-2 right-1/2 rounded-l-full transition-[width] duration-300"
             style={{
-              width: `${leftPercent}%`,
-              background: `linear-gradient(90deg, ${withAlpha(primaryAccent, 0.85)}, ${withAlpha(primaryAccent, 0.45)})`,
-              boxShadow: "0 12px 35px rgba(99, 102, 241, 0.35)",
+              width: `${primaryHalfWidth}%`,
+              background: `linear-gradient(270deg, ${withAlpha(primaryAccent, 0.9)}, ${withAlpha(primaryAccent, 0.5)})`,
+              boxShadow: `0 12px 30px ${withAlpha(primaryAccent, 0.28)}`,
             }}
           />
           <span
-            className="absolute inset-y-0 right-0 rounded-full"
+            className="absolute inset-y-2 left-1/2 rounded-r-full transition-[width] duration-300"
             style={{
-              width: `${rightPercent}%`,
-              background: `linear-gradient(90deg, ${withAlpha(secondaryAccent, 0.45)}, ${withAlpha(secondaryAccent, 0.85)})`,
-              boxShadow: "0 12px 35px rgba(244, 114, 182, 0.32)",
+              width: `${secondaryHalfWidth}%`,
+              background: `linear-gradient(90deg, ${withAlpha(secondaryAccent, 0.5)}, ${withAlpha(secondaryAccent, 0.9)})`,
+              boxShadow: `0 12px 30px ${withAlpha(secondaryAccent, 0.28)}`,
             }}
           />
-          <div className="absolute inset-0 flex items-center justify-between px-4 text-[11px] font-semibold uppercase tracking-[0.3em] text-[var(--cp-text-primary)]">
+          <span className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-black/20" aria-hidden />
+          <div className="absolute inset-x-3 top-2 flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.28em] text-[var(--cp-text-secondary)]">
             <span>{primary.name}</span>
             <span>{secondary.name}</span>
+          </div>
+          <div className="absolute inset-x-3 bottom-2 grid grid-cols-2 text-xs font-semibold text-[var(--cp-text-primary)]">
+            <span className="text-left">{primaryValue}</span>
+            <span className="text-right">{secondaryValue}</span>
           </div>
         </div>
       </div>
@@ -601,7 +587,6 @@ function buildStatComparison(primary: CompareCharacter | null, secondary: Compar
     .map((key) => {
       const primaryValue = clampStat(primary.stats?.[key]);
       const secondaryValue = clampStat(secondary.stats?.[key]);
-      const maxValue = Math.max(primaryValue, secondaryValue, 1);
       const delta = primaryValue - secondaryValue;
       const leader: StatComparison["leader"] = delta === 0 ? "tie" : delta > 0 ? "primary" : "secondary";
       return {
@@ -609,7 +594,6 @@ function buildStatComparison(primary: CompareCharacter | null, secondary: Compar
         label: prettifyLabel(key),
         primaryValue,
         secondaryValue,
-        maxValue,
         leader,
         delta: Math.round(delta),
       };

@@ -39,7 +39,7 @@ export default function CharacterCard({ c, owned = false }: { c: CharacterBasic;
   const [hoverable, setHoverable] = useState(false);
   const [flipped, setFlipped] = useState(false);
 
-  const media = useMemo(() => c.artRefs?.thumbnail || null, [c.artRefs]);
+  const media = useMemo(() => pickCardMedia(c.artRefs), [c.artRefs]);
   const rating = useMemo(() => (c.rarity + 2.7).toFixed(1), [c.rarity]);
   const frontDescription = c.tagline || c.description;
   const backCopy = c.description || c.tagline;
@@ -275,6 +275,25 @@ export default function CharacterCard({ c, owned = false }: { c: CharacterBasic;
       )}
     </div>
   );
+}
+
+function pickCardMedia(artRefs?: Record<string, string>): string | null {
+  if (!artRefs) return null;
+  const priority = ["thumbnail", "portrait", "card", "full", "banner", "square", "signature", "sprite"] as const;
+  const valuesByKey = priority
+    .map((key) => artRefs[key])
+    .filter((value): value is string => typeof value === "string" && value.trim().length > 0);
+
+  const preferred = valuesByKey.find((value) => !isPlaceholderRef(value));
+  if (preferred) return preferred;
+
+  const anyValue = Object.values(artRefs).find((value): value is string => typeof value === "string" && value.trim().length > 0);
+  return anyValue ?? null;
+}
+
+function isPlaceholderRef(value: string): boolean {
+  const lower = value.toLowerCase();
+  return lower.includes("card-placeholder.svg") || lower.includes("/placeholder");
 }
 
 function useReducedMotion() {

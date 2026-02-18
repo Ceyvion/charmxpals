@@ -21,7 +21,7 @@ export default function AppNav() {
 
   return (
     <>
-      <nav className="hidden md:flex items-center gap-6 cp-nav cp-nav-orbit">
+      <nav className="hidden md:flex items-center gap-0.5 cp-nav cp-nav-orbit">
         {items.map((it) => {
           const active = isActivePath(pathname, it.href);
           return (
@@ -39,10 +39,10 @@ export default function AppNav() {
       </nav>
 
       <details className="relative md:hidden">
-        <summary className="list-none cursor-pointer rounded-[var(--cp-radius-sm)] border-2 border-[var(--cp-border)] bg-[var(--cp-white)] px-3 py-2 text-xs font-bold uppercase tracking-[0.16em] text-[var(--cp-text-primary)]">
+        <summary className="list-none cursor-pointer rounded-lg border border-white/[0.1] bg-white/[0.04] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">
           Menu
         </summary>
-        <nav className="absolute right-0 top-[calc(100%+8px)] z-30 min-w-[180px] rounded-[var(--cp-radius-md)] border-2 border-[var(--cp-border)] bg-[var(--cp-white)] p-2">
+        <nav className="absolute right-0 top-[calc(100%+8px)] z-50 min-w-[180px] rounded-xl border border-white/[0.08] bg-[#0c0c1a]/95 backdrop-blur-xl p-1.5">
           {items.map((it) => {
             const active = isActivePath(pathname, it.href);
             return (
@@ -50,7 +50,7 @@ export default function AppNav() {
                 key={`mobile-${it.href}`}
                 href={it.href}
                 prefetch={false}
-                className={`block rounded-[var(--cp-radius-sm)] px-3 py-2 text-sm font-semibold ${active ? 'bg-[var(--cp-gray-100)] text-[var(--cp-text-primary)]' : 'text-[var(--cp-text-secondary)] hover:bg-[var(--cp-gray-100)]'}`}
+                className={`block rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors ${active ? 'bg-white/[0.08] text-white' : 'text-white/40 hover:bg-white/[0.04] hover:text-white/70'}`}
                 aria-current={active ? 'page' : undefined}
               >
                 {it.label}

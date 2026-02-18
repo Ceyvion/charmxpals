@@ -1,10 +1,16 @@
 'use client';
 
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, useRef, useCallback, type CSSProperties } from 'react';
 import Link from 'next/link';
 
-import CharacterStats from '@/components/CharacterStats';
 import RevealOnView from '@/components/RevealOnView';
+import HexRadar from '@/components/champion/HexRadar';
+import StatBar from '@/components/champion/StatBar';
+import LoreCodex from '@/components/champion/LoreCodex';
+import CharacterGallery from '@/components/champion/CharacterGallery';
+import TraitBadge from '@/components/champion/TraitBadge';
+
+/* ── Types ── */
 
 type Character = {
   id: string;
@@ -25,503 +31,650 @@ type Character = {
   color?: string | null;
 };
 
-type TraitHighlight = {
-  id: string;
-  label: string;
-  value: string;
+/* ── Constants ── */
+
+const RARITY_CONFIG = [
+  { test: (r: number) => r >= 5, label: 'Legendary', gradient: 'from-yellow-300 via-orange-400 to-yellow-600', accent: '#fbbf24', glow: 'rgba(251,191,36,0.3)' },
+  { test: (r: number) => r >= 4, label: 'Epic', gradient: 'from-purple-300 via-fuchsia-400 to-purple-600', accent: '#a855f7', glow: 'rgba(168,85,247,0.3)' },
+  { test: () => true, label: 'Rare', gradient: 'from-sky-300 via-blue-400 to-indigo-500', accent: '#38bdf8', glow: 'rgba(56,189,248,0.3)' },
+] as const;
+
+const STAT_COLORS: Record<string, string> = {
+  rhythm: '#38bdf8',
+  style: '#e879f9',
+  power: '#fb7185',
+  flow: '#34d399',
+  teamwork: '#a78bfa',
 };
 
-type HighlightTone = {
-  border: string;
-  surface: string;
-  halo: string;
-  chipBg: string;
-  chipBorder: string;
-  chipText: string;
+const TRAIT_ICONS: Record<string, string> = {
+  coreCharm: '\u2756',
+  danceStyle: '\u2740',
+  vibe: '\u2734',
+  personality: '\u2662',
+  codeSeries: '\u25C8',
+  realm: '\u2726',
 };
 
-type GalleryTone = {
-  border: string;
-  labelBg: string;
-  labelText: string;
-  glow: string;
+const TRAIT_LABELS: Record<string, string> = {
+  coreCharm: 'Core Charm',
+  danceStyle: 'Dance Style',
+  vibe: 'Stage Vibe',
+  personality: 'Personality',
+  codeSeries: 'Code Series',
+  realm: 'Realm',
 };
 
-const rarityPalette = [
-  {
-    test: (rarity: number) => rarity >= 5,
-    label: 'Legendary',
-    gradient: 'from-yellow-300 via-orange-400 to-yellow-600',
-    accent: '#fbbf24',
-  },
-  {
-    test: (rarity: number) => rarity >= 4,
-    label: 'Epic',
-    gradient: 'from-purple-300 via-fuchsia-400 to-purple-600',
-    accent: '#a855f7',
-  },
-  {
-    test: () => true,
-    label: 'Rare',
-    gradient: 'from-sky-300 via-blue-400 to-indigo-500',
-    accent: '#38bdf8',
-  },
-];
+type SectionId = 'lore' | 'stats' | 'gallery' | 'traits';
 
-const HIGHLIGHT_TONES: Record<string, HighlightTone> = {
-  coreCharm: {
-    border: '#fda4af',
-    surface: 'linear-gradient(145deg, rgba(255, 230, 238, 0.98), rgba(255, 241, 223, 0.96))',
-    halo: 'radial-gradient(circle, rgba(251, 113, 133, 0.34), transparent 70%)',
-    chipBg: 'rgba(255, 228, 232, 0.95)',
-    chipBorder: 'rgba(251, 113, 133, 0.6)',
-    chipText: '#9f1239',
-  },
-  danceStyle: {
-    border: '#93c5fd',
-    surface: 'linear-gradient(145deg, rgba(226, 240, 255, 0.98), rgba(237, 252, 255, 0.95))',
-    halo: 'radial-gradient(circle, rgba(96, 165, 250, 0.32), transparent 72%)',
-    chipBg: 'rgba(224, 242, 254, 0.95)',
-    chipBorder: 'rgba(59, 130, 246, 0.55)',
-    chipText: '#1e3a8a',
-  },
-  vibe: {
-    border: '#a7f3d0',
-    surface: 'linear-gradient(145deg, rgba(228, 255, 241, 0.97), rgba(241, 255, 249, 0.95))',
-    halo: 'radial-gradient(circle, rgba(52, 211, 153, 0.3), transparent 72%)',
-    chipBg: 'rgba(209, 250, 229, 0.95)',
-    chipBorder: 'rgba(16, 185, 129, 0.52)',
-    chipText: '#065f46',
-  },
-  personality: {
-    border: '#c4b5fd',
-    surface: 'linear-gradient(145deg, rgba(238, 233, 255, 0.98), rgba(249, 240, 255, 0.95))',
-    halo: 'radial-gradient(circle, rgba(139, 92, 246, 0.3), transparent 72%)',
-    chipBg: 'rgba(237, 233, 254, 0.95)',
-    chipBorder: 'rgba(139, 92, 246, 0.52)',
-    chipText: '#5b21b6',
-  },
-  codeSeries: {
-    border: '#fcd34d',
-    surface: 'linear-gradient(145deg, rgba(255, 248, 226, 0.98), rgba(255, 240, 206, 0.95))',
-    halo: 'radial-gradient(circle, rgba(245, 158, 11, 0.3), transparent 72%)',
-    chipBg: 'rgba(254, 243, 199, 0.95)',
-    chipBorder: 'rgba(217, 119, 6, 0.5)',
-    chipText: '#92400e',
-  },
-  realm: {
-    border: '#67e8f9',
-    surface: 'linear-gradient(145deg, rgba(224, 253, 255, 0.98), rgba(236, 254, 255, 0.95))',
-    halo: 'radial-gradient(circle, rgba(6, 182, 212, 0.3), transparent 72%)',
-    chipBg: 'rgba(207, 250, 254, 0.95)',
-    chipBorder: 'rgba(8, 145, 178, 0.52)',
-    chipText: '#155e75',
-  },
-};
+/* ── Helpers ── */
 
-const DEFAULT_HIGHLIGHT_TONE: HighlightTone = {
-  border: '#cbd5e1',
-  surface: 'linear-gradient(145deg, rgba(248, 250, 252, 0.98), rgba(241, 245, 249, 0.95))',
-  halo: 'radial-gradient(circle, rgba(148, 163, 184, 0.28), transparent 72%)',
-  chipBg: 'rgba(241, 245, 249, 0.98)',
-  chipBorder: 'rgba(148, 163, 184, 0.5)',
-  chipText: '#334155',
-};
-
-const GALLERY_TONES: Record<string, GalleryTone> = {
-  signature: {
-    border: '#fda4af',
-    labelBg: '#ffe4e6',
-    labelText: '#9f1239',
-    glow: 'radial-gradient(circle, rgba(251, 113, 133, 0.24), transparent 70%)',
-  },
-  banner: {
-    border: '#67e8f9',
-    labelBg: '#cffafe',
-    labelText: '#155e75',
-    glow: 'radial-gradient(circle, rgba(34, 211, 238, 0.24), transparent 70%)',
-  },
-  portrait: {
-    border: '#a7f3d0',
-    labelBg: '#d1fae5',
-    labelText: '#065f46',
-    glow: 'radial-gradient(circle, rgba(16, 185, 129, 0.24), transparent 70%)',
-  },
-  card: {
-    border: '#c4b5fd',
-    labelBg: '#ede9fe',
-    labelText: '#5b21b6',
-    glow: 'radial-gradient(circle, rgba(139, 92, 246, 0.24), transparent 70%)',
-  },
-  thumbnail: {
-    border: '#fcd34d',
-    labelBg: '#fef3c7',
-    labelText: '#92400e',
-    glow: 'radial-gradient(circle, rgba(245, 158, 11, 0.22), transparent 72%)',
-  },
-  full: {
-    border: '#93c5fd',
-    labelBg: '#dbeafe',
-    labelText: '#1e3a8a',
-    glow: 'radial-gradient(circle, rgba(59, 130, 246, 0.24), transparent 72%)',
-  },
-  sprite: {
-    border: '#fdba74',
-    labelBg: '#ffedd5',
-    labelText: '#9a3412',
-    glow: 'radial-gradient(circle, rgba(249, 115, 22, 0.2), transparent 72%)',
-  },
-};
-
-const DEFAULT_GALLERY_TONE: GalleryTone = {
-  border: '#cbd5e1',
-  labelBg: '#f1f5f9',
-  labelText: '#334155',
-  glow: 'radial-gradient(circle, rgba(100, 116, 139, 0.2), transparent 72%)',
-};
-
-function pickPrimaryArt(artRefs?: Record<string, string>): string | null {
-  if (!artRefs) return null;
-  return (
-    artRefs.signature ||
-    artRefs.banner ||
-    artRefs.full ||
-    artRefs.portrait ||
-    artRefs.card ||
-    artRefs.thumbnail ||
-    Object.values(artRefs)[0] ||
-    null
-  );
+function getRarity(rarity: number) {
+  return RARITY_CONFIG.find((r) => r.test(rarity)) ?? RARITY_CONFIG[RARITY_CONFIG.length - 1];
 }
 
-function pickSignatureArt(artRefs?: Record<string, string>): string | null {
+function pickHeroArt(artRefs?: Record<string, string>): string | null {
   if (!artRefs) return null;
-  return (
-    artRefs.signature ||
-    artRefs.banner ||
-    artRefs.portrait ||
-    artRefs.card ||
-    artRefs.thumbnail ||
-    artRefs.full ||
-    Object.values(artRefs)[0] ||
-    null
-  );
-}
-
-function pickGallery(artRefs?: Record<string, string>): Array<{ key: string; src: string }> {
-  if (!artRefs) return [];
-  const preferredOrder = ['signature', 'banner', 'portrait', 'card', 'thumbnail', 'full', 'sprite'];
-  const seen = new Set<string>();
-  const gallery: Array<{ key: string; src: string }> = [];
-  for (const key of preferredOrder) {
-    const value = artRefs[key];
-    if (!value || seen.has(value)) continue;
-    seen.add(value);
-    gallery.push({ key, src: value });
-  }
-  for (const [key, value] of Object.entries(artRefs)) {
-    if (!value || seen.has(value)) continue;
-    seen.add(value);
-    gallery.push({ key, src: value });
-  }
-  return gallery;
+  return artRefs.signature || artRefs.banner || artRefs.full || artRefs.portrait || artRefs.card || artRefs.thumbnail || Object.values(artRefs)[0] || null;
 }
 
 function buildArtCandidates(artRefs?: Record<string, string>, slug?: string | null): string[] {
   const candidates: string[] = [];
-  const push = (value: string | null | undefined) => {
-    if (value) candidates.push(value);
-  };
-
+  const push = (v: string | undefined | null) => { if (v) candidates.push(v); };
   if (artRefs) {
-    push(artRefs.signature);
-    push(artRefs.banner);
-    push(artRefs.portrait);
-    push(artRefs.card);
-    push(artRefs.thumbnail);
-    push(artRefs.full);
-    push(artRefs.sprite);
-    for (const value of Object.values(artRefs)) push(value);
+    push(artRefs.signature); push(artRefs.banner); push(artRefs.portrait); push(artRefs.card);
+    push(artRefs.thumbnail); push(artRefs.full); push(artRefs.sprite);
+    for (const v of Object.values(artRefs)) push(v);
   }
-
   if (slug) {
     const base = `/assets/characters/${slug}`;
-    push(`${base}/signature.png`);
-    push(`${base}/banner.png`);
-    push(`${base}/portrait.png`);
-    push(`${base}/card.png`);
-    push(`${base}/thumb.png`);
+    push(`${base}/signature.png`); push(`${base}/banner.png`);
+    push(`${base}/portrait.png`); push(`${base}/card.png`); push(`${base}/thumb.png`);
   }
-
   push('/card-placeholder.svg');
   return [...new Set(candidates)];
 }
 
-function getRarityDetails(rarity: number) {
-  return rarityPalette.find((entry) => entry.test(rarity)) ?? rarityPalette[rarityPalette.length - 1];
+function buildGallery(artRefs?: Record<string, string>): Array<{ key: string; src: string }> {
+  if (!artRefs) return [];
+  const order = ['signature', 'banner', 'portrait', 'card', 'thumbnail', 'full', 'sprite'];
+  const seen = new Set<string>();
+  const gallery: Array<{ key: string; src: string }> = [];
+  for (const key of order) {
+    const v = artRefs[key];
+    if (!v || seen.has(v)) continue;
+    seen.add(v);
+    gallery.push({ key, src: v });
+  }
+  for (const [key, v] of Object.entries(artRefs)) {
+    if (!v || seen.has(v)) continue;
+    seen.add(v);
+    gallery.push({ key, src: v });
+  }
+  return gallery;
 }
 
-function buildTraitHighlights(character: Character): TraitHighlight[] {
-  const rows: Array<{ id: string; label: string; value: string | null | undefined }> = [
-    { id: 'coreCharm', label: 'Core Charm', value: character.coreCharm },
-    { id: 'danceStyle', label: 'Dance Style', value: character.danceStyle },
-    { id: 'vibe', label: 'Stage Vibe', value: character.vibe },
-    { id: 'personality', label: 'Personality', value: character.personality },
-    { id: 'codeSeries', label: 'Code Series', value: character.codeSeries },
-    { id: 'realm', label: 'Realm', value: character.realm },
-  ];
-  return rows
-    .filter((row) => Boolean(row.value))
-    .map((row) => ({
-      id: row.id,
-      label: row.label,
-      value: String(row.value),
+function buildTraits(character: Character) {
+  const keys = ['coreCharm', 'danceStyle', 'vibe', 'personality', 'codeSeries', 'realm'] as const;
+  return keys
+    .filter((k) => character[k])
+    .map((k) => ({
+      id: k,
+      label: TRAIT_LABELS[k] ?? k,
+      value: String(character[k]),
+      icon: TRAIT_ICONS[k] ?? '\u2022',
     }));
 }
 
-function getHighlightTone(id: string): HighlightTone {
-  return HIGHLIGHT_TONES[id] ?? DEFAULT_HIGHLIGHT_TONE;
+function prettifyStat(key: string): string {
+  return key.replace(/[_-]+/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase());
 }
 
-function getGalleryTone(key: string): GalleryTone {
-  return GALLERY_TONES[key] ?? DEFAULT_GALLERY_TONE;
+function normalizeStats(stats?: Record<string, number> | null): Record<string, number> {
+  if (!stats) return {};
+  const normalized: Record<string, number> = {};
+  for (const [key, raw] of Object.entries(stats)) {
+    const value = Number(raw);
+    if (!Number.isFinite(value)) continue;
+    normalized[key] = Math.min(100, Math.max(0, Math.round(value)));
+  }
+  return normalized;
 }
 
-export default function CharacterPageClient({ character }: { character: Character }) {
-  const rarity = useMemo(() => getRarityDetails(character.rarity), [character.rarity]);
-  const artCandidates = useMemo(() => buildArtCandidates(character.artRefs, character.slug), [character.artRefs, character.slug]);
-  const heroArt = useMemo(() => pickPrimaryArt(character.artRefs) ?? artCandidates[0] ?? null, [character.artRefs, artCandidates]);
-  const defaultSignatureArt = useMemo(() => pickSignatureArt(character.artRefs) ?? artCandidates[0] ?? null, [character.artRefs, artCandidates]);
-  const gallery = useMemo(() => pickGallery(character.artRefs), [character.artRefs]);
-  const galleryPreview = useMemo(() => gallery.slice(0, 5), [gallery]);
-  const highlights = useMemo(() => buildTraitHighlights(character), [character]);
-  const stats = useMemo(() => character.stats ?? {}, [character.stats]);
-  const accentColor = character.color ?? rarity.accent;
-  const realmLabel = character.realm ? character.realm.toUpperCase() : 'UNKNOWN REALM';
-  const [signatureIndex, setSignatureIndex] = useState(0);
-
-  useEffect(() => {
-    setSignatureIndex(0);
-  }, [character.id]);
-
-  const signatureArt = artCandidates[signatureIndex] ?? defaultSignatureArt;
+/* ── Floating particles ── */
+function Particles({ count, color }: { count: number; color: string }) {
+  const particles = useMemo(() => {
+    return Array.from({ length: count }, (_, i) => ({
+      id: i,
+      left: `${Math.random() * 100}%`,
+      size: 1 + Math.random() * 2,
+      duration: 8 + Math.random() * 12,
+      delay: Math.random() * 10,
+      opacity: 0.2 + Math.random() * 0.4,
+    }));
+  }, [count]);
 
   return (
-    <div className="min-h-screen bg-[var(--cp-bg)] text-[var(--cp-text-primary)]">
-      <section className="relative overflow-hidden cp-section-dark">
+    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+      {particles.map((p) => (
         <div
-          className="absolute inset-0 bg-cover bg-center"
+          key={p.id}
+          className="cp-profile-particle"
           style={{
-            backgroundImage: heroArt
-              ? `linear-gradient(120deg, rgba(10,10,10,0.93) 10%, rgba(10,10,10,0.84) 42%, rgba(10,10,10,0.74) 70%, rgba(10,10,10,0.88) 100%), url(${heroArt})`
-              : `radial-gradient(circle at 12% 22%, ${accentColor}55, transparent 46%), linear-gradient(140deg, rgba(8,13,26,0.9), rgba(13,25,48,0.75))`,
-          }}
+            '--accent-color': color,
+            left: p.left,
+            bottom: '-10px',
+            width: p.size,
+            height: p.size,
+            animationDuration: `${p.duration}s`,
+            animationDelay: `${p.delay}s`,
+            opacity: p.opacity,
+            background: color,
+          } as CSSProperties}
         />
-        <div className="relative mx-auto grid max-w-6xl gap-10 px-6 py-14 md:px-10 lg:grid-cols-[1.15fr_0.85fr] lg:py-20">
-          <RevealOnView className="space-y-7">
-            <div className="flex flex-wrap items-center gap-4 text-xs uppercase tracking-[0.32em] text-[var(--cp-gray-400)] md:text-sm">
-              <span>{realmLabel}</span>
-              <span className="h-px w-10 bg-[var(--cp-gray-700)]" />
-              <span>Champion Profile</span>
+      ))}
+    </div>
+  );
+}
+
+/* ── Main Component ── */
+
+export default function CharacterPageClient({ character }: { character: Character }) {
+  const rarity = useMemo(() => getRarity(character.rarity), [character.rarity]);
+  const artCandidates = useMemo(() => buildArtCandidates(character.artRefs, character.slug), [character.artRefs, character.slug]);
+  const heroArt = useMemo(() => pickHeroArt(character.artRefs) ?? artCandidates[0] ?? null, [character.artRefs, artCandidates]);
+  const gallery = useMemo(() => buildGallery(character.artRefs), [character.artRefs]);
+  const traits = useMemo(() => buildTraits(character), [character]);
+  const stats = useMemo(() => normalizeStats(character.stats), [character.stats]);
+  const statEntries = useMemo(
+    () => Object.entries(stats).sort((a, b) => Number(b[1]) - Number(a[1])),
+    [stats],
+  );
+  const hasLoreSection = Boolean(character.description);
+  const hasStandaloneTraits = !hasLoreSection && traits.length > 0;
+  const accentColor = character.color ?? rarity.accent;
+  const realmLabel = character.realm ? character.realm.toUpperCase() : 'UNKNOWN REALM';
+  const [artIndex, setArtIndex] = useState(0);
+  const [activeSection, setActiveSection] = useState<SectionId>('lore');
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const heroRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => { setArtIndex(0); }, [character.id]);
+
+  const currentArt = artCandidates[artIndex] ?? heroArt;
+
+  // Hero parallax on mouse move
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!heroRef.current) return;
+    const rect = heroRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width - 0.5) * 2;
+    const y = ((e.clientY - rect.top) / rect.height - 0.5) * 2;
+    setMousePos({ x, y });
+  }, []);
+
+  // Compute overall power rating
+  const avgStat = statEntries.length > 0 ? Math.round(statEntries.reduce((s, [, v]) => s + Number(v), 0) / statEntries.length) : 0;
+
+  const sections: { id: SectionId; label: string; available: boolean }[] = [
+    { id: 'lore', label: 'Lore', available: hasLoreSection },
+    { id: 'stats', label: 'Stats', available: statEntries.length > 0 },
+    { id: 'gallery', label: 'Gallery', available: gallery.length > 0 },
+    { id: 'traits', label: 'Identity', available: hasStandaloneTraits },
+  ];
+
+  const availableSections = sections.filter((s) => s.available);
+
+  useEffect(() => {
+    if (!availableSections.length) return;
+    if (availableSections.some((s) => s.id === activeSection)) return;
+    setActiveSection(availableSections[0].id);
+  }, [availableSections, activeSection]);
+
+  return (
+    <div
+      className="min-h-screen bg-[#060610] text-white"
+      style={{ '--accent-color': accentColor } as CSSProperties}
+    >
+      {/* ═══ HERO SECTION ═══ */}
+      <section
+        ref={heroRef}
+        className="relative overflow-hidden"
+        onMouseMove={handleMouseMove}
+      >
+        {/* Background layers */}
+        <div className="absolute inset-0">
+          {/* Base image with heavy overlay */}
+          {heroArt && (
+            <div
+              className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out"
+              style={{
+                backgroundImage: `url(${heroArt})`,
+                transform: `scale(1.05) translate(${mousePos.x * -8}px, ${mousePos.y * -5}px)`,
+                filter: 'blur(2px) saturate(0.6)',
+              }}
+            />
+          )}
+          {/* Gradient overlays */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#060610]/80 via-[#060610]/60 to-[#060610]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#060610]/90 via-transparent to-[#060610]/70" />
+          {/* Accent glow */}
+          <div
+            className="cp-profile-glow pointer-events-none absolute left-1/4 top-1/3 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[120px]"
+            style={{ backgroundColor: `${accentColor}15` }}
+          />
+          <div
+            className="cp-profile-glow pointer-events-none absolute bottom-0 right-1/4 h-[300px] w-[400px] rounded-full blur-[100px]"
+            style={{ backgroundColor: `${accentColor}10`, animationDelay: '2s' }}
+          />
+        </div>
+
+        {/* Particles */}
+        <Particles count={15} color={accentColor} />
+
+        {/* Hero content */}
+        <div className="relative mx-auto grid max-w-7xl gap-8 px-6 pb-8 pt-16 md:px-10 lg:grid-cols-[1fr_0.85fr] lg:gap-12 lg:pb-12 lg:pt-24">
+          {/* Left: Character info */}
+          <RevealOnView className="flex flex-col justify-center space-y-6">
+            {/* Realm & faction kicker */}
+            <div className="flex flex-wrap items-center gap-3">
+              <span
+                className="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.3em]"
+                style={{
+                  borderColor: `${accentColor}40`,
+                  backgroundColor: `${accentColor}10`,
+                  color: `${accentColor}cc`,
+                }}
+              >
+                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: accentColor }} />
+                {realmLabel}
+              </span>
+              {character.codeSeries && (
+                <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-white/30">
+                  {character.codeSeries}
+                </span>
+              )}
             </div>
 
+            {/* Name */}
             <div>
-              <h1 className="font-display text-6xl font-black leading-[0.86] tracking-tight text-[var(--cp-white)] md:text-7xl">{character.name}</h1>
-              {character.title && <p className="mt-3 text-sm uppercase tracking-[0.28em] text-[var(--cp-gray-400)] md:text-base">{character.title}</p>}
+              <h1 className="font-display text-6xl font-black leading-[0.88] tracking-tight md:text-8xl">
+                <span className="block text-white">{character.name}</span>
+              </h1>
+              {character.title && (
+                <p
+                  className="mt-3 text-sm font-semibold uppercase tracking-[0.25em] md:text-base"
+                  style={{ color: `${accentColor}99` }}
+                >
+                  {character.title}
+                </p>
+              )}
             </div>
 
+            {/* Rarity + Power */}
             <div className="flex flex-wrap items-center gap-4">
-              <span className={`inline-flex items-center rounded-[var(--cp-radius-sm)] border-2 border-[var(--cp-black)] bg-gradient-to-r px-3 py-1 text-xs font-black ${rarity.gradient} text-[var(--cp-black)]`}>
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-md bg-gradient-to-r px-3 py-1.5 text-xs font-black uppercase tracking-wider ${rarity.gradient} text-black`}
+              >
+                <span className="h-1 w-1 rounded-full bg-black/40" />
                 {rarity.label}
               </span>
-              <span className="text-sm font-semibold text-[var(--cp-gray-300)]">
-                Power Index <span className="text-[var(--cp-white)]">{(character.rarity + 2.7).toFixed(1)}</span>
-              </span>
+              {avgStat > 0 && (
+                <span className="flex items-baseline gap-1.5 text-sm text-white/50">
+                  Power
+                  <span className="font-display text-xl font-bold text-white">{avgStat}</span>
+                </span>
+              )}
             </div>
 
-            {character.tagline && <p className="max-w-3xl text-2xl italic text-[var(--cp-gray-100)] md:text-3xl">“{character.tagline}”</p>}
-
-            {character.description && (
-              <p className="max-w-3xl text-sm leading-7 text-[var(--cp-gray-300)] md:text-base">
-                {character.description}
+            {/* Tagline */}
+            {character.tagline && (
+              <p className="max-w-lg border-l-2 pl-4 text-lg italic leading-relaxed text-white/50 md:text-xl" style={{ borderColor: `${accentColor}55` }}>
+                &ldquo;{character.tagline}&rdquo;
               </p>
             )}
 
+            {/* CTA */}
             <div className="flex flex-wrap gap-3 pt-2">
-              <Link href="/arena" className="cp-cta-primary">
+              <Link
+                href="/arena"
+                className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-sm font-bold uppercase tracking-wider text-black transition-all duration-200 hover:brightness-110"
+                style={{ backgroundColor: accentColor }}
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13.2 3.5 6.5 13h5l-.7 7.5 6.7-9.5h-5l.7-7.5Z" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 Battle Arena
               </Link>
-              <Link href="/play" className="cp-cta-ghost">
-                Game Hub
-              </Link>
-              <Link href="/explore" className="cp-cta-ghost">
+              <Link
+                href="/explore"
+                className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-6 py-3 text-sm font-semibold uppercase tracking-wider text-white/70 transition-colors duration-200 hover:border-white/30 hover:text-white"
+              >
                 Back to Roster
               </Link>
             </div>
           </RevealOnView>
 
-          <RevealOnView>
-            <div className="overflow-hidden rounded-[var(--cp-radius-lg)] border-2 border-[var(--cp-gray-700)] bg-[rgba(10,10,10,0.7)]">
-              <div className="border-b-2 border-[var(--cp-gray-700)] px-4 py-3 text-[11px] uppercase tracking-[0.3em] text-[var(--cp-gray-400)]">Signature Art</div>
-              {signatureArt ? (
-                <img
-                  src={signatureArt}
-                  alt={character.name}
-                  className="h-[62vh] min-h-[420px] w-full object-cover object-center"
-                  loading="eager"
-                  decoding="async"
-                  onError={() => {
-                    setSignatureIndex((index) => {
-                      if (index >= artCandidates.length - 1) return index;
-                      return index + 1;
-                    });
-                  }}
-                />
-              ) : (
-                <div className="flex h-[420px] items-center justify-center bg-[var(--cp-gray-900)] text-5xl font-black text-[var(--cp-gray-400)]">
-                  {character.name.slice(0, 2).toUpperCase()}
+          {/* Right: Character art */}
+          <RevealOnView delay={100} className="relative flex items-center justify-center">
+            <div className="relative w-full max-w-[480px]">
+              {/* Art glow backdrop */}
+              <div
+                className="cp-profile-glow pointer-events-none absolute inset-0 scale-110 rounded-3xl blur-3xl"
+                style={{ backgroundColor: `${accentColor}12` }}
+              />
+
+              {/* Art frame */}
+              <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-black/30 backdrop-blur-sm">
+                {/* Top bar */}
+                <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-2.5">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/30">Signature Art</span>
+                  <div className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: accentColor }} />
+                    <span className="text-[10px] text-white/25">LIVE</span>
+                  </div>
                 </div>
-              )}
-            </div>
-          </RevealOnView>
-        </div>
-      </section>
 
-      <section className="border-t-2 border-[var(--cp-border)] bg-[var(--cp-bg)]">
-        <div className="mx-auto grid max-w-6xl gap-10 px-6 py-14 md:px-10 lg:grid-cols-[1.1fr_0.9fr]">
-          <RevealOnView className="cp-panel p-8">
-            <div className="mb-7 flex items-center justify-between">
-              <h2 className="font-display text-3xl font-bold tracking-tight text-[var(--cp-text-primary)]">Performance Metrics</h2>
-              <span className="text-[11px] uppercase tracking-[0.3em] text-[var(--cp-text-muted)]">Stats</span>
-            </div>
-            {Object.keys(stats).length > 0 ? (
-              <div className="rounded-[var(--cp-radius-lg)] border-2 border-[var(--cp-gray-700)] bg-[var(--cp-black)] p-4">
-                <CharacterStats stats={stats} />
-              </div>
-            ) : (
-              <p className="text-sm text-[var(--cp-text-muted)]">Detailed metrics are syncing for this character.</p>
-            )}
-          </RevealOnView>
+                {/* Image */}
+                {currentArt ? (
+                  <img
+                    src={currentArt}
+                    alt={character.name}
+                    className="h-[55vh] min-h-[380px] w-full object-cover object-center transition-transform duration-700 ease-out"
+                    style={{
+                      transform: `scale(1.02) translate(${mousePos.x * 4}px, ${mousePos.y * 3}px)`,
+                    }}
+                    loading="eager"
+                    decoding="async"
+                    onError={() => {
+                      setArtIndex((i) => (i >= artCandidates.length - 1 ? i : i + 1));
+                    }}
+                  />
+                ) : (
+                  <div className="flex h-[380px] items-center justify-center bg-white/[0.02] text-5xl font-black text-white/10">
+                    {character.name.slice(0, 2).toUpperCase()}
+                  </div>
+                )}
 
-          <RevealOnView className="space-y-6">
-            <div className="cp-panel p-8">
-              <div className="flex items-end justify-between gap-3">
-                <h3 className="font-display text-2xl font-semibold text-[var(--cp-text-primary)]">Identity Highlights</h3>
-                <span className="rounded-[var(--cp-radius-sm)] border border-[var(--cp-border)] bg-[var(--cp-white)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--cp-text-muted)]">
-                  Spotlight
-                </span>
-              </div>
-              {highlights.length > 0 ? (
-                <dl className="mt-6 grid gap-4 sm:grid-cols-2">
-                  {highlights.map((trait) => {
-                    const tone = getHighlightTone(trait.id);
-                    const cardStyle: CSSProperties = {
-                      borderColor: tone.border,
-                      backgroundImage: tone.surface,
-                    };
-                    const chipStyle: CSSProperties = {
-                      backgroundColor: tone.chipBg,
-                      borderColor: tone.chipBorder,
-                      color: tone.chipText,
-                    };
-
-                    return (
-                      <div
-                        key={trait.id}
-                        className="group relative overflow-hidden rounded-[var(--cp-radius-md)] border-2 px-4 py-4 transition-transform duration-200 hover:-translate-y-0.5"
-                        style={cardStyle}
-                      >
-                        <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full opacity-70 blur-2xl" style={{ backgroundImage: tone.halo }} />
-                        <dt className="relative">
-                          <span className="inline-flex items-center rounded-[var(--cp-radius-sm)] border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.22em]" style={chipStyle}>
-                            {trait.label}
-                          </span>
-                        </dt>
-                        <dd className="relative mt-3 text-sm leading-relaxed text-[var(--cp-text-primary)]">{trait.value}</dd>
-                      </div>
-                    );
-                  })}
-                </dl>
-              ) : (
-                <p className="mt-4 text-sm text-[var(--cp-text-muted)]">Profile metadata is still being expanded for this champion.</p>
-              )}
-            </div>
-
-            <div className="cp-panel p-8">
-              <h3 className="font-display text-2xl font-semibold text-[var(--cp-text-primary)]">Quick Links</h3>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <Link href="/claim" className="rounded-[var(--cp-radius-md)] border-2 border-[var(--cp-border)] bg-[var(--cp-white)] px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.16em] text-[var(--cp-text-secondary)] transition-colors hover:border-[var(--cp-border-strong)] hover:text-[var(--cp-text-primary)]">
-                  Claim Codes
-                </Link>
-                <Link href="/compare" className="rounded-[var(--cp-radius-md)] border-2 border-[var(--cp-border)] bg-[var(--cp-white)] px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.16em] text-[var(--cp-text-secondary)] transition-colors hover:border-[var(--cp-border-strong)] hover:text-[var(--cp-text-primary)]">
-                  Stat Compare
-                </Link>
-                <Link href="/plaza" className="rounded-[var(--cp-radius-md)] border-2 border-[var(--cp-border)] bg-[var(--cp-white)] px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.16em] text-[var(--cp-text-secondary)] transition-colors hover:border-[var(--cp-border-strong)] hover:text-[var(--cp-text-primary)]">
-                  Social Plaza
-                </Link>
-                <Link href="/arena" className="rounded-[var(--cp-radius-md)] border-2 border-[var(--cp-border)] bg-[var(--cp-white)] px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.16em] text-[var(--cp-text-secondary)] transition-colors hover:border-[var(--cp-border-strong)] hover:text-[var(--cp-text-primary)]">
-                  Rift Arena
-                </Link>
+                {/* Scanline effect */}
+                <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(255,255,255,0.01)_2px,rgba(255,255,255,0.01)_4px)]" />
               </div>
             </div>
           </RevealOnView>
         </div>
+
+        {/* Bottom fade into content */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#060610] to-transparent" />
       </section>
 
-      {gallery.length > 0 && (
-        <section className="border-t-2 border-[var(--cp-border)] bg-[var(--cp-gray-100)] py-10">
-          <div className="mx-auto max-w-6xl px-6 md:px-10">
-            <RevealOnView className="cp-panel p-6">
-              <div className="flex items-end justify-between gap-4">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.34em] text-[var(--cp-text-muted)]">Asset Set</p>
-                  <h2 className="font-display text-3xl font-bold text-[var(--cp-text-primary)]">Character Gallery</h2>
-                  <p className="mt-1 text-sm text-[var(--cp-text-muted)]">Compact reel of the key visual variants.</p>
-                </div>
-                <span className="rounded-[var(--cp-radius-sm)] border-2 border-[var(--cp-border)] bg-[var(--cp-white)] px-3 py-1 text-xs uppercase tracking-[0.2em] text-[var(--cp-text-secondary)]">
-                  {gallery.length} assets
-                </span>
-              </div>
-              <div className="mt-5 flex gap-3 overflow-x-auto pb-2 pr-1">
-                {galleryPreview.map((item, index) => {
-                  const tone = getGalleryTone(item.key);
-                  return (
-                    <figure
-                      key={`${item.key}-${item.src}`}
-                      className="group relative min-w-[152px] overflow-hidden rounded-[var(--cp-radius-md)] border-2 bg-[var(--cp-white)]"
-                      style={{ borderColor: tone.border }}
-                    >
-                      <div className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-70 blur-xl" style={{ backgroundImage: tone.glow }} />
-                      <img
-                        src={item.src}
-                        alt={`${character.name} ${item.key}`}
-                        className={`${index === 0 ? 'h-28' : 'h-24'} w-full object-cover transition-transform duration-200 group-hover:scale-[1.03]`}
-                        loading="lazy"
-                        decoding="async"
-                        onError={(event) => {
-                          event.currentTarget.src = '/card-placeholder.svg';
-                        }}
-                      />
-                      <figcaption
-                        className="flex items-center justify-between border-t-2 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em]"
-                        style={{ borderColor: tone.border, backgroundColor: tone.labelBg, color: tone.labelText }}
-                      >
-                        <span>{item.key}</span>
-                        <span>{index + 1}</span>
-                      </figcaption>
-                    </figure>
-                  );
-                })}
-              </div>
-              {gallery.length > galleryPreview.length && (
-                <p className="mt-3 text-xs uppercase tracking-[0.2em] text-[var(--cp-text-muted)]">
-                  +{gallery.length - galleryPreview.length} additional assets hidden to keep this profile focused.
-                </p>
-              )}
-            </RevealOnView>
+      {/* ═══ SECTION NAVIGATION ═══ */}
+      {availableSections.length > 1 && (
+        <nav className="sticky top-0 z-30 border-b border-white/[0.06] bg-[#060610]/80 backdrop-blur-xl" aria-label="Profile sections">
+          <div className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-6 md:px-10">
+            {availableSections.map((section) => (
+              <button
+                key={section.id}
+                className="cp-profile-tab"
+                data-active={activeSection === section.id}
+                onClick={() => {
+                  setActiveSection(section.id);
+                  document.getElementById(`section-${section.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }}
+                style={{ '--accent-color': accentColor } as CSSProperties}
+              >
+                {section.label}
+              </button>
+            ))}
           </div>
-        </section>
+        </nav>
       )}
+
+      {/* ═══ CONTENT SECTIONS ═══ */}
+      <div className="relative mx-auto max-w-7xl space-y-0 px-6 md:px-10">
+
+        {/* ── LORE SECTION ── */}
+        {hasLoreSection && (
+          <section id="section-lore" className="scroll-mt-16 py-16">
+            <RevealOnView>
+              <div className="grid gap-10 lg:grid-cols-[1fr_0.9fr]">
+                {/* Lore codex */}
+                <div>
+                  <div className="mb-6 flex items-center gap-3">
+                    <div
+                      className="flex h-8 w-8 items-center justify-center rounded-lg text-sm"
+                      style={{ backgroundColor: `${accentColor}15`, color: accentColor }}
+                    >
+                      &#x270E;
+                    </div>
+                    <h2 className="font-display text-3xl font-bold tracking-tight">Codex</h2>
+                  </div>
+                  <LoreCodex
+                    description={character.description ?? ''}
+                    tagline={character.tagline}
+                    personality={character.personality}
+                    vibe={character.vibe}
+                    coreCharm={character.coreCharm}
+                    danceStyle={character.danceStyle}
+                    realm={character.realm}
+                    accentColor={accentColor}
+                  />
+                </div>
+
+                {/* Trait badges */}
+                {traits.length > 0 && (
+                  <div>
+                    <div className="mb-6 flex items-center gap-3">
+                      <div
+                        className="flex h-8 w-8 items-center justify-center rounded-lg text-sm"
+                        style={{ backgroundColor: `${accentColor}15`, color: accentColor }}
+                      >
+                        &#x2662;
+                      </div>
+                      <h2 className="font-display text-3xl font-bold tracking-tight">Identity</h2>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {traits.map((trait) => (
+                        <TraitBadge
+                          key={trait.id}
+                          label={trait.label}
+                          value={trait.value}
+                          icon={trait.icon}
+                          accentColor={accentColor}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </RevealOnView>
+
+            <div className="cp-section-divider mt-16" style={{ '--accent-color': accentColor } as CSSProperties} />
+          </section>
+        )}
+
+        {/* ── IDENTITY SECTION (fallback when no lore block) ── */}
+        {hasStandaloneTraits && (
+          <section id="section-traits" className="scroll-mt-16 py-16">
+            <RevealOnView>
+              <div className="mb-6 flex items-center gap-3">
+                <div
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-sm"
+                  style={{ backgroundColor: `${accentColor}15`, color: accentColor }}
+                >
+                  &#x2662;
+                </div>
+                <h2 className="font-display text-3xl font-bold tracking-tight">Identity</h2>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {traits.map((trait) => (
+                  <TraitBadge
+                    key={trait.id}
+                    label={trait.label}
+                    value={trait.value}
+                    icon={trait.icon}
+                    accentColor={accentColor}
+                  />
+                ))}
+              </div>
+            </RevealOnView>
+
+            <div className="cp-section-divider mt-16" style={{ '--accent-color': accentColor } as CSSProperties} />
+          </section>
+        )}
+
+        {/* ── STATS SECTION ── */}
+        {statEntries.length > 0 && (
+          <section id="section-stats" className="scroll-mt-16 py-16">
+            <RevealOnView>
+              <div className="mb-8 flex items-center gap-3">
+                <div
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-sm"
+                  style={{ backgroundColor: `${accentColor}15`, color: accentColor }}
+                >
+                  &#x2B23;
+                </div>
+                <h2 className="font-display text-3xl font-bold tracking-tight">Combat Stats</h2>
+                <span className="ml-auto rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">
+                  {statEntries.length} attributes
+                </span>
+              </div>
+
+              <div className="grid gap-10 lg:grid-cols-[0.9fr_1fr]">
+                {/* Hex radar */}
+                <div className="flex flex-col items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6">
+                  {statEntries.length >= 3 ? (
+                    <>
+                      <HexRadar stats={stats} accentColor={accentColor} size={280} />
+                      <p className="mt-4 text-center text-xs text-white/30">
+                        Core Attribute Radar
+                      </p>
+                    </>
+                  ) : (
+                    <p className="max-w-xs text-center text-sm leading-relaxed text-white/45">
+                      Radar view unlocks when at least three attributes are available.
+                    </p>
+                  )}
+                </div>
+
+                {/* Segmented bars */}
+                <div className="space-y-5">
+                  {statEntries.map(([key, value], i) => (
+                    <StatBar
+                      key={key}
+                      label={prettifyStat(key)}
+                      value={Number(value)}
+                      color={STAT_COLORS[key.toLowerCase()] ?? accentColor}
+                      delay={i * 100}
+                    />
+                  ))}
+
+                  {/* Overall summary */}
+                  <div className="mt-4 flex items-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
+                    <div className="flex flex-col items-center">
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/40">Overall</span>
+                      <span className="font-display text-3xl font-bold" style={{ color: accentColor }}>{avgStat}</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex flex-wrap gap-2">
+                        {statEntries.map(([key, value]) => {
+                          const v = Number(value);
+                          const diff = v - avgStat;
+                          const trend = diff > 0 ? 'above' : diff < 0 ? 'below' : 'equal';
+                          return (
+                            <span
+                              key={key}
+                              className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-semibold"
+                              style={{
+                                borderColor:
+                                  trend === 'above'
+                                    ? 'rgba(52,211,153,0.3)'
+                                    : trend === 'below'
+                                      ? 'rgba(251,113,133,0.2)'
+                                      : 'rgba(148,163,184,0.24)',
+                                color:
+                                  trend === 'above'
+                                    ? '#34d399'
+                                    : trend === 'below'
+                                      ? '#fb7185'
+                                      : '#94a3b8',
+                                backgroundColor:
+                                  trend === 'above'
+                                    ? 'rgba(52,211,153,0.08)'
+                                    : trend === 'below'
+                                      ? 'rgba(251,113,133,0.06)'
+                                      : 'rgba(148,163,184,0.08)',
+                              }}
+                            >
+                              {trend === 'above' ? '\u25B2' : trend === 'below' ? '\u25BC' : '\u2022'} {prettifyStat(key)} {diff > 0 ? '+' : ''}{diff}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </RevealOnView>
+
+            <div className="cp-section-divider mt-16" style={{ '--accent-color': accentColor } as CSSProperties} />
+          </section>
+        )}
+
+        {/* ── GALLERY SECTION ── */}
+        {gallery.length > 0 && (
+          <section id="section-gallery" className="scroll-mt-16 py-16">
+            <RevealOnView>
+              <div className="mb-8 flex items-center gap-3">
+                <div
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-sm"
+                  style={{ backgroundColor: `${accentColor}15`, color: accentColor }}
+                >
+                  &#x25A3;
+                </div>
+                <h2 className="font-display text-3xl font-bold tracking-tight">Gallery</h2>
+                <span className="ml-auto rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">
+                  {gallery.length} variants
+                </span>
+              </div>
+
+              <CharacterGallery
+                items={gallery}
+                characterName={character.name}
+                accentColor={accentColor}
+              />
+            </RevealOnView>
+
+            <div className="cp-section-divider mt-16" style={{ '--accent-color': accentColor } as CSSProperties} />
+          </section>
+        )}
+
+        {/* ── QUICK ACTIONS ── */}
+        <section className="py-16">
+          <RevealOnView>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                { href: '/claim', label: 'Claim Codes', icon: '\u2693' },
+                { href: '/compare', label: 'Stat Compare', icon: '\u21C5' },
+                { href: '/plaza', label: 'Social Plaza', icon: '\u2605' },
+                { href: '/arena', label: 'Rift Arena', icon: '\u2694' },
+              ].map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="group flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3.5 transition-all duration-200 hover:border-white/[0.12] hover:bg-white/[0.04]"
+                >
+                  <span
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-sm transition-colors"
+                    style={{ backgroundColor: `${accentColor}10`, color: `${accentColor}88` }}
+                  >
+                    {link.icon}
+                  </span>
+                  <span className="text-xs font-semibold uppercase tracking-[0.18em] text-white/50 transition-colors group-hover:text-white/80">
+                    {link.label}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </RevealOnView>
+        </section>
+      </div>
     </div>
   );
 }

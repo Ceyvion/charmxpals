@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getRepo } from '@/lib/repo';
+import { withCharacterLore, type CharacterWithLore } from '@/lib/characterLore';
 import CharacterCard from '@/components/CharacterCard';
 
 export default async function UserProfile({ params }: { params: { handle: string } }) {
@@ -9,9 +10,10 @@ export default async function UserProfile({ params }: { params: { handle: string
   if (!user) return notFound();
 
   const ownerships = await repo.listOwnershipsByUser(user.id);
-  const characters = await Promise.all(
-    ownerships.map(async (o) => (await repo.getCharacterById(o.characterId))!).filter(Boolean)
-  );
+  const rawCharacters = await Promise.all(ownerships.map((ownership) => repo.getCharacterById(ownership.characterId)));
+  const characters = rawCharacters
+    .map((character) => withCharacterLore(character ?? null))
+    .filter((character): character is CharacterWithLore => Boolean(character));
 
   return (
     <div className="min-h-screen py-12 px-4 bg-grid-overlay">
@@ -29,7 +31,7 @@ export default async function UserProfile({ params }: { params: { handle: string
         {characters.length > 0 ? (
           <div className="cp-explore-grid">
             {characters.map((c) => (
-              <CharacterCard key={c!.id} c={c as any} />
+              <CharacterCard key={c.id} c={c} owned />
             ))}
           </div>
         ) : (
@@ -41,4 +43,3 @@ export default async function UserProfile({ params }: { params: { handle: string
     </div>
   );
 }
-

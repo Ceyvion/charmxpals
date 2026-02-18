@@ -493,3 +493,54 @@
   - `npm test -- src/lib/mmo/avatarId.test.ts src/lib/repoRedis.test.ts src/app/api/claim/flow.test.ts`
   - `npm run lint -- --file scripts/migrate-character-avatar-slugs.ts --file src/app/api/mmo/token/route.ts --file src/lib/mmo/avatarId.ts`
   - `npm run build`
+
+## Explore + Owned Profile UX Recovery Plan (2026-02-18)
+
+- [x] Rework the stat-compare visualization in `src/app/compare/CompareClient.tsx` so it reads cleanly on both mobile and desktop and avoids misleading bar composition.
+- [x] Improve compare row/card aesthetics with a consistent visual language (clear labels, balanced contrast, and stronger information hierarchy).
+- [x] Fix owned-player profile image resolution in `src/components/CharacterCard.tsx` and `src/app/u/[handle]/page.tsx` so real character art is shown whenever any valid art ref/lore fallback exists.
+- [x] Verify via targeted lint + build and document outcomes/residual risk in a review section.
+
+### Explore + Owned Profile UX Recovery Review (2026-02-18)
+
+- Compare stat lanes in `src/app/compare/CompareClient.tsx` now use a mirrored center-axis meter (left and right fills no longer stack on top of each other), with clearer value readouts and advantage chips per stat row.
+- Compare copy and hierarchy were tightened so the stat section explains the visualization model directly and reads cleanly under heavy mismatch scenarios (for example when one side has `0` for a stat).
+- Owned profile rendering now resolves art from the best available key in `src/components/CharacterCard.tsx` (`thumbnail`, `portrait`, `card`, `full`, `banner`, etc.) while avoiding placeholder-first selection.
+- Player profile ownership pages (`src/app/u/[handle]/page.tsx`) now enrich characters through `withCharacterLore`, ensuring lore-backed artRefs are available when DB records are sparse; `src/app/me/page.tsx` was aligned to the same enrichment path for consistency.
+- Verification:
+  - `npm run lint -- --file src/app/compare/CompareClient.tsx --file src/components/CharacterCard.tsx --file 'src/app/u/[handle]/page.tsx' --file src/app/me/page.tsx`
+  - `npm run build`
+  - Manual runtime smoke check on local production server (`/compare`, `/u/demo`) via Playwright snapshot confirmed updated stat lanes and non-placeholder character art rendering.
+- Residual risk:
+  - `CharacterCard` still uses native `<img>` tags (existing repo pattern), so Next.js image-optimization warnings remain intentionally unchanged.
+
+## Champion Profile Edge-Case Audit Plan (2026-02-18)
+
+- [x] Audit new champion profile components for runtime/accessibility edge cases and data-shape resilience.
+- [x] Patch confirmed issues with minimal, targeted edits in `CharacterPageClient` and `src/components/champion/*`.
+- [x] Verify with lint + production build, then add an audit review note with residual risks.
+
+### Champion Profile Edge-Case Audit Review (2026-02-18)
+
+- Runtime/data hardening in `src/app/character/[id]/CharacterPageClient.tsx`:
+  - Added stat normalization (`finite`, `0-100` clamp, integer rounding) before sorting/rendering to prevent `NaN` power totals and broken diff chips from malformed payloads.
+  - Fixed section-nav mismatch by only exposing `Identity` as a tab when it renders as its own section (`#section-traits` fallback path for characters without lore text).
+  - Added active-tab recovery so the nav always has a valid selected section after data changes.
+  - Added a non-radar fallback message when fewer than 3 stats exist (instead of showing an empty radar canvas card).
+  - Made overall diff chips neutral for exact-equal stats (no false red/down signal).
+- Interaction/accessibility hardening in `src/components/champion/CharacterGallery.tsx`:
+  - Added selected-index clamping when gallery item sets change.
+  - Added full lightbox keyboard controls (`Escape`, `ArrowLeft`, `ArrowRight`) and Space/Enter activation on the preview surface.
+  - Added body scroll-lock while lightbox is open.
+- State consistency hardening in `src/components/champion/LoreCodex.tsx`:
+  - Memoized lore entry parsing inputs and reset expanded accordion state when character lore content changes.
+- Animation lifecycle hardening in `src/components/champion/StatBar.tsx`:
+  - Added RAF cleanup to avoid lingering animation callbacks after unmount/update.
+- Lint correctness fix in `src/components/champion/HexRadar.tsx`:
+  - Replaced side-effect ternary expressions with explicit control flow to satisfy `no-unused-expressions`.
+- Verification:
+  - `npm run lint` (passes; warnings are pre-existing in unrelated areas).
+  - `npm run build` (passes).
+  - `npm test` (29/29 passing).
+- Residual risk:
+  - Accent-color alpha composition still assumes hex-like color strings in several style sites (for example ``${accentColor}15``); non-hex color tokens from data could reduce intended glow fidelity.
