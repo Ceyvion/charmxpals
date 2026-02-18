@@ -20,6 +20,15 @@ export type PlayerState = {
   hp?: number;
   kills?: number;
   deaths?: number;
+  inPowerZone?: boolean;
+};
+
+export type ArenaPickup = {
+  id: string;
+  type: 'health';
+  pos: Vec2;
+  active: boolean;
+  respawnAt: number;
 };
 
 export type ArenaMapId = 'neon-grid' | 'crystal-rift' | 'voltage-foundry';
@@ -68,10 +77,16 @@ export type S2CWelcome = {
 export type S2CAuthOk = { type: 'auth_ok'; sessionId: string };
 export type S2CAuthError = { type: 'auth_error'; reason: string };
 export type S2CJoined = { type: 'joined'; you: PlayerState; others: PlayerState[] };
-export type S2CState = { type: 'state'; t: number; seqAck: number; players: Array<Partial<PlayerState> & { id: string }> };
+export type S2CState = {
+  type: 'state';
+  t: number;
+  seqAck: number;
+  players: Array<Partial<PlayerState> & { id: string }>;
+  pickups?: ArenaPickup[];
+};
 export type S2CEvent = {
   type: 'event';
-  event: 'emote' | 'join' | 'leave' | 'chat' | 'combat' | 'score' | 'match_end' | 'system';
+  event: 'emote' | 'join' | 'leave' | 'chat' | 'combat' | 'score' | 'match_end' | 'system' | 'pickup_consumed' | 'pickup_respawn';
   data: any;
 };
 export type S2CPong = { type: 'pong'; ts: number };

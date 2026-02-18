@@ -3,9 +3,33 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { signIn } from 'next-auth/react';
 
-import type { ArenaMapId, ArenaRotation, PlayerState, S2C } from '@/lib/mmo/messages';
+import type { ArenaMapId, ArenaPickup, ArenaRotation, PlayerState, S2C } from '@/lib/mmo/messages';
 import type { MmoSessionClaims } from '@/lib/mmo/token';
 import { resolveClientWsBase } from '@/lib/mmo/wsUrl';
+import { MAP_DATA, clampToWalkable, isInSpeedZone, isInPowerZone } from '@/lib/mmo/mapData';
+import type { MapCollisionData } from '@/lib/mmo/mapData';
+import {
+  createFxState,
+  updateFx,
+  spawnPulseEffect,
+  spawnHitEffect,
+  spawnHitFlash,
+  spawnDeathEffect,
+  spawnRespawnEffect,
+  spawnPickupEffect,
+  addTrailParticle,
+  addAnnouncement,
+  ensureAmbient,
+  drawAmbientParticles,
+  drawTrailParticles,
+  drawShockwaves,
+  drawBurstParticles,
+  drawDamageNumbers,
+  drawAnnouncements,
+  getHitFlashAlpha,
+  getShakeOffset,
+} from '@/lib/mmo/arenaFx';
+import type { ArenaFxState } from '@/lib/mmo/arenaFx';
 
 type ArenaClientProps = { height?: number };
 
@@ -15,6 +39,7 @@ type PlayerView = PlayerState & {
   renderPos: Vec2;
   targetPos: Vec2;
   lastUpdate: number;
+  prevPos?: Vec2;
 };
 
 type FeedEntry = {
@@ -27,13 +52,19 @@ type ArenaEventData = {
   player?: PlayerState;
   id?: string;
   actor?: string;
-  victims?: unknown[];
+  actorId?: string;
+  victims?: Array<{ id?: string; displayName?: string; hp?: number; pos?: Vec2 }>;
   killer?: string;
   killerId?: string;
   victim?: string;
+  victimId?: string;
+  victimPos?: Vec2;
   message?: string;
   targetKills?: number;
   winner?: string;
+  pos?: Vec2;
+  range?: number;
+  playerId?: string;
 };
 
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
@@ -46,6 +77,12 @@ const ARENA_MAPS: Array<{ id: ArenaMapId; label: string; src: string; summary: s
   { id: 'crystal-rift', label: 'Crystal Rift', src: '/assets/arena/maps/crystal-rift.png', summary: 'Mid-lane ambushes and tight pivots.' },
   { id: 'voltage-foundry', label: 'Voltage Foundry', src: '/assets/arena/maps/voltage-foundry.png', summary: 'Fast rotations around pressure zones.' },
 ];
+
+const STREAK_LABELS: Record<number, string> = {
+  3: 'Triple Kill!',
+  5: 'Rampage!',
+  7: 'Unstoppable!',
+};
 
 type DailyProgress = {
   dateKey: string;
@@ -76,8 +113,10 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
   const selectedCharRef = useRef<string | null>(null);
   const [playerCount, setPlayerCount] = useState(0);
   const [cooldownMs, setCooldownMs] = useState(0);
+  const cooldownRef = useRef(0);
   const [arenaConfig, setArenaConfig] = useState<ArenaRotation | null>(null);
   const [selectedMap, setSelectedMap] = useState<ArenaMapId>('neon-grid');
+  const selectedMapRef = useRef<ArenaMapId>('neon-grid');
   const [clockMs, setClockMs] = useState(() => Date.now());
   const [dailyProgress, setDailyProgress] = useState<DailyProgress>(() => emptyProgress(toDateKey()));
 
@@ -95,6 +134,10 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
   const abilityTimerRef = useRef<number | null>(null);
   const matchTrackedRef = useRef(false);
   const spriteCacheRef = useRef<Map<string, HTMLImageElement>>(new Map());
+  const fxRef = useRef<ArenaFxState>(createFxState());
+  const pickupsRef = useRef<Map<string, ArenaPickup & { fadeIn?: number }>>(new Map());
+  const killStreakRef = useRef(0);
+  const trailTimerRef = useRef(0);
 
   const appendFeed = useCallback((entry: FeedEntry) => {
     setFeed((prev) => [...prev.slice(-19), entry]);
@@ -167,24 +210,23 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
   const castPulse = useCallback(() => {
     const ws = wsRef.current;
     if (!ws || ws.readyState !== WebSocket.OPEN || !readyRef.current) return;
-    if (cooldownMs > 0) return;
+    if (cooldownRef.current > 0) return;
     ws.send(JSON.stringify({ type: 'ability_cast', ability: 'pulse' }));
     syncDailyProgress((current) => ({ ...current, pulses: current.pulses + 1 }));
+    cooldownRef.current = 850;
     setCooldownMs(850);
     if (abilityTimerRef.current) {
       clearInterval(abilityTimerRef.current);
     }
     abilityTimerRef.current = window.setInterval(() => {
-      setCooldownMs((value) => {
-        const next = Math.max(0, value - 50);
-        if (next === 0 && abilityTimerRef.current) {
-          clearInterval(abilityTimerRef.current);
-          abilityTimerRef.current = null;
-        }
-        return next;
-      });
+      cooldownRef.current = Math.max(0, cooldownRef.current - 50);
+      setCooldownMs(cooldownRef.current);
+      if (cooldownRef.current === 0 && abilityTimerRef.current) {
+        clearInterval(abilityTimerRef.current);
+        abilityTimerRef.current = null;
+      }
     }, 50);
-  }, [cooldownMs, syncDailyProgress]);
+  }, [syncDailyProgress]);
 
   const handleSelectAvatar = useCallback((value: string) => {
     setSelectedChar(value);
@@ -206,6 +248,10 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
   useEffect(() => {
     selectedCharRef.current = selectedChar;
   }, [selectedChar]);
+
+  useEffect(() => {
+    selectedMapRef.current = selectedMap;
+  }, [selectedMap]);
 
   useEffect(() => {
     try {
@@ -248,6 +294,7 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
     };
   }, [selectedMap]);
 
+  // --- Token + WS URL ---
   useEffect(() => {
     let stop = false;
     (async () => {
@@ -299,6 +346,7 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
     };
   }, []);
 
+  // --- WebSocket connection ---
   useEffect(() => {
     if (!wsUrl) return;
     const ws = new WebSocket(wsUrl);
@@ -333,6 +381,7 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
           if (message.arena) {
             setArenaConfig(message.arena);
             setSelectedMap(message.arena.mapId);
+            selectedMapRef.current = message.arena.mapId;
           }
           break;
         case 'auth_ok':
@@ -341,6 +390,7 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
           readyRef.current = true;
           setYouId(message.sessionId);
           youIdRef.current = message.sessionId;
+          killStreakRef.current = 0;
           if (pingTimerRef.current) clearInterval(pingTimerRef.current);
           pingTimerRef.current = window.setInterval(() => {
             const current = wsRef.current;
@@ -371,7 +421,14 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
           appendFeed({ id: `joined-${Date.now()}`, text: 'Entered Rift Arena.', ts: Date.now() });
           break;
         }
-        case 'state':
+        case 'state': {
+          // Pickup state sync
+          if (message.pickups) {
+            for (const p of message.pickups) {
+              pickupsRef.current.set(p.id, { ...p });
+            }
+          }
+
           updatePlayers((prev) => {
             const next = new Map(prev);
             const now = performance.now();
@@ -379,6 +436,8 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
               const id = partial.id;
               const target = next.get(id);
               if (!target) continue;
+              // Track previous position for respawn detection
+              target.prevPos = { ...target.pos };
               if (partial.pos) {
                 const pos = partial.pos as Vec2;
                 target.pos = { ...pos };
@@ -392,12 +451,14 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
               if (typeof partial.hp === 'number') target.hp = Number(partial.hp);
               if (typeof partial.kills === 'number') target.kills = Number(partial.kills);
               if (typeof partial.deaths === 'number') target.deaths = Number(partial.deaths);
+              if (typeof partial.inPowerZone === 'boolean') target.inPowerZone = partial.inPowerZone;
               target.lastUpdate = now;
               next.set(id, target);
             }
             return next;
           });
           break;
+        }
         case 'event': {
           const data = asArenaEventData(message.data);
           if (message.event === 'join') {
@@ -430,19 +491,72 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
               text: hitCount > 0 ? `${actor} cast pulse and hit ${hitCount} target${hitCount > 1 ? 's' : ''}.` : `${actor} cast pulse.`,
               ts: Date.now(),
             });
+
+            // --- VFX: pulse shockwave + hit effects ---
+            const fx = fxRef.current;
+            const mapId = selectedMapRef.current;
+            const theme = MAP_DATA[mapId]?.theme;
+            if (data.pos && theme) {
+              const isLocal = data.actorId === youIdRef.current;
+              const range = typeof data.range === 'number' ? data.range : 2.2;
+              spawnPulseEffect(fx, data.pos.x, data.pos.y, theme.pulse, range, isLocal);
+            }
+            for (const v of victims) {
+              if (v.pos && theme) {
+                spawnHitEffect(fx, v.pos.x, v.pos.y, 35, theme.secondary);
+              }
+              if (v.id) {
+                spawnHitFlash(fx, v.id);
+              }
+            }
           } else if (message.event === 'score') {
             const killer = typeof data.killer === 'string' ? data.killer : 'Unknown';
             const victim = typeof data.victim === 'string' ? data.victim : 'Unknown';
-            if (typeof data.killerId === 'string' && data.killerId === youIdRef.current) {
+            const isLocalKill = typeof data.killerId === 'string' && data.killerId === youIdRef.current;
+            const isLocalDeath = typeof data.victimId === 'string' && data.victimId === youIdRef.current;
+
+            if (isLocalKill) {
               syncDailyProgress((current) => ({ ...current, eliminations: current.eliminations + 1 }));
+              killStreakRef.current += 1;
+              const streakLabel = STREAK_LABELS[killStreakRef.current];
+              if (streakLabel) {
+                const theme = MAP_DATA[selectedMapRef.current]?.theme;
+                addAnnouncement(fxRef.current, streakLabel, theme?.primary || '#ff79b1');
+              }
             }
+            if (isLocalDeath) {
+              killStreakRef.current = 0;
+            }
+
+            // Death VFX
+            const fx = fxRef.current;
+            const theme = MAP_DATA[selectedMapRef.current]?.theme;
+            if (data.victimPos && theme) {
+              spawnDeathEffect(fx, data.victimPos.x, data.victimPos.y, theme.secondary);
+            }
+
             appendFeed({ id: `score-${Date.now()}`, text: `${killer} eliminated ${victim}.`, ts: Date.now() });
           } else if (message.event === 'match_end') {
             matchTrackedRef.current = false;
+            killStreakRef.current = 0;
             appendFeed({ id: `end-${Date.now()}`, text: typeof data.message === 'string' ? data.message : 'Match finished.', ts: Date.now() });
           } else if (message.event === 'system') {
             const msg = typeof data.message === 'string' ? data.message : 'System message';
             appendFeed({ id: `system-${Date.now()}`, text: msg, ts: Date.now() });
+          } else if (message.event === 'pickup_consumed') {
+            const pickupId = typeof data.id === 'string' ? data.id : '';
+            const pickup = pickupsRef.current.get(pickupId);
+            if (pickup) {
+              pickup.active = false;
+              spawnPickupEffect(fxRef.current, pickup.pos.x, pickup.pos.y);
+            }
+          } else if (message.event === 'pickup_respawn') {
+            const pickupId = typeof data.id === 'string' ? data.id : '';
+            const pickup = pickupsRef.current.get(pickupId);
+            if (pickup) {
+              pickup.active = true;
+              (pickup as any).fadeIn = 1;
+            }
           }
           break;
         }
@@ -489,6 +603,7 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
     };
   }, [appendFeed, hydratePlayer, replacePlayers, syncDailyProgress, updatePlayers, wsUrl]);
 
+  // --- Input ---
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       const key = e.key;
@@ -522,6 +637,20 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
     };
   }, [castPulse, sendInput]);
 
+  // --- Init pickups from map data when map changes ---
+  useEffect(() => {
+    const mapDef = MAP_DATA[selectedMap];
+    if (!mapDef) return;
+    const pickups = new Map<string, ArenaPickup & { fadeIn?: number }>();
+    for (const hp of mapDef.healthPickups) {
+      pickups.set(hp.id, { id: hp.id, type: 'health', pos: hp.pos, active: true, respawnAt: 0 });
+    }
+    pickupsRef.current = pickups;
+  }, [selectedMap]);
+
+  // =========================================================================
+  // Canvas draw loop
+  // =========================================================================
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -541,46 +670,206 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
       ctx.scale(dpr, dpr);
       ctx.clearRect(0, 0, w, h);
 
-      ctx.fillStyle = '#0a0f20';
-      ctx.fillRect(0, 0, w, h);
-
-      const mapImage = mapImageRef.current;
-      if (mapImage) {
-        ctx.globalAlpha = 0.38;
-        ctx.drawImage(mapImage, 0, 0, w, h);
-        ctx.globalAlpha = 1;
-      }
-
-      ctx.strokeStyle = 'rgba(122, 212, 255, 0.15)';
-      for (let x = 0; x < w; x += 28) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, h);
-        ctx.stroke();
-      }
-      for (let y = 0; y < h; y += 28) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(w, y);
-        ctx.stroke();
-      }
-
       const last = lastFrameRef.current ?? timestamp;
       const dt = Math.min(0.12, (timestamp - last) / 1000);
       lastFrameRef.current = timestamp;
 
+      const mapId = selectedMapRef.current;
+      const mapDef: MapCollisionData | undefined = MAP_DATA[mapId];
+      const theme = mapDef?.theme;
+      const fx = fxRef.current;
       const scale = 26;
       const ox = w / 2;
       const oy = h / 2;
+
+      // Get local player for parallax + reactive grid
+      const localPlayer = youIdRef.current ? playersRef.current.get(youIdRef.current) : null;
+      const lpx = localPlayer?.renderPos?.x ?? 0;
+      const lpy = localPlayer?.renderPos?.y ?? 0;
+
+      // 1. Background
+      ctx.fillStyle = '#0a0f20';
+      ctx.fillRect(0, 0, w, h);
+
+      // 2. Map image with parallax
+      const mapImage = mapImageRef.current;
+      if (mapImage) {
+        ctx.globalAlpha = 0.42;
+        const parallaxX = -(lpx / 14) * 15;
+        const parallaxY = -(lpy / 8) * 10;
+        ctx.drawImage(mapImage, parallaxX - 15, parallaxY - 10, w + 30, h + 20);
+        ctx.globalAlpha = 1;
+      }
+
+      // 3. Reactive grid — glows near local player
+      const gridR = theme?.gridTint ?? [122, 212, 255];
+      const playerScreenX = ox + lpx * scale;
+      const playerScreenY = oy + lpy * scale;
+      const glowRadius = 5 * scale;
+      for (let gx = 0; gx < w; gx += 28) {
+        const dist = Math.abs(gx - playerScreenX);
+        const glow = Math.max(0, 1 - dist / glowRadius);
+        const alpha = 0.06 + glow * 0.28;
+        ctx.strokeStyle = `rgba(${gridR[0]}, ${gridR[1]}, ${gridR[2]}, ${alpha.toFixed(3)})`;
+        ctx.beginPath();
+        ctx.moveTo(gx, 0);
+        ctx.lineTo(gx, h);
+        ctx.stroke();
+      }
+      for (let gy = 0; gy < h; gy += 28) {
+        const dist = Math.abs(gy - playerScreenY);
+        const glow = Math.max(0, 1 - dist / glowRadius);
+        const alpha = 0.06 + glow * 0.28;
+        ctx.strokeStyle = `rgba(${gridR[0]}, ${gridR[1]}, ${gridR[2]}, ${alpha.toFixed(3)})`;
+        ctx.beginPath();
+        ctx.moveTo(0, gy);
+        ctx.lineTo(w, gy);
+        ctx.stroke();
+      }
+
+      // 4. Screen shake offset
+      const shake = getShakeOffset(fx);
+      ctx.translate(shake.x, shake.y);
+
+      // 5. Speed zone overlays
+      if (mapDef && theme) {
+        ctx.globalAlpha = 0.08;
+        ctx.fillStyle = theme.primary;
+        for (const zone of mapDef.speedZones) {
+          const sx = ox + zone.x1 * scale;
+          const sy = oy + zone.y1 * scale;
+          const sw = (zone.x2 - zone.x1) * scale;
+          const sh = (zone.y2 - zone.y1) * scale;
+          ctx.fillRect(sx, sy, sw, sh);
+          // Animated diagonal stripes
+          ctx.save();
+          ctx.globalAlpha = 0.12;
+          ctx.strokeStyle = theme.primary;
+          ctx.lineWidth = 1;
+          const offset = (timestamp * 0.03) % 20;
+          ctx.beginPath();
+          for (let d = -sh; d < sw + sh; d += 20) {
+            ctx.moveTo(sx + d + offset, sy);
+            ctx.lineTo(sx + d + offset - sh, sy + sh);
+          }
+          ctx.stroke();
+          ctx.restore();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      // 6. Health pickup nodes
+      pickupsRef.current.forEach((pickup) => {
+        const px = ox + pickup.pos.x * scale;
+        const py = ox + pickup.pos.y * scale;
+        // Correction: py should use oy
+        const correctedPy = oy + pickup.pos.y * scale;
+        if (pickup.active) {
+          const pulse = 0.7 + Math.sin(timestamp * 0.004) * 0.3;
+          ctx.globalAlpha = 0.7 * pulse;
+          ctx.fillStyle = '#49f3a7';
+          ctx.beginPath();
+          ctx.arc(px, correctedPy, 6 + pulse * 3, 0, Math.PI * 2);
+          ctx.fill();
+          // Glow
+          ctx.globalAlpha = 0.15 * pulse;
+          ctx.beginPath();
+          ctx.arc(px, correctedPy, 14 + pulse * 4, 0, Math.PI * 2);
+          ctx.fill();
+          // Cross icon
+          ctx.globalAlpha = 0.9;
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(px - 3, correctedPy);
+          ctx.lineTo(px + 3, correctedPy);
+          ctx.moveTo(px, correctedPy - 3);
+          ctx.lineTo(px, correctedPy + 3);
+          ctx.stroke();
+        } else {
+          ctx.globalAlpha = 0.15;
+          ctx.fillStyle = '#49f3a7';
+          ctx.beginPath();
+          ctx.arc(px, correctedPy, 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+        ctx.lineWidth = 1;
+      });
+
+      // 7. Power zone
+      if (mapDef && theme) {
+        const pz = mapDef.powerZone;
+        const pzx = ox + pz.cx * scale;
+        const pzy = oy + pz.cy * scale;
+        const pzr = pz.r * scale;
+        const pulse = 0.4 + Math.sin(timestamp * 0.002) * 0.2;
+        // Outer ring
+        ctx.globalAlpha = 0.12 * pulse;
+        ctx.strokeStyle = theme.primary;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(pzx, pzy, pzr, 0, Math.PI * 2);
+        ctx.stroke();
+        // Inner pulsing ring
+        ctx.globalAlpha = 0.08 * pulse;
+        ctx.beginPath();
+        ctx.arc(pzx, pzy, pzr * 0.6 + Math.sin(timestamp * 0.003) * pzr * 0.1, 0, Math.PI * 2);
+        ctx.stroke();
+        // Fill
+        const grad = ctx.createRadialGradient(pzx, pzy, 0, pzx, pzy, pzr);
+        grad.addColorStop(0, `rgba(255, 200, 50, ${(0.06 * pulse).toFixed(3)})`);
+        grad.addColorStop(1, 'rgba(255, 200, 50, 0)');
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = grad;
+        ctx.fillRect(pzx - pzr, pzy - pzr, pzr * 2, pzr * 2);
+        ctx.lineWidth = 1;
+      }
+
+      // 8. Ambient particles
+      if (theme) {
+        ensureAmbient(fx, theme);
+      }
+      drawAmbientParticles(fx, ctx, ox, oy, scale);
+
+      // 9. Trail particles
+      drawTrailParticles(fx, ctx, ox, oy, scale);
+
+      // --- Update FX ---
+      if (theme) {
+        updateFx(fx, dt, theme);
+      }
+
+      // --- Player movement + rendering ---
+      trailTimerRef.current += dt;
+      const emitTrail = trailTimerRef.current > 0.06;
+      if (emitTrail) trailTimerRef.current = 0;
 
       playersRef.current.forEach((player, id) => {
         if (!player.renderPos) player.renderPos = { ...player.pos };
         if (!player.targetPos) player.targetPos = { ...player.pos };
 
+        const prevRx = player.renderPos.x;
+        const prevRy = player.renderPos.y;
+
         if (id === youIdRef.current) {
           const speed = 2.8;
-          player.renderPos.x = clamp(player.renderPos.x + axesRef.current.x * speed * dt, -14, 14);
-          player.renderPos.y = clamp(player.renderPos.y + axesRef.current.y * speed * dt, -8, 8);
+          // Client-side collision prediction
+          const rawX = clamp(player.renderPos.x + axesRef.current.x * speed * dt, -14, 14);
+          const rawY = clamp(player.renderPos.y + axesRef.current.y * speed * dt, -8, 8);
+          if (mapDef) {
+            // Speed zone on client for responsive feel
+            const inSpeed = isInSpeedZone(mapDef, player.renderPos.x, player.renderPos.y);
+            const effSpeed = inSpeed ? speed * 1.6 : speed;
+            const rawXS = clamp(player.renderPos.x + axesRef.current.x * effSpeed * dt, -14, 14);
+            const rawYS = clamp(player.renderPos.y + axesRef.current.y * effSpeed * dt, -8, 8);
+            const resolved = clampToWalkable(mapDef, player.renderPos.x, player.renderPos.y, rawXS, rawYS);
+            player.renderPos.x = resolved.x;
+            player.renderPos.y = resolved.y;
+          } else {
+            player.renderPos.x = rawX;
+            player.renderPos.y = rawY;
+          }
           player.renderPos.x = lerp(player.renderPos.x, player.pos.x, dt * 7);
           player.renderPos.y = lerp(player.renderPos.y, player.pos.y, dt * 7);
         } else {
@@ -591,22 +880,59 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
         const px = ox + player.renderPos.x * scale;
         const py = oy + player.renderPos.y * scale;
 
-        const sprite = getSprite(player.characterId);
-        if (sprite.complete && sprite.naturalWidth > 0) {
-          ctx.drawImage(sprite, px - 15, py - 17, 30, 30);
-        } else {
-          ctx.fillStyle = id === youIdRef.current ? '#ff79b1' : '#6fe5ff';
+        // Trail particles for moving players
+        const movedDist = Math.abs(player.renderPos.x - prevRx) + Math.abs(player.renderPos.y - prevRy);
+        if (emitTrail && movedDist > 0.01 && theme) {
+          addTrailParticle(fx, player.renderPos.x, player.renderPos.y, id === youIdRef.current ? theme.primary : theme.ambient);
+        }
+
+        // Power zone aura
+        if (player.inPowerZone && theme) {
+          const auraR = 18 + Math.sin(timestamp * 0.005) * 3;
+          const auraGrad = ctx.createRadialGradient(px, py, 0, px, py, auraR);
+          auraGrad.addColorStop(0, `rgba(255, 200, 50, 0.2)`);
+          auraGrad.addColorStop(1, 'rgba(255, 200, 50, 0)');
+          ctx.fillStyle = auraGrad;
           ctx.beginPath();
-          ctx.arc(px, py, 9, 0, Math.PI * 2);
+          ctx.arc(px, py, auraR, 0, Math.PI * 2);
           ctx.fill();
         }
 
-        ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+        // Hit flash
+        const flashAlpha = getHitFlashAlpha(fx, id);
+
+        // Sprite
+        const sprite = getSprite(player.characterId);
+        if (sprite.complete && sprite.naturalWidth > 0) {
+          ctx.drawImage(sprite, px - 15, py - 17, 30, 30);
+          // Hit flash overlay
+          if (flashAlpha > 0) {
+            ctx.globalAlpha = flashAlpha * 0.6;
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.drawImage(sprite, px - 15, py - 17, 30, 30);
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalAlpha = 1;
+          }
+        } else {
+          ctx.fillStyle = id === youIdRef.current ? '#ff79b1' : '#6fe5ff';
+          if (flashAlpha > 0) {
+            ctx.fillStyle = '#ffffff';
+            ctx.globalAlpha = 0.5 + flashAlpha * 0.5;
+          }
+          ctx.beginPath();
+          ctx.arc(px, py, 9, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+
+        // Direction indicator
+        ctx.strokeStyle = 'rgba(255,255,255,0.55)';
         ctx.beginPath();
         ctx.moveTo(px, py);
         ctx.lineTo(px + Math.cos(player.rot) * 13, py + Math.sin(player.rot) * 13);
         ctx.stroke();
 
+        // Health bar
         const hp = clamp(Number(player.hp ?? 100), 0, 100);
         const barW = 30;
         const barH = 4;
@@ -615,10 +941,91 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
         ctx.fillStyle = hp > 60 ? '#49f3a7' : hp > 30 ? '#ffd36a' : '#ff7575';
         ctx.fillRect(px - barW / 2, py - 19, (barW * hp) / 100, barH);
 
+        // Name
         ctx.fillStyle = '#ffffff';
         ctx.font = '10px system-ui';
         ctx.textAlign = 'center';
         ctx.fillText(player.displayName || id.slice(0, 4), px, py - 24);
+
+        // 11. Cooldown radial arc around local player
+        if (id === youIdRef.current && cooldownRef.current > 0) {
+          const progress = cooldownRef.current / 850;
+          ctx.beginPath();
+          ctx.arc(px, py, 18, -Math.PI / 2, -Math.PI / 2 + (1 - progress) * Math.PI * 2);
+          ctx.strokeStyle = `rgba(255, 121, 177, ${(0.3 + progress * 0.5).toFixed(2)})`;
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+          ctx.lineWidth = 1;
+        }
+      });
+
+      // 12. Shockwaves
+      drawShockwaves(fx, ctx, ox, oy, scale);
+
+      // 13. Burst particles
+      drawBurstParticles(fx, ctx, ox, oy, scale);
+
+      // 14. Damage numbers
+      drawDamageNumbers(fx, ctx, ox, oy, scale);
+
+      // Remove shake offset for UI overlays
+      ctx.translate(-shake.x, -shake.y);
+
+      // 15. Low HP vignette
+      const localHp = localPlayer ? clamp(Number(localPlayer.hp ?? 100), 0, 100) : 100;
+      if (localHp < 35) {
+        const vignetteAlpha = (1 - localHp / 35) * 0.35;
+        const gradient = ctx.createRadialGradient(w / 2, h / 2, w * 0.25, w / 2, h / 2, w * 0.65);
+        gradient.addColorStop(0, 'rgba(255, 0, 0, 0)');
+        gradient.addColorStop(1, `rgba(255, 0, 0, ${vignetteAlpha.toFixed(3)})`);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, w, h);
+      }
+
+      // 16. Announcements
+      drawAnnouncements(fx, ctx, w);
+
+      // 17. Minimap
+      const mmW = 120;
+      const mmH = 70;
+      const mmX = w - mmW - 10;
+      const mmY = h - mmH - 10;
+      ctx.fillStyle = 'rgba(10, 15, 32, 0.65)';
+      ctx.fillRect(mmX, mmY, mmW, mmH);
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.strokeRect(mmX, mmY, mmW, mmH);
+
+      // Power zone on minimap
+      if (mapDef) {
+        const pz = mapDef.powerZone;
+        const mmPzX = mmX + ((pz.cx + 14) / 28) * mmW;
+        const mmPzY = mmY + ((pz.cy + 8) / 16) * mmH;
+        const mmPzR = (pz.r / 28) * mmW;
+        ctx.strokeStyle = 'rgba(255, 200, 50, 0.3)';
+        ctx.beginPath();
+        ctx.arc(mmPzX, mmPzY, mmPzR, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // Pickups on minimap
+      pickupsRef.current.forEach((pickup) => {
+        if (!pickup.active) return;
+        const dotX = mmX + ((pickup.pos.x + 14) / 28) * mmW;
+        const dotY = mmY + ((pickup.pos.y + 8) / 16) * mmH;
+        ctx.fillStyle = '#49f3a7';
+        ctx.globalAlpha = 0.7;
+        ctx.fillRect(dotX - 1, dotY - 1, 2, 2);
+      });
+      ctx.globalAlpha = 1;
+
+      // Players on minimap
+      playersRef.current.forEach((player, id) => {
+        const dotX = mmX + ((player.renderPos.x + 14) / 28) * mmW;
+        const dotY = mmY + ((player.renderPos.y + 8) / 16) * mmH;
+        ctx.fillStyle = id === youIdRef.current ? '#ff79b1' : '#6fe5ff';
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, id === youIdRef.current ? 2.5 : 1.5, 0, Math.PI * 2);
+        ctx.fill();
       });
 
       ctx.restore();
@@ -631,6 +1038,7 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
     };
   }, [getSprite]);
 
+  // Cleanup
   useEffect(() => {
     return () => {
       if (pingTimerRef.current) clearInterval(pingTimerRef.current);

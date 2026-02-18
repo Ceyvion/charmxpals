@@ -6,6 +6,8 @@ import type WebSocket from 'ws';
 
 import type { MmoSessionClaims } from '../../src/lib/mmo/token';
 import { filterProfanity } from '../../src/lib/profanity';
+import { MAP_DATA, clampToWalkable, isInSpeedZone, isInPowerZone } from '../../src/lib/mmo/mapData';
+import type { ArenaMapId as MapDataMapId } from '../../src/lib/mmo/mapData';
 
 type Vec2 = { x: number; y: number };
 type GameMode = 'plaza' | 'arena';
@@ -47,6 +49,7 @@ type ClientState = {
   kills: number;
   deaths: number;
   lastAbilityAt: number;
+  inPowerZone: boolean;
 };
 
 export type PlazaServerOptions = {
@@ -84,8 +87,13 @@ const EMOTE_WINDOW_MS = 4000;
 const EMOTE_MAX = 6;
 const ABILITY_COOLDOWN_MS = 850;
 const ABILITY_RANGE = 2.2;
+const ABILITY_RANGE_EMPOWERED = 3.5;
 const ABILITY_DAMAGE = 35;
 const ARENA_KILL_TARGET = 8;
+const HEALTH_PICKUP_AMOUNT = 30;
+const PICKUP_RESPAWN_MS = 12_000;
+const POWER_ZONE_DPS = 5;
+const SPEED_ZONE_MULTIPLIER = 1.6;
 const ARENA_ROTATION_WINDOW_MS = 20 * 60 * 1000;
 const ARENA_MAP_ROTATION: ArenaMapId[] = ['neon-grid', 'crystal-rift', 'voltage-foundry'];
 const ARENA_MODIFIER_POOL = [
@@ -193,7 +201,14 @@ function modeFromClaims(claims: MmoSessionClaims): GameMode {
   return 'plaza';
 }
 
-function spawnForMode(mode: GameMode): Vec2 {
+function spawnForMode(mode: GameMode, mapId?: ArenaMapId): Vec2 {
+  if (mode === 'arena' && mapId) {
+    const mapDef = MAP_DATA[mapId as MapDataMapId];
+    if (mapDef) {
+      const points = mapDef.spawnPoints;
+      return { ...points[Math.floor(Math.random() * points.length)] };
+    }
+  }
   if (mode === 'arena') {
     return { x: Math.random() * 20 - 10, y: Math.random() * 12 - 6 };
   }
@@ -232,6 +247,7 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
   const tickMs = opts.tickMs ?? defaultOptions.tickMs;
   const snapshotMs = opts.snapshotMs ?? defaultOptions.snapshotMs;
   const log = opts.logger || console.log;
+  let cachedArenaConfig: ArenaConfig | null = buildArenaConfig();
 
   const safeSend = (ws: WebSocket, payload: unknown) => {
     if (ws.readyState !== WS_READY_STATE_OPEN) return;
@@ -332,27 +348,32 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
     }
     client.lastAbilityAt = now;
 
-    const victims: Array<{ id: string; displayName: string; hp: number }> = [];
+    // Dynamic range: empowered in the power zone
+    const effectiveRange = client.inPowerZone ? ABILITY_RANGE_EMPOWERED : ABILITY_RANGE;
+    const currentMapId = cachedArenaConfig?.mapId;
+
+    const victims: Array<{ id: string; displayName: string; hp: number; pos: Vec2 }> = [];
     clients.forEach((target, targetId) => {
       if (targetId === client.sessionId) return;
       if (!target.joined || target.mode !== 'arena') return;
       const dx = target.pos.x - client.pos.x;
       const dy = target.pos.y - client.pos.y;
       const distanceSq = dx * dx + dy * dy;
-      if (distanceSq > ABILITY_RANGE * ABILITY_RANGE) return;
+      if (distanceSq > effectiveRange * effectiveRange) return;
 
       target.hp = clamp(target.hp - ABILITY_DAMAGE, 0, 100);
       victims.push({
         id: targetId,
         displayName: target.displayName,
         hp: target.hp,
+        pos: { ...target.pos },
       });
 
       if (target.hp <= 0) {
         target.deaths += 1;
         client.kills += 1;
         target.hp = 100;
-        target.pos = spawnForMode('arena');
+        target.pos = spawnForMode('arena', currentMapId);
         target.axes = { x: 0, y: 0 };
 
         broadcast(
@@ -364,6 +385,7 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
               killer: client.displayName,
               victimId: targetId,
               victim: target.displayName,
+              victimPos: { ...target.pos },
               kills: client.kills,
               deaths: target.deaths,
             },
@@ -393,7 +415,7 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
         arenaClient.kills = 0;
         arenaClient.deaths = 0;
         arenaClient.hp = 100;
-        arenaClient.pos = spawnForMode('arena');
+        arenaClient.pos = spawnForMode('arena', currentMapId);
         arenaClient.axes = { x: 0, y: 0 };
       });
     }
@@ -406,6 +428,8 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
           actorId: client.sessionId,
           actor: client.displayName,
           ability: ability || 'pulse',
+          pos: { ...client.pos },
+          range: effectiveRange,
           victims,
         },
       },
@@ -443,7 +467,7 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
       displayName,
       characterId: ownedChars[0] || 'neon-city',
       mode,
-      pos: spawnForMode(mode),
+      pos: spawnForMode(mode, mode === 'arena' ? buildArenaConfig().mapId : undefined),
       rot: 0,
       axes: { x: 0, y: 0 },
       lastInputSeq: 0,
@@ -459,6 +483,7 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
       kills: 0,
       deaths: 0,
       lastAbilityAt: 0,
+      inPowerZone: false,
     };
 
     client.handshakeTimer = setTimeout(() => {
@@ -599,48 +624,159 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
     });
   });
 
+  // --- Arena state: pickups ---
+  type PickupState = { id: string; type: 'health'; pos: Vec2; r: number; active: boolean; respawnAt: number };
+  let arenaPickups: PickupState[] = [];
+  let pickupsDirty = false;
+
+  function initPickupsForMap(mapId: ArenaMapId) {
+    const mapDef = MAP_DATA[mapId as MapDataMapId];
+    if (!mapDef) { arenaPickups = []; return; }
+    arenaPickups = mapDef.healthPickups.map((hp) => ({
+      id: hp.id,
+      type: 'health' as const,
+      pos: { ...hp.pos },
+      r: hp.r,
+      active: true,
+      respawnAt: 0,
+    }));
+    pickupsDirty = true;
+  }
+  if (cachedArenaConfig) initPickupsForMap(cachedArenaConfig.mapId);
+
   let last = Date.now();
   let lastSnapshot = 0;
   const tickHandle = setInterval(() => {
     const now = Date.now();
     const dt = Math.min(100, now - last);
+    const dtSec = dt / 1000;
     last = now;
 
+    // Check for map rotation
+    const freshConfig = buildArenaConfig(now);
+    if (cachedArenaConfig && freshConfig.mapId !== cachedArenaConfig.mapId) {
+      cachedArenaConfig = freshConfig;
+      initPickupsForMap(freshConfig.mapId);
+      broadcast(
+        { type: 'event', event: 'system', data: { message: `Map rotated to ${freshConfig.mapId}` } },
+        { mode: 'arena' },
+      );
+    }
+    cachedArenaConfig = freshConfig;
+
+    const arenaMapId = cachedArenaConfig.mapId as MapDataMapId;
+    const mapDef = MAP_DATA[arenaMapId];
     const speed = 2.8;
+
+    // --- Movement ---
     clients.forEach((client) => {
-      const dx = client.axes.x * speed * (dt / 1000);
-      const dy = client.axes.y * speed * (dt / 1000);
-      const xBound = client.mode === 'arena' ? 14 : 10;
-      const yBound = client.mode === 'arena' ? 8 : 6;
-      client.pos.x = clamp(client.pos.x + dx, -xBound, xBound);
-      client.pos.y = clamp(client.pos.y + dy, -yBound, yBound);
-      if (dx || dy) client.rot = Math.atan2(dy, dx) || client.rot;
+      if (client.mode === 'arena' && mapDef) {
+        // Speed zone check
+        const inSpeed = isInSpeedZone(mapDef, client.pos.x, client.pos.y);
+        const effectiveSpeed = inSpeed ? speed * SPEED_ZONE_MULTIPLIER : speed;
+        const dx = client.axes.x * effectiveSpeed * dtSec;
+        const dy = client.axes.y * effectiveSpeed * dtSec;
+        const xBound = 14;
+        const yBound = 8;
+        const rawX = clamp(client.pos.x + dx, -xBound, xBound);
+        const rawY = clamp(client.pos.y + dy, -yBound, yBound);
+        const resolved = clampToWalkable(mapDef, client.pos.x, client.pos.y, rawX, rawY);
+        client.pos.x = resolved.x;
+        client.pos.y = resolved.y;
+        if (dx || dy) client.rot = Math.atan2(dy, dx) || client.rot;
+
+        // Power zone
+        client.inPowerZone = isInPowerZone(mapDef, client.pos.x, client.pos.y);
+        if (client.inPowerZone) {
+          client.hp = Math.max(1, client.hp - POWER_ZONE_DPS * dtSec);
+        }
+      } else {
+        // Plaza mode — no collision
+        const dx = client.axes.x * speed * dtSec;
+        const dy = client.axes.y * speed * dtSec;
+        const xBound = client.mode === 'arena' ? 14 : 10;
+        const yBound = client.mode === 'arena' ? 8 : 6;
+        client.pos.x = clamp(client.pos.x + dx, -xBound, xBound);
+        client.pos.y = clamp(client.pos.y + dy, -yBound, yBound);
+        if (dx || dy) client.rot = Math.atan2(dy, dx) || client.rot;
+      }
     });
 
+    // --- Health pickups ---
+    for (const pickup of arenaPickups) {
+      if (!pickup.active) {
+        if (now >= pickup.respawnAt) {
+          pickup.active = true;
+          pickupsDirty = true;
+          broadcast(
+            { type: 'event', event: 'pickup_respawn', data: { id: pickup.id } },
+            { mode: 'arena' },
+          );
+        }
+        continue;
+      }
+      clients.forEach((client) => {
+        if (client.mode !== 'arena' || !client.joined || !pickup.active) return;
+        const dx = client.pos.x - pickup.pos.x;
+        const dy = client.pos.y - pickup.pos.y;
+        if (dx * dx + dy * dy <= pickup.r * pickup.r) {
+          if (client.hp < 100) {
+            client.hp = Math.min(100, client.hp + HEALTH_PICKUP_AMOUNT);
+            pickup.active = false;
+            pickup.respawnAt = now + PICKUP_RESPAWN_MS;
+            pickupsDirty = true;
+            broadcast(
+              { type: 'event', event: 'pickup_consumed', data: { id: pickup.id, playerId: client.sessionId, pos: { ...pickup.pos } } },
+              { mode: 'arena' },
+            );
+          }
+        }
+      });
+    }
+
+    // --- Snapshots ---
     if (now - lastSnapshot >= snapshotMs) {
       lastSnapshot = now;
       const plazaPlayers: Array<{ id: string; characterId: string; pos: Vec2; rot: number; hp: number; kills: number; deaths: number }> = [];
-      const arenaPlayers: Array<{ id: string; characterId: string; pos: Vec2; rot: number; hp: number; kills: number; deaths: number }> = [];
+      const arenaPlayers: Array<{ id: string; characterId: string; pos: Vec2; rot: number; hp: number; kills: number; deaths: number; inPowerZone?: boolean }> = [];
 
       clients.forEach((client, id) => {
-        const row = {
-          id,
-          characterId: client.characterId,
-          pos: { ...client.pos },
-          rot: client.rot,
-          hp: client.hp,
-          kills: client.kills,
-          deaths: client.deaths,
-        };
-        if (client.mode === 'arena') arenaPlayers.push(row);
-        else plazaPlayers.push(row);
+        if (client.mode === 'arena') {
+          arenaPlayers.push({
+            id,
+            characterId: client.characterId,
+            pos: { ...client.pos },
+            rot: client.rot,
+            hp: client.hp,
+            kills: client.kills,
+            deaths: client.deaths,
+            inPowerZone: client.inPowerZone || undefined,
+          });
+        } else {
+          plazaPlayers.push({
+            id,
+            characterId: client.characterId,
+            pos: { ...client.pos },
+            rot: client.rot,
+            hp: client.hp,
+            kills: client.kills,
+            deaths: client.deaths,
+          });
+        }
       });
 
       if (plazaPlayers.length > 0) {
         broadcast({ type: 'state', t: now, seqAck: 0, players: plazaPlayers }, { mode: 'plaza' });
       }
       if (arenaPlayers.length > 0) {
-        broadcast({ type: 'state', t: now, seqAck: 0, players: arenaPlayers }, { mode: 'arena' });
+        const stateMsg: any = { type: 'state', t: now, seqAck: 0, players: arenaPlayers };
+        if (pickupsDirty) {
+          stateMsg.pickups = arenaPickups.map((p) => ({
+            id: p.id, type: p.type, pos: p.pos, active: p.active, respawnAt: p.respawnAt,
+          }));
+          pickupsDirty = false;
+        }
+        broadcast(stateMsg, { mode: 'arena' });
       }
     }
   }, tickMs);
