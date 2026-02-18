@@ -59,12 +59,14 @@ type ArenaEventData = {
   victim?: string;
   victimId?: string;
   victimPos?: Vec2;
+  respawnPos?: Vec2;
   message?: string;
   targetKills?: number;
   winner?: string;
   pos?: Vec2;
   range?: number;
   playerId?: string;
+  arena?: ArenaRotation;
 };
 
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
@@ -534,8 +536,19 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
             if (data.victimPos && theme) {
               spawnDeathEffect(fx, data.victimPos.x, data.victimPos.y, theme.secondary);
             }
+            if (data.respawnPos && theme) {
+              spawnRespawnEffect(fx, data.respawnPos.x, data.respawnPos.y, theme.primary);
+            }
 
             appendFeed({ id: `score-${Date.now()}`, text: `${killer} eliminated ${victim}.`, ts: Date.now() });
+          } else if (message.event === 'arena_rotation') {
+            if (data.arena?.mapId) {
+              setArenaConfig(data.arena);
+              setSelectedMap(data.arena.mapId);
+              selectedMapRef.current = data.arena.mapId;
+            }
+            const msg = typeof data.message === 'string' ? data.message : 'Arena map rotated.';
+            appendFeed({ id: `rotation-${Date.now()}`, text: msg, ts: Date.now() });
           } else if (message.event === 'match_end') {
             matchTrackedRef.current = false;
             killStreakRef.current = 0;
@@ -555,7 +568,7 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
             const pickup = pickupsRef.current.get(pickupId);
             if (pickup) {
               pickup.active = true;
-              (pickup as any).fadeIn = 1;
+              pickup.fadeIn = 1;
             }
           }
           break;
@@ -761,23 +774,26 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
       // 6. Health pickup nodes
       pickupsRef.current.forEach((pickup) => {
         const px = ox + pickup.pos.x * scale;
-        const py = ox + pickup.pos.y * scale;
-        // Correction: py should use oy
         const correctedPy = oy + pickup.pos.y * scale;
+        const fadeInMultiplier = pickup.fadeIn ? Math.max(0, 1 - pickup.fadeIn) : 1;
+        if (pickup.fadeIn) {
+          pickup.fadeIn = Math.max(0, pickup.fadeIn - dt * 2.5);
+          if (pickup.fadeIn === 0) delete pickup.fadeIn;
+        }
         if (pickup.active) {
           const pulse = 0.7 + Math.sin(timestamp * 0.004) * 0.3;
-          ctx.globalAlpha = 0.7 * pulse;
+          ctx.globalAlpha = 0.7 * pulse * fadeInMultiplier;
           ctx.fillStyle = '#49f3a7';
           ctx.beginPath();
           ctx.arc(px, correctedPy, 6 + pulse * 3, 0, Math.PI * 2);
           ctx.fill();
           // Glow
-          ctx.globalAlpha = 0.15 * pulse;
+          ctx.globalAlpha = 0.15 * pulse * fadeInMultiplier;
           ctx.beginPath();
           ctx.arc(px, correctedPy, 14 + pulse * 4, 0, Math.PI * 2);
           ctx.fill();
           // Cross icon
-          ctx.globalAlpha = 0.9;
+          ctx.globalAlpha = 0.9 * fadeInMultiplier;
           ctx.strokeStyle = '#ffffff';
           ctx.lineWidth = 1.5;
           ctx.beginPath();
@@ -872,6 +888,9 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
           }
           player.renderPos.x = lerp(player.renderPos.x, player.pos.x, dt * 7);
           player.renderPos.y = lerp(player.renderPos.y, player.pos.y, dt * 7);
+          if (mapDef) {
+            player.inPowerZone = isInPowerZone(mapDef, player.renderPos.x, player.renderPos.y);
+          }
         } else {
           player.renderPos.x = lerp(player.renderPos.x, player.targetPos.x, dt * 9);
           player.renderPos.y = lerp(player.renderPos.y, player.targetPos.y, dt * 9);
@@ -1097,9 +1116,12 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
           <button
             key={map.id}
             type="button"
-            onClick={() => setSelectedMap(map.id)}
+            disabled
+            title="Map rotates automatically on the server"
             className={`rounded-2xl border px-3 py-3 text-left transition ${
-              selectedMap === map.id ? 'border-rose-300 bg-rose-100/70 text-slate-800' : 'border-white/20 bg-white/45 text-slate-700'
+              selectedMap === map.id
+                ? 'border-rose-300 bg-rose-100/70 text-slate-800'
+                : 'border-white/20 bg-white/45 text-slate-700 opacity-75'
             }`}
           >
             <div className="text-xs uppercase tracking-[0.24em] opacity-70">{map.label}</div>
@@ -1107,6 +1129,7 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
           </button>
         ))}
       </div>
+      <div className="text-xs text-slate-500">Maps rotate automatically every 20 minutes.</div>
 
       {arenaConfig?.modifiers?.length ? (
         <div className="rounded-2xl border border-white/15 bg-white/45 p-3 text-xs text-slate-700">

@@ -294,6 +294,7 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
     hp: client.hp,
     kills: client.kills,
     deaths: client.deaths,
+    inPowerZone: client.mode === 'arena' ? client.inPowerZone : undefined,
   });
 
   const finalizeJoin = (client: ClientState) => {
@@ -316,7 +317,7 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
     safeSend(client.ws, { type: 'joined', you, others });
 
     if (client.mode === 'arena') {
-      const arenaConfig = buildArenaConfig();
+      const arenaConfig = cachedArenaConfig ?? buildArenaConfig();
       safeSend(client.ws, {
         type: 'event',
         event: 'system',
@@ -370,6 +371,7 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
       });
 
       if (target.hp <= 0) {
+        const deathPos = { ...target.pos };
         target.deaths += 1;
         client.kills += 1;
         target.hp = 100;
@@ -385,7 +387,8 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
               killer: client.displayName,
               victimId: targetId,
               victim: target.displayName,
-              victimPos: { ...target.pos },
+              victimPos: deathPos,
+              respawnPos: { ...target.pos },
               kills: client.kills,
               deaths: target.deaths,
             },
@@ -467,7 +470,7 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
       displayName,
       characterId: ownedChars[0] || 'neon-city',
       mode,
-      pos: spawnForMode(mode, mode === 'arena' ? buildArenaConfig().mapId : undefined),
+      pos: spawnForMode(mode, mode === 'arena' ? (cachedArenaConfig?.mapId ?? buildArenaConfig().mapId) : undefined),
       rot: 0,
       axes: { x: 0, y: 0 },
       lastInputSeq: 0,
@@ -495,7 +498,7 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
 
     sockets.set(ws, client);
 
-    const arenaConfig = mode === 'arena' ? buildArenaConfig() : null;
+    const arenaConfig = mode === 'arena' ? (cachedArenaConfig ?? buildArenaConfig()) : null;
     safeSend(ws, {
       type: 'welcome',
       motd: mode === 'arena' ? ARENA_MOTD : PLAZA_MOTD,
@@ -627,7 +630,6 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
   // --- Arena state: pickups ---
   type PickupState = { id: string; type: 'health'; pos: Vec2; r: number; active: boolean; respawnAt: number };
   let arenaPickups: PickupState[] = [];
-  let pickupsDirty = false;
 
   function initPickupsForMap(mapId: ArenaMapId) {
     const mapDef = MAP_DATA[mapId as MapDataMapId];
@@ -640,7 +642,6 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
       active: true,
       respawnAt: 0,
     }));
-    pickupsDirty = true;
   }
   if (cachedArenaConfig) initPickupsForMap(cachedArenaConfig.mapId);
 
@@ -657,8 +658,17 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
     if (cachedArenaConfig && freshConfig.mapId !== cachedArenaConfig.mapId) {
       cachedArenaConfig = freshConfig;
       initPickupsForMap(freshConfig.mapId);
+
+      // Reposition arena players onto valid spawn points for the new map.
+      clients.forEach((arenaClient) => {
+        if (arenaClient.mode !== 'arena') return;
+        arenaClient.pos = spawnForMode('arena', freshConfig.mapId);
+        arenaClient.axes = { x: 0, y: 0 };
+        arenaClient.inPowerZone = false;
+      });
+
       broadcast(
-        { type: 'event', event: 'system', data: { message: `Map rotated to ${freshConfig.mapId}` } },
+        { type: 'event', event: 'arena_rotation', data: { arena: freshConfig, message: `Map rotated to ${freshConfig.mapId}` } },
         { mode: 'arena' },
       );
     }
@@ -707,7 +717,6 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
       if (!pickup.active) {
         if (now >= pickup.respawnAt) {
           pickup.active = true;
-          pickupsDirty = true;
           broadcast(
             { type: 'event', event: 'pickup_respawn', data: { id: pickup.id } },
             { mode: 'arena' },
@@ -724,7 +733,6 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
             client.hp = Math.min(100, client.hp + HEALTH_PICKUP_AMOUNT);
             pickup.active = false;
             pickup.respawnAt = now + PICKUP_RESPAWN_MS;
-            pickupsDirty = true;
             broadcast(
               { type: 'event', event: 'pickup_consumed', data: { id: pickup.id, playerId: client.sessionId, pos: { ...pickup.pos } } },
               { mode: 'arena' },
@@ -738,7 +746,7 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
     if (now - lastSnapshot >= snapshotMs) {
       lastSnapshot = now;
       const plazaPlayers: Array<{ id: string; characterId: string; pos: Vec2; rot: number; hp: number; kills: number; deaths: number }> = [];
-      const arenaPlayers: Array<{ id: string; characterId: string; pos: Vec2; rot: number; hp: number; kills: number; deaths: number; inPowerZone?: boolean }> = [];
+      const arenaPlayers: Array<{ id: string; characterId: string; pos: Vec2; rot: number; hp: number; kills: number; deaths: number; inPowerZone: boolean }> = [];
 
       clients.forEach((client, id) => {
         if (client.mode === 'arena') {
@@ -750,7 +758,7 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
             hp: client.hp,
             kills: client.kills,
             deaths: client.deaths,
-            inPowerZone: client.inPowerZone || undefined,
+            inPowerZone: client.inPowerZone,
           });
         } else {
           plazaPlayers.push({
@@ -769,13 +777,15 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
         broadcast({ type: 'state', t: now, seqAck: 0, players: plazaPlayers }, { mode: 'plaza' });
       }
       if (arenaPlayers.length > 0) {
-        const stateMsg: any = { type: 'state', t: now, seqAck: 0, players: arenaPlayers };
-        if (pickupsDirty) {
-          stateMsg.pickups = arenaPickups.map((p) => ({
+        const stateMsg = {
+          type: 'state',
+          t: now,
+          seqAck: 0,
+          players: arenaPlayers,
+          pickups: arenaPickups.map((p) => ({
             id: p.id, type: p.type, pos: p.pos, active: p.active, respawnAt: p.respawnAt,
-          }));
-          pickupsDirty = false;
-        }
+          })),
+        };
         broadcast(stateMsg, { mode: 'arena' });
       }
     }

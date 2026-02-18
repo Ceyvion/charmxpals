@@ -593,3 +593,35 @@
     - menu closes after mobile nav link navigation,
     - Explore filter container is non-sticky on mobile (`position: relative`).
   - Dark-mode emulation check confirms Explore-specific variables/contrast are active (`prefers-color-scheme: dark`, readable text and surface colors).
+
+## Arena Overhaul Bugfix Plan (2026-02-18)
+
+- [x] Fix server/client arena map authority so rotation updates are pushed and local map switching cannot desync prediction.
+- [x] Ensure arena pickup state is delivered reliably to all clients, including newly joined clients.
+- [x] Fix elimination event payloads so death FX render at death position and add respawn FX position support.
+- [x] Fix `inPowerZone` snapshot semantics so clients can clear zone state correctly.
+- [x] Clean up `ArenaClient` lint errors introduced by the overhaul and verify with lint/test/build.
+
+### Arena Overhaul Bugfix Review (2026-02-18)
+
+- Server map authority fixes in `server/mmo/plazaServer.ts`:
+  - Added `arena_rotation` event broadcast with full arena config payload on map rotation.
+  - Repositioned all arena players to valid spawn points on rotation to prevent off-map/stuck states.
+  - Used cached arena config for arena spawns/welcome data to keep map state consistent during connect/join.
+- Pickup synchronization fixes:
+  - Arena `state` snapshots now always include `pickups` so late-join clients never miss current pickup availability.
+  - Added regression test in `server/mmo/__tests__/plazaServer.test.ts` to assert pickup snapshots are present in arena state updates.
+- Combat/FX payload fixes:
+  - Score events now include `victimPos` captured pre-respawn and `respawnPos` post-respawn.
+  - Arena client now renders death FX at death position and respawn FX at respawn position.
+- Power zone state correctness:
+  - Arena snapshots now always send explicit boolean `inPowerZone` values (not omitted false values).
+  - Client also updates local-player power-zone aura from predicted position for responsive visuals.
+- Arena client robustness/UX fixes:
+  - Added handling for `arena_rotation` to update map + arena config client-side.
+  - Removed unsafe `any` pickup fade-in cast and fixed pickup draw-coordinate lint issue.
+  - Disabled manual map switching UI to avoid client-side map desync from server authority.
+- Verification:
+  - `npm run lint` (passes; existing unrelated warnings remain).
+  - `npm test` (passes; 30/30 tests).
+  - `npm run build` (passes).

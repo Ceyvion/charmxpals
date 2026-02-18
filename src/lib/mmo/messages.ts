@@ -86,7 +86,18 @@ export type S2CState = {
 };
 export type S2CEvent = {
   type: 'event';
-  event: 'emote' | 'join' | 'leave' | 'chat' | 'combat' | 'score' | 'match_end' | 'system' | 'pickup_consumed' | 'pickup_respawn';
+  event:
+    | 'emote'
+    | 'join'
+    | 'leave'
+    | 'chat'
+    | 'combat'
+    | 'score'
+    | 'match_end'
+    | 'system'
+    | 'pickup_consumed'
+    | 'pickup_respawn'
+    | 'arena_rotation';
   data: any;
 };
 export type S2CPong = { type: 'pong'; ts: number };

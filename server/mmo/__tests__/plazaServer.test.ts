@@ -30,7 +30,7 @@ async function openClient(
   server: PlazaServer,
   userId: string,
   sessionId: string,
-  options: { binaryHandshake?: boolean } = {}
+  options: { binaryHandshake?: boolean; scope?: string[]; mode?: 'plaza' | 'arena' } = {}
 ): Promise<TestClient> {
   const exp = Math.floor(Date.now() / 1000) + 60;
   const token = signToken(
@@ -39,8 +39,9 @@ async function openClient(
       sid: sessionId,
       exp,
       nonce: `${sessionId}-nonce`,
-      scope: ['plaza:join'],
+      scope: options.scope ?? ['plaza:join'],
       owned: ['demo'],
+      mode: options.mode,
     },
     { secret: TEST_SECRET }
   );
@@ -164,6 +165,24 @@ describe('plaza server', () => {
     const client = await openClient(server, 'user-bin', 'session-bin', { binaryHandshake: true });
 
     await waitForExpect(() => expect(server.getPlayerCount()).toBe(1));
+
+    client.ws.close();
+    await waitForExpect(() => expect(server.getPlayerCount()).toBe(0));
+  });
+
+  it('includes pickup snapshots in arena state updates', async () => {
+    const client = await openClient(server, 'arena-user', 'arena-session', {
+      scope: ['arena:join'],
+      mode: 'arena',
+    });
+
+    await waitForExpect(() => {
+      const snapshot = client.events.find(
+        (entry) => entry.payload?.type === 'state' && Array.isArray(entry.payload?.pickups)
+      );
+      expect(snapshot).toBeTruthy();
+      expect(snapshot?.payload.pickups.length).toBeGreaterThan(0);
+    });
 
     client.ws.close();
     await waitForExpect(() => expect(server.getPlayerCount()).toBe(0));
