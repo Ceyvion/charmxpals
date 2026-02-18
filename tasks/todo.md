@@ -218,6 +218,38 @@
 - [x] Patch landing roster card rendering to display resolved art refs with safe fallback behavior.
 - [x] Filter landing roster payload so inactive legacy characters are excluded from this section.
 - [x] Add deterministic Blaze the Dragon art fallback to prevent blank/placeholder-only rendering.
+
+## Fiber Optic Background Audit Plan (2026-02-18)
+
+- [x] Audit `src/components/champion/FiberOpticBackground.tsx` for runtime bugs, animation edge cases, and browser compatibility gaps.
+- [x] Audit `src/app/character/[id]/CharacterPageClient.tsx` integration behavior for env-gating, hydration safety, and reduced-motion handling.
+- [x] Implement minimal, elegant fixes for any confirmed defects without broad UI refactors.
+- [x] Verify with `npm run lint` and `npm run build`.
+- [x] Document findings and residual risk in a review note.
+
+## Runtime Audit Request (2026-02-18)
+
+- [x] Inspect `/src/components/champion/FiberOpticBackground.tsx` for runtime bugs/edge cases introduced by the fiber optic background integration.
+- [x] Inspect `/src/app/character/[id]/CharacterPageClient.tsx` for any integration regressions, reduced-motion gating, or hydration issues related to the new background.
+- [ ] Summarize confirmed defects with file/line references, severity, and reproduction or reasoning.
+- [ ] Capture verification status or residual risk in this review note.
+
+### Fiber Optic Background Audit Review (2026-02-18)
+
+- Findings and fixes:
+  - `src/components/champion/FiberOpticBackground.tsx` previously created one `prefers-reduced-motion` listener per `FiberStrand` layer, multiplying subscriptions across all strands. Reduced-motion state is now resolved once at wrapper level and passed down.
+  - Media-query change handling used only `addEventListener('change', ...)`; added compatibility fallback to `addListener/removeListener` for browsers that still expose the legacy API.
+  - Fiber animation `dashOffset` was unbounded over time; offset now wraps in `[-1, 0]` to avoid long-session float drift.
+  - When reduced motion is enabled, line materials now reset to deterministic static values and the canvas `frameloop` switches to `demand` so animation fully stops.
+  - Line `resolution` now clamps to at least `1x1` to avoid invalid zero-dimension values during transient layout states.
+  - Added WebGL capability guard and a local canvas error boundary so unsupported/broken WebGL environments degrade to no-3D instead of crashing the character route.
+  - `src/app/character/[id]/CharacterPageClient.tsx` now parses `NEXT_PUBLIC_DISABLE_3D` explicitly (`1|true|yes|on`) instead of treating any non-empty string as disable-on.
+  - Dynamic import for the fiber background now has a no-op fallback (`loading: null` + rejected import recovery) so chunk-load failures do not take down the page.
+- Verification:
+  - `npm run lint` passes (pre-existing unrelated warnings remain).
+  - `npm run build` passes.
+- Residual risk:
+  - Fiber curve generation remains intentionally non-deterministic per mount (`Math.random`), so strand paths change between full remounts by design.
 - [x] Verify with lint and a focused local roster data check; document review notes.
 
 ### Landing Character Art + Inactive Cleanup Review (2026-02-17)

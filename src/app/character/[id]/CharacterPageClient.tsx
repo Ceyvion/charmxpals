@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useRef, useCallback, type CSSProperties } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 
 import RevealOnView from '@/components/RevealOnView';
 import HexRadar from '@/components/champion/HexRadar';
@@ -9,6 +10,18 @@ import StatBar from '@/components/champion/StatBar';
 import LoreCodex from '@/components/champion/LoreCodex';
 import CharacterGallery from '@/components/champion/CharacterGallery';
 import TraitBadge from '@/components/champion/TraitBadge';
+
+const FiberOpticBackground = dynamic(
+  () =>
+    import('@/components/champion/FiberOpticBackground')
+      .then((mod) => mod.default)
+      .catch(() => () => null),
+  { ssr: false, loading: () => null },
+);
+
+const DISABLE_3D_EFFECTS = /^(1|true|yes|on)$/i.test(
+  process.env.NEXT_PUBLIC_DISABLE_3D ?? '',
+);
 
 /* ── Types ── */
 
@@ -267,6 +280,11 @@ export default function CharacterPageClient({ character }: { character: Characte
             style={{ backgroundColor: `${accentColor}10`, animationDelay: '2s' }}
           />
         </div>
+
+        {/* Fiber optic light strands */}
+        {!DISABLE_3D_EFFECTS && (
+          <FiberOpticBackground accentColor={accentColor} fiberCount={10} />
+        )}
 
         {/* Particles */}
         <Particles count={15} color={accentColor} />
