@@ -356,6 +356,20 @@
 - Residual risk:
   - Existing repo/runtime console noise (`/favicon.ico` 500 and intermittent RSC payload mismatch from stale browser/dev contexts) still appears outside core battle logic and can pollute automation error logs.
 
+## Character Narrative Audit Plan (2026-02-18)
+
+- [x] Catalog canonical character data files and confirm total entries.
+- [x] Verify each profile has updated narrative fields (`descriptionHint`, `personality`, etc.) and flag placeholders/duplicates.
+- [x] Collect counts, examples, and paths for reporting; note any remaining weak copy.
+
+### Character Narrative Audit Review (2026-02-18)
+
+- Canonical source verified at `src/data/characterLore.ts`, with assembled export from `coreCharacterLore` (10), `legacyCharacterLore` (11), and generated seed-driven entries (34), for 55 total profiles.
+- Rewrite pass confirmed across profile narrative text: substantial `description` rewrites in handcrafted/legacy entries and upgraded `descriptionHint` copy powering generated descriptions.
+- Quality checks found no placeholder markers (`placeholder`, `TODO`, `TBD`) and no duplicate `tagline`/`descriptionHint` literals.
+- Verification commands run: `npm test`, `npm run lint`, and `npm run build` (all passing; lint reports existing non-blocking warnings).
+
+
 ## Localhost 500 Startup Recovery Plan (2026-02-17)
 
 - [x] Reproduce `/` returning `500` on `npm start` and capture production stack traces.

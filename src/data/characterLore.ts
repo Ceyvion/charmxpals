@@ -63,7 +63,7 @@ const coreCharacterLore: CharacterLore[] = [
     personality: 'Bold, flashy, and full of swagger; speaks in punchy beats and graffiti tags.',
     tagline: 'Lightning-fast footwork straight from the neon skyline.',
     description:
-      'Neon City’s skyline is her stage. Vexa Volt slides across holo rails, syncs with billboard breakers, and channels the Bass Drop Gem to spark Shockwave routines that reboot corrupted beats.',
+      "Vexa didn't learn to dance in a studio. She learned in the gap between trains — eight seconds of silence before the city swallowed her again. Neon City never stops talking, so Vexa learned to talk louder. The Bass Drop Gem came to her during a blackout, humming against dead billboard glass, and she's been syncing to its pulse ever since. She doesn't perform for crowds. She performs so the city remembers it's alive.",
     rarity: 4,
     stats: {
       rhythm: 95,
@@ -88,7 +88,7 @@ const coreCharacterLore: CharacterLore[] = [
     personality: 'Graceful and diplomatic but fierce once the music swells.',
     tagline: 'A single pirouette can shatter silence into symphonies.',
     description:
-      'Raised within the mirrored halls of Crystal Kingdom, Seraphine Gliss wields the Royal Rhythm Crown to choreograph lightstorms. Every spin restores harmony, bending reflections to reveal hidden distortions in the beat.',
+      "The Crystal Kingdom reflects everything perfectly — which is exactly why Seraphine learned to distrust mirrors. She was groomed to be ornamental, a centerpiece of light and grace with nothing underneath. The Royal Rhythm Crown chose her not for her lineage, but for the moment she stopped performing for the court and danced alone in a shattered hall. In the fractures, she found the truth: harmony isn't the absence of discord. It's what survives it.",
     rarity: 4,
     stats: {
       rhythm: 88,
@@ -113,7 +113,7 @@ const coreCharacterLore: CharacterLore[] = [
     personality: 'Calm, soothing, but fiercely competitive when currents shift.',
     tagline: 'The tide always turns on the downbeat.',
     description:
-      'Kai Tidal rides luminant surf across coral amphitheaters, bending water into ribboned choreography. With the Tidal Tune Pearl he can summon rhythm ripcurrents that wash corruption out of entire arenas.',
+      "The ocean doesn't hurry, and neither does Kai. They grew up listening to the deep — not the crash of waves, but the silence between them, the place where one rhythm ends and the next hasn't decided what it wants to be yet. The Tidal Tune Pearl surfaced during the longest drought the Reef had ever known, when the coral had gone quiet and the fish had forgotten how to school. Kai carried it home and played until the water remembered its own song. They've been doing it ever since — not because they're the best, but because the ocean asked.",
     rarity: 4,
     stats: {
       rhythm: 92,
@@ -138,7 +138,7 @@ const coreCharacterLore: CharacterLore[] = [
     personality: 'Energetic, earthy, and fiercely loyal to every crew mate.',
     tagline: 'Roots, rhythm, and relentless bounce.',
     description:
-      'Tarin Pulse drums thunder through canopy catwalks, syncing every creature to the primal groove. The Jungle Groove Seed lets Tarin awaken drumtree guardians whose beats mend fractured Beat Bridges.',
+      "Every elder in the Wildbeat Jungle knows: you don't teach the drum. You listen until it teaches you. Tarin spent three seasons alone in the upper canopy before the Jungle Groove Seed cracked open in their palm — not because they'd mastered the rhythm, but because they'd finally stopped trying to. The jungle is the oldest musician alive. Tarin is its translator. When Beat Bridges fracture and the silence spreads like rot, Tarin doesn't fight it — they call the old trees, and the old trees remember what silence is supposed to feel like before it heals.",
     rarity: 4,
     stats: {
       rhythm: 90,
@@ -163,7 +163,7 @@ const coreCharacterLore: CharacterLore[] = [
     personality: 'Bubbly, confident, and obsessed with staging the perfect encore.',
     tagline: 'Every spotlight follows her constellation.',
     description:
-      'Mina Starlit headlines Lunar Lux’s shimmering tour, dropping choreo bursts timed to meteor showers. With the Stardust Mic she harmonizes entire squads, reflecting corrupted noise back as glittering harmony.',
+      "Mina was once afraid of the dark between stars. Now she performs in it. Lunar Lux is a city built on light borrowed from distant suns — beautiful, borrowed, always on the edge of going out. Mina's perfectionism isn't vanity; it's survival instinct. A single missed beat in a Stardust Mic performance can let the darkness creep in at the edges. She smiles for the crowd because the crowd's energy is what keeps the lights on — literally. Behind the glitter, she's the loneliest person in any room. The mic knows. It's why it chose her.",
     rarity: 4,
     stats: {
       rhythm: 93,
@@ -188,7 +188,7 @@ const coreCharacterLore: CharacterLore[] = [
     personality: 'Speaks through motion; enigmatic but laser-focused on justice.',
     tagline: 'Silence is just a beat waiting to be flipped.',
     description:
-      'Cipher Noir stalks the dim catwalks of Shadow Stage, pulling echoes out of lamplit fog. The Phantom Pulse Orb spins spectral doubles that battle in sync, overwhelming the Beat Break with improvisational swarms.',
+      "Nobody knows Cipher Noir's real name. That's not an accident — it's a philosophy. In the Shadow Stage, names are leverage, and leverage is a leash. Cipher gave their name away to the fog years ago and has moved lighter ever since. The Phantom Pulse Orb didn't appear to them; it followed them, drawn by the silence they carry like a second skin. Each spectral double the Orb creates is a version of Cipher that almost existed — the one who stayed, the one who spoke, the one who didn't make it out. They fight with all of them. That's what justice looks like from the inside of a shadow.",
     rarity: 5,
     stats: {
       rhythm: 91,
@@ -213,7 +213,7 @@ const coreCharacterLore: CharacterLore[] = [
     personality: 'Mentor energy, radiates calm focus, keeps crews unified.',
     tagline: 'Spin every realm into the same groove.',
     description:
-      'DJ Prismix floats between realms on soundwave bridges, sampling every rhythm to remix the perfect counterbeat. The Master Mix Prism lets Prismix splice dimensions together, stabilizing arenas before the Beat Break can spread.',
+      "Prismix has heard every song that ever existed across every realm — and the weight of that is not what you'd expect. When you've heard everything, silence becomes precious. The Master Mix Prism was cracking the last time anyone saw it clearly; Prismix keeps it wrapped, keeps moving, keeps sampling, because still water lets the Break take hold. They mentor not out of wisdom but out of debt — they've borrowed from every rhythm in the multiverse, and the only way to pay it back is to make sure those rhythms survive. Every realm they stabilize is a note they owe. They'll never be done.",
     rarity: 5,
     stats: {
       rhythm: 99,
@@ -238,7 +238,7 @@ const coreCharacterLore: CharacterLore[] = [
     personality: 'Fearless hype-starter; first into battle, last off the floor.',
     tagline: 'Spin sparks until the night catches fire.',
     description:
-      'Raze Ember whips through rooftop cyphers, fusing flare combos with capoeira sweeps. Every strike on the Inferno Heart Drum throws heat mirages that trip up corrupted rhythms and reignite the crowd.',
+      "Raze Ember is afraid of exactly one thing: a silent crowd. Not because they need the applause — because silence means the fire went out. Ember Heights was built on the heat of collective movement; the rooftop cyphers that crackle under Raze's feet are the city's pulse, and when they go cold, the city goes dark. The Inferno Heart Drum came from the ruins of the old Heights — a relic of a people who danced to survive the cold. Raze carries it not as a weapon but as an inheritance. Every heat mirage, every blazing flare: a promise to the dead that the warmth didn't die with them.",
     rarity: 5,
     stats: {
       rhythm: 94,
@@ -263,7 +263,7 @@ const coreCharacterLore: CharacterLore[] = [
     personality: 'Radiant optimist and timekeeper; keeps every crew on count.',
     tagline: 'Daylight drops right on beat.',
     description:
-      'Helio Trace conducts rooftop sessions that charge the Sunburst Disc, releasing Burst Tempo flares that quicken allies’ steps and burn through shadows. Every shuffle keeps the multiverse perfectly on time.',
+      "The Solar Spire doesn't run on power or politics. It runs on tempo. Helio Trace understood this before they understood anything else: if the shuffle stops, the light fades — not metaphorically, but structurally. The Sunburst Disc isn't a tool Helio found. It's a duty Helio inherited from the last Captain, who burned out keeping the spire lit through the Long Dusk. Helio smiles because the alternative is panic, and panic breaks the count. They will never tell you how heavy the disc is. You don't put that weight on people you're trying to keep dancing.",
     rarity: 4,
     stats: {
       rhythm: 90,
@@ -288,7 +288,7 @@ const coreCharacterLore: CharacterLore[] = [
     personality: 'Steady, wise, community-first; turns crowds into choirs.',
     tagline: 'Every stomp anchors the beat.',
     description:
-      'Cadence Clay leads canyon choirs where every stomp travels for miles. The Earth Resonance Stone drops seismic metronomes that stabilize Beat Bridges and give the squad rock-solid timing.',
+      "Cadence Clay is the first to arrive and the last to leave. Not the most talented dancer in any room — they'll tell you that before you can think it — but the one whose absence the room notices most. Terra Tempo is a canyon that echoes everything: joy, grief, arrogance, doubt. Clay learned to stomp in a way that turns all of it into something the earth can use. The Earth Resonance Stone was their grandmother's, and her grandmother's before that. It doesn't grant power. It connects you to everyone who held it before — all their rhythms, all their weight — and asks: what will you add?",
     rarity: 3,
     stats: {
       rhythm: 88,
@@ -315,7 +315,8 @@ const legacyCharacterLore: CharacterLore[] = [
     coreCharm: 'Eclipse Carapace Sigil',
     personality: 'Calm, precise, and relentlessly patient.',
     tagline: 'Silent strikes from the dark.',
-    description: 'Silent strikes from the dark.',
+    description:
+      "The Umbral Canopy has no sunrise. What it has is the moment before — that held-breath darkness when predators and prey both go still, and only the one who listens deepest survives. Shadow Mantis wasn't born quiet. They were shaped by a canopy that punished sound. Every snap-fast cut in their footwork is a year of stillness compressed into a half-second of motion. The Eclipse Carapace Sigil doesn't make them invisible. It makes everyone else loud.",
     rarity: 5,
     stats: {
       rhythm: 88,
@@ -339,7 +340,8 @@ const legacyCharacterLore: CharacterLore[] = [
     coreCharm: 'Leviathan Tempest Core',
     personality: 'Dominant and unflinching under pressure.',
     tagline: 'Tidal thunder reign.',
-    description: 'Tidal thunder reign.',
+    description:
+      "The Maelstrom Trench is not a place that welcomes visitors. It is a place that tests them — with pressure, with cold, with the kind of darkness that has weight. Storm Leviathan rose from the deepest part of it, which is why they don't posture. They don't need to. Everything at the surface is just noise to something that has heard the sound the ocean makes when it folds in on itself. The Leviathan Tempest Core resonates at a frequency that bypasses the conscious mind and speaks directly to the oldest part of the body — the part that knows when to run.",
     rarity: 5,
     stats: {
       rhythm: 86,
@@ -362,8 +364,9 @@ const legacyCharacterLore: CharacterLore[] = [
     danceStyle: 'Fluid coils, sweeping turns, and crushing bass drops.',
     coreCharm: 'Abyss Current Pearl',
     personality: 'Ancient, focused, and fiercely territorial.',
-    tagline: 'A massive sea serpent that commands the power of the ocean.',
-    description: 'A massive sea serpent that commands the power of the ocean.',
+    tagline: 'Ancient current, absolute power.',
+    description:
+      "The Abyssal Current runs beneath every ocean in the known multiverse — a river inside a sea, old enough that it remembers when the worlds were one. Tidal Serpent is part of it now, has been for so long that the distinction between self and current has blurred. The Abyss Current Pearl isn't carried; it's embedded. When the Serpent moves, the oceans feel it. When the Serpent is still, the rhythm of the deep slows — and the creatures of the shallows grow uneasy without knowing why.",
     rarity: 5,
     stats: {
       rhythm: 84,
@@ -387,7 +390,8 @@ const legacyCharacterLore: CharacterLore[] = [
     coreCharm: 'Jetstream Crest',
     personality: 'Daring and instinctive, with razor focus mid-flight.',
     tagline: 'Master of the jetstream.',
-    description: 'Master of the jetstream.',
+    description:
+      "Aero Falcon was grounded once — for exactly eleven days, after a storm shattered the eastern thermal rail. Those eleven days are the reason they dive without hesitation now. The Jetstream Crest calculates seventeen variables in the half-second before a lane commitment; Falcon doesn't check it anymore. At this altitude, instinct is faster than thought, and hesitation is a kind of falling.",
     rarity: 4,
     stats: {
       rhythm: 81,
@@ -411,7 +415,8 @@ const legacyCharacterLore: CharacterLore[] = [
     coreCharm: 'Dawnsong Antler Sigil',
     personality: 'Protective, noble, and grounded in discipline.',
     tagline: 'Dawnsong guardian.',
-    description: 'Dawnsong guardian.',
+    description:
+      "Dawnsong Ridge only shows its auroras to those willing to wait in the cold for them. Aurora Stag has waited every dawn since they were young enough to remember waiting — not out of duty, but because the light has never failed to arrive, and bearing witness to something faithful makes you faithful in return. The Dawnsong Antler Sigil doesn't generate light. It remembers it. Every aurora Stag has witnessed is stored in the tines, ready to be recalled when the darkness insists it's permanent.",
     rarity: 4,
     stats: {
       rhythm: 83,
@@ -434,8 +439,9 @@ const legacyCharacterLore: CharacterLore[] = [
     danceStyle: 'Low glide strides with pounce-step bursts.',
     coreCharm: 'Cryo Fang Charm',
     personality: 'Cunning and relentless in prolonged hunts.',
-    tagline: 'A cunning wolf with ice-blue fur and razor-sharp claws.',
-    description: 'A cunning wolf with ice-blue fur and razor-sharp claws.',
+    tagline: 'Nothing ends. Things just pause.',
+    description:
+      "The Glacier Run doesn't forgive errors. It just records them in the ice, preserved until the next thaw — which may never come. Frost Wolf knows every mistake they've ever made by the exact shade of blue in the frost beneath their paws. The Cryo Fang Charm runs cold enough to slow corrupted rhythms to a crawl — not destroyed, just frozen in place, forced to wait while Frost Wolf decides what to do with them. They always decide. That's what the glacier taught: nothing ends. Things just pause.",
     rarity: 4,
     stats: {
       rhythm: 79,
@@ -459,7 +465,8 @@ const legacyCharacterLore: CharacterLore[] = [
     coreCharm: 'Everbloom Knot',
     personality: 'Steadfast, patient, and impossible to dislodge.',
     tagline: 'Roots that never yield.',
-    description: 'Roots that never yield.',
+    description:
+      "The Verdant Bastion has been besieged seventeen times in recorded memory. It has never fallen. Not because Vine Warden is invincible — they've been cut, burned, uprooted — but because the Bastion's roots run deeper than any attacker has patience to dig. The Everbloom Knot is woven from the first vine that ever climbed anything, and it remembers the shape of every wall it has held. Vine Warden doesn't fight to win. They fight to outlast. There's a difference, and it matters most at the end.",
     rarity: 4,
     stats: {
       rhythm: 76,
@@ -483,7 +490,8 @@ const legacyCharacterLore: CharacterLore[] = [
     coreCharm: 'Static Claw Coil',
     personality: 'Agile, alert, and aggressive in open lanes.',
     tagline: 'Crackling with static speed.',
-    description: 'Crackling with static speed.',
+    description:
+      "The Static Steppe generates its own weather — charge builds in the dry grass until the whole plain hums, and anything moving fast enough becomes part of the circuit. Volt Lynx understood this young: speed isn't about outrunning the static. It's about becoming the path the charge wants to take. The Static Claw Coil doesn't give them speed; it makes their speed legible to the storm. When Lynx moves, the steppe pays attention.",
     rarity: 4,
     stats: {
       rhythm: 82,
@@ -507,7 +515,8 @@ const legacyCharacterLore: CharacterLore[] = [
     coreCharm: 'Prism Bloom Sigil',
     personality: 'Curious, elegant, and tactically bright.',
     tagline: 'Prism magic and light bends.',
-    description: 'Prism magic and light bends.',
+    description:
+      "Light traveling through Crystal Nymph's Prism Glade never arrives the same color it left as. This is the Glade's gift and its riddle: nothing is quite what it appears to be, and truth requires the patience to trace light back to its source. Crystal Nymph found the Prism Bloom Sigil at the bottom of a refraction pool, which means they found it by looking not at the pool but at the way the pool bent everything around it. That's the skill: not seeing what's there, but seeing what everything else is doing in response to what's there.",
     rarity: 3,
     stats: {
       rhythm: 71,
@@ -531,7 +540,8 @@ const legacyCharacterLore: CharacterLore[] = [
     coreCharm: 'Shardwall Crest',
     personality: 'Unbreakable, disciplined, and mission-first.',
     tagline: 'Shards of unbreakable will.',
-    description: 'Shards of unbreakable will.',
+    description:
+      "Shatter Bastion was named for what happened to the wall before the current one — an older, prouder structure that broke because it refused to flex. Quartz Sentinel studied those shards. Every facet in the Shardwall Crest is cut from the rubble of that failure, carried not as a trophy but as a reminder that will alone isn't a defense. What endures isn't what refuses to crack — it's what knows which way to angle itself so the force passes through.",
     rarity: 3,
     stats: {
       rhythm: 70,
@@ -555,7 +565,8 @@ const legacyCharacterLore: CharacterLore[] = [
     coreCharm: 'Titan Core Stone',
     personality: 'Stoic, loyal, and immovable under pressure.',
     tagline: 'Unshakable mountain defender.',
-    description: 'Unshakable mountain defender.',
+    description:
+      "Mountains are patient in a way that has no human equivalent. Terra Golem understands this because they were assembled from Granite Vault's oldest rock — stone that has compressed under weight for millennia until it became something harder than intention. The Titan Core Stone at Golem's center is not a power source. It is a heartbeat, slow enough that the untrained ear mistakes it for silence. When the Vault is threatened, Golem doesn't rage. They simply become more of what they already are — and what they already are has survived every force this world has ever produced.",
     rarity: 3,
     stats: {
       rhythm: 68,
@@ -599,7 +610,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Fast-talking tactician with fearless openers.',
     tagline: 'Run the skyline before the beat can blink.',
     focus: 'flow',
-    descriptionHint: 'rides elevated lines and rewires tempo under pressure.',
+    descriptionHint: "was late once — to something that mattered. The Aurora Circuit doesn't wait for anyone, and those eleven missed seconds are the reason Nova runs without hesitation now, rewiring tempo in stride and outpacing the break before it can blink.",
   },
   {
     series: 'Aqua Dash',
@@ -614,7 +625,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Quiet until the drop, then all momentum.',
     tagline: 'Every spark lands on count.',
     focus: 'power',
-    descriptionHint: 'turns forge sparks into controlled shockbeats.',
+    descriptionHint: "spent years listening to the foundry before speaking a word of its language. Now Kairo Flux reads the Skyforge District's rhythms the way a smith reads heat — by color, by sound, by the weight of silence just before the drop.",
   },
   {
     series: 'Ivory Pixie',
@@ -629,7 +640,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Empathetic, precise, and impossible to rattle.',
     tagline: 'Reflect the noise, keep the groove.',
     focus: 'style',
-    descriptionHint: 'uses reflection loops to redirect chaotic sound.',
+    descriptionHint: "learned early that the Mirror Basin shows you not what you are, but what you're moving toward. Lumi Vibe uses that — catching chaotic sound in the water's surface and bending it back on itself, turning noise into something the crowd can believe in.",
   },
   {
     series: 'Steel Dash',
@@ -644,7 +655,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Direct, loyal, and all action.',
     tagline: 'Heavy beats, heavier impact.',
     focus: 'power',
-    descriptionHint: 'anchors the team with ground-shaking cadence.',
+    descriptionHint: "grew up in the Iron Echo's industrial pits, where the walls never stopped ringing. Jett Quake learned that the heaviest beat isn't the loudest — it's the one that lands so precisely the whole room reorganizes around it.",
   },
   {
     series: 'Gold Pixie',
@@ -659,7 +670,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Bright motivator who keeps squads steady.',
     tagline: 'Catch the daylight on the downbeat.',
     focus: 'teamwork',
-    descriptionHint: 'synchronizes crews through wide-area tempo pulses.',
+    descriptionHint: "understands that the best timing isn't personal — it's shared. Solara Sync moves through Sunwire Boulevard like a conductor who never lifts the baton, letting the gold light rails do the counting while the crew feels the beat before they hear it.",
   },
   {
     series: 'Violet Dash',
@@ -674,7 +685,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Clever, playful, and always improvising.',
     tagline: 'After midnight, rhythm gets sharper.',
     focus: 'rhythm',
-    descriptionHint: 'threads precise timing through chaotic night crowds.',
+    descriptionHint: "is always still inside the Midnight Arcade when it closes — not trapped, just uninterested in leaving. The retro machines are more honest in the dark. Nyx Ripple finds the pocket between chaos and control, threading timing through the noise like it was always supposed to be there.",
   },
   {
     series: 'Rose Pixie',
@@ -689,7 +700,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Gentle but unbreakable in a showdown.',
     tagline: 'Soft steps, sharp timing.',
     focus: 'style',
-    descriptionHint: 'turns graceful movement into control over tempo fields.',
+    descriptionHint: "moves through Petal Plaza like each step is a question the music gets to answer. Echo Bloom is gentle until the showdown — then the softness becomes precision, and the petal canopy overhead seems to hold its breath waiting for the next move.",
   },
   {
     series: 'Crimson Dash',
@@ -704,7 +715,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Calm under heat, ruthless on timing windows.',
     tagline: 'Pressure makes perfect tempo.',
     focus: 'power',
-    descriptionHint: 'channels thermal surges into controlled beat strikes.',
+    descriptionHint: "runs the Volcanic Lab's lava channels not around the heat but through it. Vorn Tempo learned that pressure applied at exactly the right moment becomes something else entirely — not force, but tempo. The Cinder Resonator doesn't suppress the heat. It gives it a count.",
   },
   {
     series: 'Cloud Pixie',
@@ -719,7 +730,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Curious strategist with calm execution.',
     tagline: 'Glide first, strike on beat.',
     focus: 'flow',
-    descriptionHint: 'reads movement lanes and opens escape patterns.',
+    descriptionHint: "grew up mapping sky docks and sail-glow currents, learning to read the space between things before the things themselves. Aria Drift moves through Cloudline Harbor like air filling a room — you notice the result before you notice the motion.",
   },
   {
     series: 'Copper Dash',
@@ -734,7 +745,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Pragmatic and relentless when stakes rise.',
     tagline: 'Tune the machine, own the rhythm.',
     focus: 'teamwork',
-    descriptionHint: 'keeps crews moving with precision route calls.',
+    descriptionHint: "knows that a crew is a machine, and machines need maintenance more than motivation. Torque Beat moves through the Mecha Yard calling routes that feel less like orders and more like the gears clicking into place — everyone arrives exactly where they need to be.",
   },
   {
     series: 'Amber Pixie',
@@ -749,7 +760,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Warm and social, sharp in competition.',
     tagline: 'Open the day with perfect timing.',
     focus: 'rhythm',
-    descriptionHint: 'launches tempo waves that stabilize crowded arenas.',
+    descriptionHint: "opens every performance the same way: arriving early, reading the crowd before it knows it's being read. Siena Pulse carries the Dawn Market's sunrise energy in every pivot — by the time the arena feels the tempo stabilize, she's already two counts ahead.",
   },
   {
     series: 'Star Dash',
@@ -764,7 +775,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Disciplined, focused, quietly competitive.',
     tagline: 'Never miss the transfer beat.',
     focus: 'flow',
-    descriptionHint: 'orchestrates movement lanes and recovery routes.',
+    descriptionHint: "studies departure boards the way others study opponents — every lane a variable, every transfer point a decision. Orion Step doesn't rush through Starrail Terminal. They time it, moving through the rail hubs in a way that makes the whole system feel like it was built around their step.",
   },
   {
     series: 'Laser Pixie',
@@ -779,7 +790,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Bold risk-taker with elite reflexes.',
     tagline: 'Blink fast, dance faster.',
     focus: 'style',
-    descriptionHint: 'cuts through clutter with laser-precise movement.',
+    descriptionHint: "learned to move in the Laser Barrens the hard way — every mistake answered by a fence that didn't forgive. Vega Flicker carries that education in their reflexes now, cutting through clutter with a precision that looks like risk but is really just a very fast kind of patience.",
   },
   {
     series: 'Rain Dash',
@@ -794,7 +805,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Patient, observant, and tactically sharp.',
     tagline: 'Let the rain keep tempo.',
     focus: 'teamwork',
-    descriptionHint: 'links teammates with shared rhythm protection.',
+    descriptionHint: "moves through Rain Garden like someone who has learned to trust the weather. Miko Wave doesn't fight the monsoon — they choreograph alongside it, and the teammates who watch closely find their own timing adjusting without being told, drawn into the groove the way water finds its level.",
   },
   {
     series: 'Storm Pixie',
@@ -809,7 +820,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Intense, focused, and fearless under pressure.',
     tagline: 'Ride the charge into battle.',
     focus: 'power',
-    descriptionHint: 'bursts into fights with high-voltage openings.',
+    descriptionHint: "reads the charge towers of Storm Spine the way sailors read the sky — with respect, and with contingencies. Zane Static doesn't chase lightning. They position themselves where the lightning wants to go, then let the storm do what storms do.",
   },
   {
     series: 'Lantern Dash',
@@ -824,7 +835,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Kind mentor with strong clutch instincts.',
     tagline: 'Guide the crew through the dark.',
     focus: 'teamwork',
-    descriptionHint: 'anchors team morale with stabilizing light pulses.',
+    descriptionHint: "has guided more crews through dark waters than they can count, and the Harbor Beacon has never once gone out. Rumi Glow doesn't lead from the front — they light the path and trust the crew to walk it, always there at the end of the rope bridge if someone's footing slips.",
   },
   {
     series: 'Orbit Pixie',
@@ -839,7 +850,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Analytical and cool under chaos.',
     tagline: 'Keep rotation, keep control.',
     focus: 'flow',
-    descriptionHint: 'uses orbit lines to reposition and counter.',
+    descriptionHint: "thinks in trajectories. The Satellite Yard taught Pax Orbit that everything is in motion and the question is never whether to move, but at what angle — so they glide the gravity pads between positions with the calm of someone who has already calculated the next three outcomes.",
   },
   {
     series: 'Cobalt Dash',
@@ -854,7 +865,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Competitive, fearless, and protective.',
     tagline: 'Drop heavy and hold the line.',
     focus: 'power',
-    descriptionHint: 'breaks enemy timing with seismic beat impacts.',
+    descriptionHint: "learned Cobalt Canyon's ridgelines before learning anything else — every dust trail a lesson in how weight moves through space. Tala Crush drops into rhythm with the inevitability of a rockslide, landing on timing so precise that disruption feels less like an attack and more like a correction.",
   },
   {
     series: 'Holo Pixie',
@@ -869,7 +880,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Charismatic trickster with strict discipline.',
     tagline: 'Sell the move, win the beat.',
     focus: 'style',
-    descriptionHint: 'creates mirror feints to bait and punish.',
+    descriptionHint: "sells every move with total commitment — which is exactly what makes the feints work. Ivo Prism has built a reputation in the Holo Bazaar for giving opponents exactly what they expect, right up until the moment the Bazaar Lens shows them they were watching the wrong reflection entirely.",
   },
   {
     series: 'River Dash',
@@ -884,7 +895,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Centered and steady when others panic.',
     tagline: 'Follow the current, find the count.',
     focus: 'rhythm',
-    descriptionHint: 'keeps team timing aligned under pressure.',
+    descriptionHint: "finds the current in Riverlight's canal walkways and moves with it, not against it. Nia Rhythm understands that panic breaks timing the same way a rock breaks a stream — briefly. The water keeps going. She keeps the count until everyone around her finds it again.",
   },
   {
     series: 'Echo Dash',
@@ -899,7 +910,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Reserved but unstoppable in crunch time.',
     tagline: 'Let the walls carry the beat.',
     focus: 'power',
-    descriptionHint: 'amplifies every strike through resonant architecture.',
+    descriptionHint: "learned to play in Echo Citadel's resonant halls, where you hear your own sound return before you've finished making it. Quill Bass calibrated every strike until the echo matched the original — and now every beat lands with the weight of the hall itself behind it.",
   },
   {
     series: 'Chrome Pixie',
@@ -914,7 +925,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Approachable leader with strong instincts.',
     tagline: 'Bring the whole block into sync.',
     focus: 'teamwork',
-    descriptionHint: 'turns scattered players into coordinated waves.',
+    descriptionHint: "sees Chrome Commons' open circles for what they are — a conversation waiting to happen. Rey Sway doesn't organize crews so much as remind them they were already organized; the social freestyle just makes the shape of it visible.",
   },
   {
     series: 'Moss Dash',
@@ -929,7 +940,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Measured and thoughtful with clutch execution.',
     tagline: 'Ancient stones, modern flow.',
     focus: 'flow',
-    descriptionHint: 'adapts instantly to uneven terrain and tempo shifts.',
+    descriptionHint: "grew up in Moss Ruins where the floors are never level and the tempo shifts without warning. Koda Spin stopped expecting the ground to cooperate a long time ago — now the adaptation is instinct, and the ancient stones feel like familiar partners.",
   },
   {
     series: 'Auric Pixie',
@@ -944,7 +955,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Confident, theatrical, and highly tactical.',
     tagline: 'Strike pose, strike fast.',
     focus: 'style',
-    descriptionHint: 'wins exchanges by forcing opponents off rhythm.',
+    descriptionHint: "knows that the Auric Catwalk rewards commitment — a half-committed pose is worse than no pose at all. Astra Clip gives opponents exactly what they expect: a runway, a spotlight, a moment of perfect theater — and then lands on the beat they weren't watching.",
   },
   {
     series: 'Pulse Dash',
@@ -959,7 +970,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Aggressive playmaker who commits fully.',
     tagline: 'Heat up, then close out.',
     focus: 'power',
-    descriptionHint: 'forces high-pressure duels with heavy burst windows.',
+    descriptionHint: "runs hot in Pulse Furnace — not recklessly, but with the kind of all-in commitment that makes opponents second-guess their own rhythm. Bex Nova knows that hesitation is contagious, and a heavy enough opening burst infects the entire arena.",
   },
   {
     series: 'Glacier Pixie',
@@ -974,7 +985,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Calm strategist with elite composure.',
     tagline: 'Cool hands, perfect timing.',
     focus: 'flow',
-    descriptionHint: 'controls pacing by forcing precise movement lines.',
+    descriptionHint: "moves through Glacier Hall with a composure that reads as effortless until you realize the ice corridors offer exactly one correct path at any moment — and Lio Glide has chosen correctly, every time, for as long as anyone can remember.",
   },
   {
     series: 'Crimson Pixie',
@@ -989,7 +1000,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Energetic, bold, and relentless.',
     tagline: 'Loop the beat, crack the line.',
     focus: 'rhythm',
-    descriptionHint: 'chains tempo loops until openings appear.',
+    descriptionHint: "runs Crimson Loop's circular arenas like a current looking for the drain — patient, inevitable, building loop after loop until the structure of the opponent's rhythm simply gives way. Mira Volt doesn't break the line. She waits for it to break itself.",
   },
   {
     series: 'Opal Dash',
@@ -1004,7 +1015,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Disciplined and fiercely methodical.',
     tagline: 'Angles, timing, execution.',
     focus: 'style',
-    descriptionHint: 'translates geometry into flawless combat spacing.',
+    descriptionHint: "sees the Opal Grid's geometric floors as a language, and spent years becoming fluent. Dex Lumen doesn't improvise — every angle is a word, every footwork pattern a sentence, and by the time the meaning lands, the opponent has already lost the argument.",
   },
   {
     series: 'Thunder Pixie',
@@ -1019,7 +1030,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Fearless vanguard who rallies squads.',
     tagline: 'Hear the storm, match the beat.',
     focus: 'teamwork',
-    descriptionHint: 'opens space for allies with loud front-line pressure.',
+    descriptionHint: "runs the Thunder Steppe's open plains as a vanguard who understands that front-line pressure is a gift to the crew behind them. Faye Stomp doesn't win alone — they make winning possible for everyone else, one thunderous stride at a time.",
   },
   {
     series: 'Violet Pixie',
@@ -1034,7 +1045,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Strategic builder with patient timing.',
     tagline: 'Build tempo, break defenses.',
     focus: 'rhythm',
-    descriptionHint: 'stacks controlled tempo layers for decisive pushes.',
+    descriptionHint: "approaches the Violet Factory's assembly loops the way an architect approaches a blueprint — each tempo layer placed deliberately, load-bearing. Rune Sync builds rhythm structures that opponents don't notice until the weight of them becomes undeniable.",
   },
   {
     series: 'Mint Dash',
@@ -1049,7 +1060,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Protective and quietly confident.',
     tagline: 'Guard the groove, then push.',
     focus: 'teamwork',
-    descriptionHint: 'keeps formations stable while setting counter windows.',
+    descriptionHint: "tends Mint Terrace's tiered gardens with the same attention she brings to a crew formation — steady hands, an eye for what's fragile, and the patience to let things grow into the space she's prepared for them. Ona Veil's counter comes when it's ready. Not before.",
   },
   {
     series: 'Indigo Dash',
@@ -1064,7 +1075,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Observant and calculated.',
     tagline: 'Slow water, fast decisions.',
     focus: 'flow',
-    descriptionHint: 'navigates narrow paths without losing momentum.',
+    descriptionHint: "reads Indigo Fjord's cliff platforms like a slow conversation — each cold-water channel a sentence, each indigo mist bank a pause. Rho Drift never rushes the fjord's narrow paths, and somehow always arrives exactly when the moment needs them.",
   },
   {
     series: 'Citrine Pixie',
@@ -1079,7 +1090,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'High-energy performer and caller.',
     tagline: 'Bright beats, bold plays.',
     focus: 'style',
-    descriptionHint: 'turns high-visibility moments into momentum swings.',
+    descriptionHint: "runs Citrine Arc's bright stage like someone who knows the spotlight is a tool, not a reward. Pia Spark choreographs for the crowd and the crew simultaneously — every burst accent a signal, every showcase move a moment that shifts the arena's energy toward something decisive.",
   },
   {
     series: 'Slate Dash',
@@ -1094,7 +1105,7 @@ const generatedSeeds: GeneratedSeed[] = [
     personality: 'Stoic anchor with huge stamina.',
     tagline: 'Deep echoes, deeper resolve.',
     focus: 'power',
-    descriptionHint: 'holds frontline rhythm while pressuring space.',
+    descriptionHint: "has played in Slate Hollows' caverns long enough to know the difference between an echo and a resonance — one repeats what was, one amplifies what is. Tov Drum builds toward resonance with every anchor turn, until the stone walls start playing with them.",
   },
 ];
 
