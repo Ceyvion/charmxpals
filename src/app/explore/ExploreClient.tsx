@@ -128,18 +128,18 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
   }, [filter, filtered, groups]);
 
   return (
-    <div>
+    <div className="cp-explore-page">
       <div className="mb-7">
         <div className="cp-kicker mb-1">Build Your Crew</div>
         <h1 className="font-display text-3xl font-extrabold leading-tight text-[var(--cp-text-primary)] md:text-5xl">Recruit Across Dimensions</h1>
-        <p className="cp-muted mt-2 max-w-prose">
+        <p className="cp-muted mt-2 max-w-prose text-sm leading-relaxed sm:text-base">
           {worldTagline} Preview every champion before you scan—compare realms, study Core Charms, and line up the next unlock without jumping between
           tabs.
         </p>
       </div>
 
-      <div className="sticky top-20 z-20 mb-8">
-        <div className="cp-panel grid gap-3 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,auto)] lg:items-center">
+      <div className="relative z-10 mb-6 md:sticky md:top-20 md:z-20 md:mb-8">
+        <div className="cp-panel grid gap-3 p-3 sm:p-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,auto)] lg:items-center">
           <div className="cp-rarity-filter-set">
             <button
               type="button"
@@ -239,7 +239,9 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
               <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
                 <div>
                   <div className="cp-kicker">{RARITY_META[section.key].label}</div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-[var(--cp-text-muted)]">{RARITY_META[section.key].description}</p>
+                  <p className="text-[13px] leading-relaxed text-[var(--cp-text-secondary)] sm:text-xs sm:uppercase sm:tracking-[0.2em] sm:text-[var(--cp-text-muted)]">
+                    {RARITY_META[section.key].description}
+                  </p>
                 </div>
                 <span className="cp-pill">{section.characters.length}</span>
               </div>
@@ -310,6 +312,7 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
                               <Link
                                 href={`/character/${character.id}`}
                                 className="inline-flex items-center justify-center rounded-[var(--cp-radius-sm)] border border-[var(--cp-border)] bg-[var(--cp-white)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--cp-text-secondary)] transition-colors hover:border-[var(--cp-border-strong)] hover:text-[var(--cp-text-primary)]"
+                                data-explore-action
                                 onClick={(event) => event.stopPropagation()}
                               >
                                 Profile
@@ -317,6 +320,7 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
                               <Link
                                 href="/play"
                                 className="inline-flex items-center justify-center rounded-[var(--cp-radius-sm)] border border-[var(--cp-border)] bg-[var(--cp-white)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--cp-text-secondary)] transition-colors hover:border-[var(--cp-border-strong)] hover:text-[var(--cp-text-primary)]"
+                                data-explore-action
                                 onClick={(event) => event.stopPropagation()}
                               >
                                 Play Mode
@@ -333,6 +337,7 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
                           <Link
                             href={`/character/${character.id}`}
                             className="inline-flex min-w-[6.5rem] items-center justify-center rounded-[var(--cp-radius-sm)] border border-[var(--cp-border)] bg-[var(--cp-white)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--cp-text-secondary)] transition-colors hover:border-[var(--cp-border-strong)] hover:text-[var(--cp-text-primary)]"
+                            data-explore-action
                             onClick={(event) => event.stopPropagation()}
                           >
                             Profile
@@ -340,6 +345,7 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
                           <Link
                             href="/play"
                             className="inline-flex min-w-[6.5rem] items-center justify-center rounded-[var(--cp-radius-sm)] border border-[var(--cp-border)] bg-[var(--cp-white)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--cp-text-secondary)] transition-colors hover:border-[var(--cp-border-strong)] hover:text-[var(--cp-text-primary)]"
+                            data-explore-action
                             onClick={(event) => event.stopPropagation()}
                           >
                             Play Mode
@@ -393,6 +399,7 @@ function SpotlightCard({ character, media, owned, variant }: SpotlightCardProps)
 
   return (
     <div
+      data-spotlight-card
       className={`relative overflow-hidden rounded-[var(--cp-radius-lg)] border-2 border-[var(--cp-border)] bg-[var(--cp-white)] ${
         variant === 'mobile' ? 'shadow-[0_10px_34px_rgba(10,10,10,0.06)]' : ''
       }`}
@@ -488,12 +495,14 @@ function SpotlightCard({ character, media, owned, variant }: SpotlightCardProps)
           <Link
             href={`/character/${character.id}`}
             className="inline-flex w-full items-center justify-center rounded-[var(--cp-radius-md)] border-2 border-[var(--cp-black)] bg-[var(--cp-black)] px-5 py-2 text-center text-xs font-black uppercase tracking-[0.14em] text-[var(--cp-white)] transition-colors hover:bg-[var(--cp-gray-900)] md:w-auto"
+            data-spotlight-action
           >
             Open full profile
           </Link>
           <Link
             href="/play"
             className="inline-flex w-full items-center justify-center rounded-[var(--cp-radius-md)] border-2 border-[var(--cp-border-strong)] px-5 py-2 text-center text-xs font-black uppercase tracking-[0.14em] text-[var(--cp-text-primary)] transition-colors hover:bg-[var(--cp-gray-100)] md:w-auto"
+            data-spotlight-action
           >
             Launch battle prep
           </Link>

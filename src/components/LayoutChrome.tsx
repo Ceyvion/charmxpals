@@ -14,7 +14,7 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#060610]">
+    <div className="min-h-screen flex flex-col bg-[var(--cp-bg)]">
       <header className="cp-header sticky top-0 z-40">
         <div className="cp-container">
           <div className="flex items-center justify-between h-14">
@@ -24,9 +24,6 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
                   CHARM PALS
                 </span>
               </Link>
-              <span className="px-1.5 py-0.5 text-[9px] rounded-md bg-[var(--cp-cyan)]/15 text-[var(--cp-cyan)] font-bold uppercase tracking-[0.2em] border border-[var(--cp-cyan)]/25">
-                beta
-              </span>
             </div>
 
             <AppNav />
@@ -58,7 +55,7 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
         </div>
       </header>
 
-      <main className="flex-grow">{children}</main>
+      <main className="flex-grow bg-[var(--cp-bg)]">{children}</main>
 
       <footer className="cp-footer py-12">
         <div className="cp-container">

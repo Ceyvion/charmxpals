@@ -62,7 +62,7 @@ html.cp-scroll-lock body {
   scrollbar-gutter: stable both-edges;
 }
 body {
-  background: #060610;
+  background: var(--cp-bg);
   color: var(--cp-text-primary);
   font-family: var(--font-body), "Space Grotesk", system-ui, sans-serif;
 }
@@ -509,6 +509,90 @@ body {
 .cp-rarity-filter[data-tone="sunrise"][data-active="true"] { background: var(--cp-red); border-color: var(--cp-red); color: var(--cp-white); }
 .cp-rarity-filter[data-tone="violet"][data-active="true"] { background: var(--cp-violet); border-color: var(--cp-violet); color: var(--cp-white); }
 .cp-rarity-filter[data-tone="mint"][data-active="true"] { background: var(--cp-green); border-color: var(--cp-green); color: var(--cp-black); }
+
+@media (max-width: 640px) {
+  .cp-rarity-filter-set {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 0.125rem;
+    scrollbar-width: none;
+  }
+  .cp-rarity-filter-set::-webkit-scrollbar { display: none; }
+  .cp-rarity-filter {
+    flex: 0 0 auto;
+    padding: 0.62rem 1rem;
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .cp-explore-page {
+    --cp-bg: #070b12;
+    --cp-surface-panel: #0f1724;
+    --cp-surface-card: #0f1724;
+    --cp-border: #27334a;
+    --cp-border-strong: #d6e2f4;
+    --cp-text-primary: #f2f7ff;
+    --cp-text-secondary: #d5deee;
+    --cp-text-muted: #9dadc4;
+    --cp-gray-100: #172234;
+    --cp-gray-200: #1f2c42;
+  }
+
+  .cp-explore-page .cp-panel,
+  .cp-explore-page [data-roster-item],
+  .cp-explore-page [data-spotlight-card],
+  .cp-explore-page .cp-pill {
+    border-color: var(--cp-border);
+    background: #0f1724;
+  }
+
+  .cp-explore-page [data-roster-item][data-active='true'] {
+    border-color: var(--cp-border-strong);
+    background: #16253a;
+  }
+
+  .cp-explore-page .cp-search {
+    border-color: var(--cp-border);
+    background: #0f1724;
+    color: var(--cp-text-primary);
+  }
+
+  .cp-explore-page .cp-search::placeholder {
+    color: var(--cp-text-muted);
+  }
+
+  .cp-explore-page .cp-rarity-filter {
+    border-color: var(--cp-border);
+    color: var(--cp-text-secondary);
+    background: rgba(15, 23, 36, 0.92);
+  }
+
+  .cp-explore-page [data-explore-action] {
+    border-color: var(--cp-border);
+    background: #0b1320;
+    color: var(--cp-text-secondary);
+  }
+
+  .cp-explore-page [data-explore-action]:hover {
+    border-color: var(--cp-border-strong);
+    color: var(--cp-text-primary);
+  }
+
+  .cp-explore-page .cp-stat-bar {
+    background: #1f2c42;
+  }
+
+  .cp-explore-page .cp-stat-bar-fill {
+    background: #7ed8ff;
+  }
+
+  .cp-explore-page [data-spotlight-action]:last-child {
+    border-color: var(--cp-border);
+    color: var(--cp-text-primary);
+  }
+}
 
 /* ─── Explore grid ─── */
 .cp-explore-grid { display: grid; gap: 1rem; grid-template-columns: 1fr; }

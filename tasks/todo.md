@@ -544,3 +544,52 @@
   - `npm test` (29/29 passing).
 - Residual risk:
   - Accent-color alpha composition still assumes hex-like color strings in several style sites (for example ``${accentColor}15``); non-hex color tokens from data could reduce intended glow fidelity.
+
+## Header/Footer Regression Fix Plan (2026-02-18)
+
+- [x] Restore a light default background for general app content so legacy light-token pages remain readable.
+- [x] Keep dark header/footer styling intact while fixing content-surface contrast regressions.
+- [x] Offset champion profile sticky section navigation below the global sticky header.
+- [x] Increase champion section anchor scroll margins to avoid section headings being hidden under stacked sticky chrome.
+- [x] Verify with lint, build, and focused route checks (`/explore`, `/compare`, `/character/:id`).
+
+### Header/Footer Regression Fix Review (2026-02-18)
+
+- Updated `src/components/LayoutChrome.tsx` to use `bg-[var(--cp-bg)]` for the app wrapper and `main`, preserving dark header/footer while restoring readable default content contrast for light-token pages.
+- Reverted global `body` background in `src/app/globals.css` to `var(--cp-bg)` to prevent dark-background bleed into light-theme surfaces.
+- Updated `src/app/character/[id]/CharacterPageClient.tsx` sticky section nav from `top-0` to `top-14` so it no longer sits under the global sticky header.
+- Increased section anchor offsets from `scroll-mt-16` to `scroll-mt-24` for lore/traits/stats/gallery to keep section starts visible after in-page tab navigation.
+- Verification:
+  - `npm run lint` (passes; warnings are pre-existing and unrelated).
+  - `npm run build` (passes).
+  - Manual Playwright smoke check on local dev server for `/explore`, `/compare`, and `/character/322ac6bd-4685-4027-90ce-38c4426dc9e5` confirms improved contrast and non-overlapping sticky navigation.
+
+## Mobile Responsiveness + Explore Menu Overlap Plan (2026-02-18)
+
+- [x] Reproduce and isolate mobile header menu persistence + overlap issues on `/explore`.
+- [x] Patch mobile `AppNav` so the menu closes on link selection, outside taps, and route changes.
+- [x] Resolve Explore mobile stacking conflicts between header menu and rarity filter controls/floating surfaces.
+- [x] Improve Explore mobile text legibility, including dark-scheme readability for key labels and controls.
+- [x] Verify with targeted lint + mobile viewport browser checks and document outcomes below.
+
+### Mobile Responsiveness + Explore Menu Overlap Review (2026-02-18)
+
+- Root cause:
+  - `src/components/AppNav.tsx` used uncontrolled `<details>` for mobile nav, so it could stay open while users interacted with other sticky UI on Explore.
+  - Explore filter controls were sticky on mobile (`sticky top-20`), creating a second floating layer under the header menu.
+  - Explore small-text utility combinations (tight uppercase tracking at `text-xs`) reduced mobile readability, especially under dark color schemes.
+- Fixes:
+  - Reworked mobile nav in `src/components/AppNav.tsx` to controlled state with explicit close on route change, outside pointer tap, `Escape`, and link tap.
+  - Updated Explore controls wrapper in `src/app/explore/ExploreClient.tsx` to be non-sticky on mobile and sticky only from `md` upward.
+  - Improved Explore mobile legibility in `src/app/explore/ExploreClient.tsx` (larger description copy and readable section-description treatment on small screens).
+  - Added scoped Explore styling in `src/app/globals.css`:
+    - mobile horizontal-scroll-friendly rarity filter controls with larger tap/read targets;
+    - dark-scheme contrast overrides limited to `.cp-explore-page` for panels/cards/controls.
+- Verification:
+  - `npm run lint -- --file src/components/AppNav.tsx --file src/app/explore/ExploreClient.tsx` (passes; existing `no-img-element` warnings only).
+  - `npm run build -- --no-lint` (passes).
+  - Mobile interaction smoke test via Playwright script (390x844) confirms:
+    - menu closes after tapping Explore rarity controls,
+    - menu closes after mobile nav link navigation,
+    - Explore filter container is non-sticky on mobile (`position: relative`).
+  - Dark-mode emulation check confirms Explore-specific variables/contrast are active (`prefers-color-scheme: dark`, readable text and surface colors).

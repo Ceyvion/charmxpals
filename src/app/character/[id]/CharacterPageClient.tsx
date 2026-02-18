@@ -406,7 +406,7 @@ export default function CharacterPageClient({ character }: { character: Characte
 
       {/* ═══ SECTION NAVIGATION ═══ */}
       {availableSections.length > 1 && (
-        <nav className="sticky top-0 z-30 border-b border-white/[0.06] bg-[#060610]/80 backdrop-blur-xl" aria-label="Profile sections">
+        <nav className="sticky top-14 z-30 border-b border-white/[0.06] bg-[#060610]/80 backdrop-blur-xl" aria-label="Profile sections">
           <div className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-6 md:px-10">
             {availableSections.map((section) => (
               <button
@@ -431,7 +431,7 @@ export default function CharacterPageClient({ character }: { character: Characte
 
         {/* ── LORE SECTION ── */}
         {hasLoreSection && (
-          <section id="section-lore" className="scroll-mt-16 py-16">
+          <section id="section-lore" className="scroll-mt-24 py-16">
             <RevealOnView>
               <div className="grid gap-10 lg:grid-cols-[1fr_0.9fr]">
                 {/* Lore codex */}
@@ -491,7 +491,7 @@ export default function CharacterPageClient({ character }: { character: Characte
 
         {/* ── IDENTITY SECTION (fallback when no lore block) ── */}
         {hasStandaloneTraits && (
-          <section id="section-traits" className="scroll-mt-16 py-16">
+          <section id="section-traits" className="scroll-mt-24 py-16">
             <RevealOnView>
               <div className="mb-6 flex items-center gap-3">
                 <div
@@ -521,7 +521,7 @@ export default function CharacterPageClient({ character }: { character: Characte
 
         {/* ── STATS SECTION ── */}
         {statEntries.length > 0 && (
-          <section id="section-stats" className="scroll-mt-16 py-16">
+          <section id="section-stats" className="scroll-mt-24 py-16">
             <RevealOnView>
               <div className="mb-8 flex items-center gap-3">
                 <div
@@ -619,7 +619,7 @@ export default function CharacterPageClient({ character }: { character: Characte
 
         {/* ── GALLERY SECTION ── */}
         {gallery.length > 0 && (
-          <section id="section-gallery" className="scroll-mt-16 py-16">
+          <section id="section-gallery" className="scroll-mt-24 py-16">
             <RevealOnView>
               <div className="mb-8 flex items-center gap-3">
                 <div

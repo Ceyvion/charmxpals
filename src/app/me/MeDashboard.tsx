@@ -1,7 +1,9 @@
+'use client';
+
 import Link from 'next/link';
-import BetaWelcome from '@/components/BetaWelcome';
-import BetaChecklist from '@/components/BetaChecklist';
-import { betaChecklistTasks } from '@/data/betaChecklist';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+/* ── Types ── */
 
 type CharacterDisplay = {
   id: string;
@@ -11,6 +13,7 @@ type CharacterDisplay = {
   stats: Record<string, number>;
   artRefs: Record<string, string>;
   color?: string | null;
+  rarity?: number;
   ownedAtIso: string | null;
 };
 
@@ -21,7 +24,6 @@ type MeDashboardProps = {
   characters: CharacterDisplay[];
   lastClaimAtIso: string | null;
   newestPalName: string | null;
-  initialChecklistProgress: ChecklistSnapshot;
 };
 
 type QuickAction = {
@@ -29,20 +31,50 @@ type QuickAction = {
   label: string;
   href: string;
   tagline: string;
+  icon: string;
   external?: boolean;
 };
 
-type PalStory = {
-  headline: string;
-  summary: string;
-  beats: Array<{
-    id: string;
-    label: string;
-    detail: string;
-    href?: string;
-    external?: boolean;
-  }>;
+/* ── Constants ── */
+
+const RARITY_ACCENT: Record<string, { accent: string; glow: string; label: string }> = {
+  legendary: { accent: '#fbbf24', glow: 'rgba(251,191,36,0.25)', label: 'Legendary' },
+  epic: { accent: '#a855f7', glow: 'rgba(168,85,247,0.25)', label: 'Epic' },
+  rare: { accent: '#38bdf8', glow: 'rgba(56,189,248,0.25)', label: 'Rare' },
+  common: { accent: '#737373', glow: 'rgba(115,115,115,0.15)', label: 'Common' },
 };
+
+const STAT_COLORS: Record<string, string> = {
+  rhythm: '#38bdf8',
+  style: '#e879f9',
+  power: '#fb7185',
+  flow: '#34d399',
+  teamwork: '#a78bfa',
+};
+
+function getRarityKey(rarity?: number): string {
+  if (!rarity) return 'rare';
+  if (rarity >= 5) return 'legendary';
+  if (rarity >= 4) return 'epic';
+  if (rarity >= 3) return 'rare';
+  return 'common';
+}
+
+function pickPreview(artRefs?: Record<string, string>): string | null {
+  if (!artRefs) return null;
+  return (
+    artRefs.portrait ||
+    artRefs.card ||
+    artRefs.thumbnail ||
+    artRefs.banner ||
+    artRefs.full ||
+    artRefs.signature ||
+    Object.values(artRefs)[0] ||
+    null
+  );
+}
+
+/* ── Component ── */
 
 export default function MeDashboard({
   userId,
@@ -51,405 +83,517 @@ export default function MeDashboard({
   characters,
   lastClaimAtIso,
   newestPalName,
-  initialChecklistProgress,
 }: MeDashboardProps) {
-  const completedMissions = betaChecklistTasks.reduce(
-    (count, task) => (initialChecklistProgress.progress[task.id] ? count + 1 : count),
-    0,
+  const [selectedId, setSelectedId] = useState<string | null>(
+    characters.length > 0 ? characters[0].id : null,
   );
-  const checklistPercent =
-    betaChecklistTasks.length === 0 ? 0 : (completedMissions / betaChecklistTasks.length) * 100;
-  const quickActions: QuickAction[] = [
-    {
-      id: 'claim',
-      label: 'Claim a Pal',
-      href: '/claim',
-      tagline: 'Scan or enter a fresh code.',
-    },
-    {
-      id: 'play',
-      label: 'Play Mini-Game',
-      href: '/play',
-      tagline: 'Chase today’s high score.',
-    },
-    {
-      id: 'plaza',
-      label: 'Enter Plaza',
-      href: '/plaza',
-      tagline: 'Link up in the social hub.',
-    },
-    {
-      id: 'arena',
-      label: 'Fight in Arena',
-      href: '/arena',
-      tagline: 'Queue live 2D battles.',
-    },
-    {
-      id: 'compare',
-      label: 'Compare Crew',
-      href: '/compare',
-      tagline: 'Stack stats head-to-head.',
-    },
-    {
-      id: 'feedback',
-      label: 'Drop Feedback',
-      href: 'mailto:charmxpals.contact@gmail.com',
-      tagline: 'Share discoveries in beta.',
-      external: true,
-    },
-  ];
-  const todaysStory = createPalStory({
-    ownedCount,
-    newestPalName,
-    lastClaimAtIso,
-    checklistPercent,
-    characters,
-  });
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const galleryRef = useRef<HTMLDivElement>(null);
+
+  const selectedCharacter = useMemo(
+    () => characters.find((c) => c.id === selectedId) ?? characters[0] ?? null,
+    [characters, selectedId],
+  );
+
+  const accentColor = useMemo(() => {
+    if (selectedCharacter?.color) return selectedCharacter.color;
+    const key = getRarityKey(selectedCharacter?.rarity);
+    return RARITY_ACCENT[key]?.accent ?? '#38bdf8';
+  }, [selectedCharacter]);
+
+  const quickActions: QuickAction[] = useMemo(
+    () => [
+      { id: 'claim', label: 'Claim a Pal', href: '/claim', tagline: 'Scan or enter a code', icon: '\u2726' },
+      { id: 'play', label: 'Play', href: '/play', tagline: 'Chase today\'s high score', icon: '\u25B6' },
+      { id: 'plaza', label: 'Enter Plaza', href: '/plaza', tagline: 'Link up in the social hub', icon: '\u2302' },
+      { id: 'arena', label: 'Arena', href: '/arena', tagline: 'Queue live 2D battles', icon: '\u2694' },
+      { id: 'compare', label: 'Compare', href: '/compare', tagline: 'Stack stats head-to-head', icon: '\u21C4' },
+      {
+        id: 'feedback',
+        label: 'Feedback',
+        href: 'mailto:charmxpals.contact@gmail.com',
+        tagline: 'Share what you found',
+        icon: '\u2709',
+        external: true,
+      },
+    ],
+    [],
+  );
+
+  const lastClaimRelative = useMemo(() => {
+    if (!lastClaimAtIso) return null;
+    return formatRelativeShort(new Date(lastClaimAtIso), new Date());
+  }, [lastClaimAtIso]);
 
   return (
-    <>
-      <section className="relative mb-10 overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-br from-[#110628] via-[#0b031b] to-[#050012] px-6 py-8 shadow-[0_40px_120px_rgba(32,10,70,0.45)] sm:px-8 sm:py-10">
-        <AmbientBackdrop />
-        <div className="relative z-10 space-y-8">
-          <header className="space-y-3 md:flex md:items-end md:justify-between md:space-y-0">
-            <div>
-              <p className="text-xs uppercase tracking-[0.28em] text-white/60">My Pal Home</p>
-              <h1 className="font-display text-4xl font-extrabold leading-tight text-white md:text-5xl">
-                Welcome back, {userDisplayName}.
-              </h1>
-              <p className="max-w-xl text-sm text-white/70 md:text-base">
-                Today&apos;s stage adapts to what your pals have been up to. Tap an action or jump into the latest beat.
-              </p>
-            </div>
-          </header>
+    <div
+      className="relative min-h-screen bg-[#060610]"
+      style={{ '--accent-color': accentColor } as React.CSSProperties}
+    >
+      {/* ── Ambient background ── */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <div
+          className="cp-profile-glow absolute -top-32 left-[15%] h-[500px] w-[500px] rounded-full blur-[120px]"
+          style={{ background: `${accentColor}15` }}
+        />
+        <div
+          className="cp-profile-glow absolute -bottom-40 right-[10%] h-[400px] w-[400px] rounded-full blur-[100px]"
+          style={{ background: `${accentColor}10`, animationDelay: '2s' }}
+        />
+        <HubParticles count={12} accentColor={accentColor} />
+      </div>
 
-          <div className="flex flex-wrap gap-3">
-            {quickActions.map((action) => {
-              const actionBody = (
-                <span className="flex flex-col gap-1 text-left">
-                  <span className="text-sm font-semibold text-white">{action.label}</span>
-                  <span className="text-xs text-white/70">{action.tagline}</span>
-                </span>
-              );
+      <div className="relative z-10">
+        {/* ── Hero section ── */}
+        <section className="px-4 pb-6 pt-10 sm:pt-14">
+          <div className="mx-auto max-w-6xl">
+            <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+              <div className="space-y-3">
+                <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-white/40">
+                  Player Hub
+                </p>
+                <h1 className="font-display text-5xl font-black leading-[0.92] text-white md:text-6xl">
+                  {userDisplayName}
+                </h1>
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-white/50">
+                    <span
+                      className="inline-block h-1.5 w-1.5 rounded-full"
+                      style={{ background: accentColor }}
+                    />
+                    {ownedCount} {ownedCount === 1 ? 'Pal' : 'Pals'}
+                  </span>
+                  {lastClaimRelative && (
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30">
+                      Last claim {lastClaimRelative}
+                    </span>
+                  )}
+                </div>
+              </div>
 
-              return action.external ? (
-                <a
-                  key={action.id}
-                  href={action.href}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="group inline-flex min-w-[12rem] flex-1 basis-[12rem] items-center justify-between rounded-2xl border border-white/15 bg-white/6 px-4 py-4 transition hover:border-white/35 hover:bg-white/12"
-                >
-                  {actionBody}
-                  <span className="text-xs font-semibold uppercase tracking-[0.28em] text-white/70">↗</span>
-                </a>
-              ) : (
+              <div className="flex flex-wrap gap-2">
                 <Link
-                  key={action.id}
-                  href={action.href}
-                  className="group inline-flex min-w-[12rem] flex-1 basis-[12rem] items-center justify-between rounded-2xl border border-white/15 bg-white/6 px-4 py-4 transition hover:border-white/35 hover:bg-white/12"
+                  href="/claim"
+                  className="inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-black transition-all hover:brightness-110"
+                  style={{ background: accentColor }}
                 >
-                  {actionBody}
-                  <span className="text-xs font-semibold uppercase tracking-[0.28em] text-white/70">⇢</span>
+                  Claim Pal
                 </Link>
-              );
-            })}
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="md:col-span-2 rounded-2xl border border-white/12 bg-white/6 px-5 py-6 backdrop-blur-[32px]">
-              <div className="text-[11px] uppercase tracking-[0.28em] text-white/75">What&apos;s new with your pals</div>
-              <h2 className="mt-2 font-display text-2xl font-semibold text-white md:text-3xl">{todaysStory.headline}</h2>
-              <p className="mt-3 text-sm leading-relaxed text-white/85 md:text-base">{todaysStory.summary}</p>
+                <Link
+                  href="/explore"
+                  className="inline-flex items-center rounded-lg border border-white/[0.1] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white/50 transition-all hover:border-white/25 hover:text-white/80"
+                >
+                  Explore All
+                </Link>
+              </div>
             </div>
-            <div className="space-y-3">
-              {todaysStory.beats.map((beat) => {
-                const beatBody = (
-                  <>
-                    <div className="text-[11px] uppercase tracking-[0.28em] text-white/70">{beat.label}</div>
-                    <p className="mt-2 text-sm text-white/85">{beat.detail}</p>
-                  </>
+          </div>
+        </section>
+
+        {/* ── Divider ── */}
+        <div className="cp-section-divider mx-auto max-w-6xl" />
+
+        {/* ── Character gallery ── */}
+        <section className="px-4 py-10" id="gallery">
+          <div className="mx-auto max-w-6xl">
+            {characters.length > 0 ? (
+              <div className="space-y-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-white/40">
+                      Your Collection
+                    </p>
+                    <h2 className="mt-1 font-display text-3xl font-bold text-white">
+                      {ownedCount} {ownedCount === 1 ? 'Pal' : 'Pals'} Synced
+                    </h2>
+                  </div>
+                </div>
+
+                {/* Showcase: selected character detail */}
+                {selectedCharacter && (
+                  <CharacterShowcase
+                    character={selectedCharacter}
+                    accentColor={accentColor}
+                  />
+                )}
+
+                {/* Gallery grid */}
+                <div ref={galleryRef}>
+                  <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.28em] text-white/35">
+                    {characters.length > 1 ? 'Select a pal' : 'Your pal'}
+                  </p>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                    {characters.map((c) => (
+                      <GalleryCard
+                        key={c.id}
+                        character={c}
+                        isSelected={c.id === selectedId}
+                        isHovered={c.id === hoveredId}
+                        onSelect={() => setSelectedId(c.id)}
+                        onHover={() => setHoveredId(c.id)}
+                        onLeave={() => setHoveredId(null)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <EmptyState />
+            )}
+          </div>
+        </section>
+
+        {/* ── Divider ── */}
+        <div className="cp-section-divider mx-auto max-w-6xl" />
+
+        {/* ── Quick actions ── */}
+        <section className="px-4 py-10">
+          <div className="mx-auto max-w-6xl">
+            <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-white/40">
+              Quick Actions
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              {quickActions.map((action) => {
+                const body = (
+                  <div className="flex h-full flex-col gap-2 rounded-xl border border-white/[0.06] bg-white/[0.03] px-4 py-4 transition-all duration-200 hover:border-white/[0.15] hover:bg-white/[0.06]">
+                    <span
+                      className="flex h-8 w-8 items-center justify-center rounded-lg text-sm"
+                      style={{
+                        background: `${accentColor}15`,
+                        color: accentColor,
+                      }}
+                    >
+                      {action.icon}
+                    </span>
+                    <span className="text-sm font-semibold text-white">{action.label}</span>
+                    <span className="text-[11px] leading-snug text-white/40">{action.tagline}</span>
+                  </div>
                 );
 
-                if (!beat.href) {
-                  return (
-                    <div key={beat.id} className="rounded-2xl border border-white/12 bg-white/6 px-5 py-5">
-                      {beatBody}
-                    </div>
-                  );
-                }
-
-                return beat.external ? (
+                return action.external ? (
                   <a
-                    key={beat.id}
-                    href={beat.href}
+                    key={action.id}
+                    href={action.href}
                     target="_blank"
                     rel="noreferrer"
-                    className="block rounded-2xl border border-white/12 bg-white/6 px-5 py-5 transition hover:border-white/30 hover:bg-white/12"
+                    className="focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-xl"
                   >
-                    {beatBody}
-                    <span className="mt-3 inline-flex text-xs font-semibold uppercase tracking-[0.28em] text-white/85">
-                      Open ↗
-                    </span>
+                    {body}
                   </a>
                 ) : (
                   <Link
-                    key={beat.id}
-                    href={beat.href}
-                    className="block rounded-2xl border border-white/12 bg-white/6 px-5 py-5 transition hover:border-white/30 hover:bg-white/12"
+                    key={action.id}
+                    href={action.href}
+                    className="focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded-xl"
                   >
-                    {beatBody}
-                    <span className="mt-3 inline-flex text-xs font-semibold uppercase tracking-[0.28em] text-white/85">
-                      Jump ⇢
-                    </span>
+                    {body}
                   </Link>
                 );
               })}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <div className="space-y-10 mb-10">
-        <BetaWelcome
-          userName={userDisplayName}
-          ownedCount={ownedCount}
-          lastClaimAtIso={lastClaimAtIso}
-          newestPalName={newestPalName}
-          checklistProgressPercent={checklistPercent}
+        {/* ── Bottom spacer ── */}
+        <div className="h-16" />
+      </div>
+    </div>
+  );
+}
+
+/* ── Character Showcase ── */
+
+function CharacterShowcase({
+  character,
+  accentColor,
+}: {
+  character: CharacterDisplay;
+  accentColor: string;
+}) {
+  const preview = pickPreview(character.artRefs);
+  const rarityKey = getRarityKey(character.rarity);
+  const rarityInfo = RARITY_ACCENT[rarityKey];
+  const statsEntries = Object.entries(character.stats ?? {});
+  const mouseRef = useRef<HTMLDivElement>(null);
+  const [parallax, setParallax] = useState({ x: 0, y: 0 });
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    const el = mouseRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width - 0.5;
+    const py = (e.clientY - rect.top) / rect.height - 0.5;
+    setParallax({ x: px * -8, y: py * -5 });
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setParallax({ x: 0, y: 0 });
+  }, []);
+
+  return (
+    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+      {/* Art panel */}
+      <div
+        ref={mouseRef}
+        className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03]"
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+      >
+        {/* Glow behind art */}
+        <div
+          className="pointer-events-none absolute inset-0 z-0 opacity-40 blur-[80px]"
+          style={{ background: accentColor }}
         />
-        <div id="beta-checklist">
-          <BetaChecklist
-            userId={userId}
-            initialProgress={initialChecklistProgress}
+
+        {preview ? (
+          <img
+            src={preview}
+            alt={character.name}
+            className="relative z-10 aspect-[16/9] w-full object-cover transition-transform duration-700 ease-out will-change-transform"
+            style={{
+              transform: `scale(1.05) translate(${parallax.x}px, ${parallax.y}px)`,
+            }}
+            loading="eager"
+            decoding="async"
           />
+        ) : (
+          <div className="relative z-10 flex aspect-[16/9] items-center justify-center bg-gradient-to-br from-white/[0.04] to-transparent">
+            <span className="font-display text-6xl font-black tracking-[0.14em] text-white/10">
+              {character.name.slice(0, 2).toUpperCase()}
+            </span>
+          </div>
+        )}
+
+        {/* Scanline overlay */}
+        <div className="pointer-events-none absolute inset-0 z-20 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(0,0,0,0.03)_2px,rgba(0,0,0,0.03)_4px)]" />
+
+        {/* Top label */}
+        <div className="absolute left-4 top-4 z-20 flex items-center gap-2">
+          <span
+            className="rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-[0.2em]"
+            style={{
+              background: `${rarityInfo.accent}20`,
+              color: rarityInfo.accent,
+              border: `1px solid ${rarityInfo.accent}30`,
+            }}
+          >
+            {rarityInfo.label}
+          </span>
         </div>
       </div>
 
-      {characters.length > 0 ? (
-        <div className="space-y-8">
-          {characters.map((c) => {
-            const statsEntries = Object.entries(c.stats ?? {});
-            const preview =
-              c.artRefs?.portrait ||
-              c.artRefs?.card ||
-              c.artRefs?.thumbnail ||
-              c.artRefs?.banner ||
-              c.artRefs?.full ||
-              null;
-            return (
-              <div key={c.id} className="cp-panel p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h2 className="text-2xl font-extrabold text-[color:var(--cp-text-primary)] font-display">{c.name}</h2>
-                    {c.title && <div className="text-[color:var(--cp-text-secondary)] text-sm font-medium">{c.title}</div>}
-                    {c.tagline && <div className="text-[color:var(--cp-text-muted)] text-sm">{c.tagline}</div>}
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="cp-chip">Owned</span>
-                    <Link
-                      href={`/character/${c.id}`}
-                      className="px-4 py-2 rounded-lg text-sm font-semibold border border-[var(--cp-border)] bg-[var(--cp-gray-100)] text-[color:var(--cp-text-primary)] hover:border-[var(--cp-border-strong)]"
-                    >
-                      Open
-                    </Link>
-                  </div>
-                </div>
-                <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)] items-start">
-                  <div className="overflow-hidden rounded-2xl border border-[var(--cp-border)] bg-[var(--cp-gray-100)]">
-                    {preview ? (
-                      <img src={preview} alt={c.name} className="h-56 w-full object-cover" loading="lazy" decoding="async" />
-                    ) : (
-                      <div className="flex h-56 items-center justify-center bg-gradient-to-br from-cyan-200/40 to-rose-200/40 text-xl font-black tracking-[0.14em] text-[color:var(--cp-text-secondary)]">
-                        {c.name.slice(0, 2).toUpperCase()}
-                      </div>
-                    )}
-                    <div className="border-t border-[var(--cp-border)] px-3 py-2 text-[10px] uppercase tracking-[0.28em] text-[color:var(--cp-text-muted)]">
-                      Profile Art
-                    </div>
-                  </div>
-                  <div className="space-y-6">
-                    <div>
-                      <h3 className="text-xl font-bold text-[color:var(--cp-text-primary)] font-display mb-3">Stats</h3>
-                      {statsEntries.length > 0 ? (
-                        <div className="space-y-3">
-                          {statsEntries.map(([key, value]) => {
-                            const v = Math.max(0, Math.min(100, Number(value)));
-                            return (
-                              <div key={key}>
-                                <div className="flex items-center justify-between text-xs text-[color:var(--cp-text-secondary)] mb-1">
-                                  <span className="capitalize">{key}</span>
-                                  <span className="font-semibold text-[color:var(--cp-text-primary)]">{v}</span>
-                                </div>
-                                <div className="cp-bar">
-                                  <div className="cp-bar-fill" style={{ width: `${v}%` }} />
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div className="text-sm text-[color:var(--cp-text-muted)]">Stats coming soon for this pal.</div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+      {/* Info panel */}
+      <div className="space-y-5">
+        <div>
+          <h3 className="font-display text-3xl font-black leading-tight text-white">
+            {character.name}
+          </h3>
+          {character.title && (
+            <p className="mt-1 text-sm font-medium text-white/50">{character.title}</p>
+          )}
+          {character.tagline && (
+            <p
+              className="mt-3 border-l-2 pl-3 text-sm leading-relaxed text-white/60"
+              style={{ borderColor: `${accentColor}60` }}
+            >
+              {character.tagline}
+            </p>
+          )}
         </div>
-      ) : (
-        <div className="cp-panel p-8 text-center">
-          <p className="cp-muted">No pals yet. Claim a code to add your first one.</p>
-          <div className="mt-4">
-            <Link href="/claim" className="px-6 py-3 bg-white text-gray-900 rounded-lg font-semibold">Claim a Pal</Link>
+
+        {/* Stats */}
+        {statsEntries.length > 0 && (
+          <div className="space-y-3">
+            <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-white/35">
+              Stats
+            </p>
+            {statsEntries.map(([key, value]) => {
+              const v = Math.max(0, Math.min(100, Number(value)));
+              const color = STAT_COLORS[key] ?? accentColor;
+              return (
+                <div key={key}>
+                  <div className="mb-1 flex items-center justify-between text-xs">
+                    <span className="capitalize text-white/50">{key}</span>
+                    <span className="font-bold text-white/80">{v}</span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+                    <div
+                      className="h-full rounded-full transition-all duration-700 ease-out"
+                      style={{
+                        width: `${v}%`,
+                        background: color,
+                        boxShadow: `0 0 8px ${color}66`,
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
           </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex gap-2 pt-2">
+          <Link
+            href={`/character/${character.id}`}
+            className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-black transition-all hover:brightness-110"
+            style={{ background: accentColor }}
+          >
+            View Profile
+          </Link>
+          <Link
+            href={`/character/${character.id}/art`}
+            className="inline-flex items-center rounded-lg border border-white/[0.1] px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white/50 transition-all hover:border-white/25 hover:text-white/80"
+          >
+            Art Gallery
+          </Link>
         </div>
-      )}
-    </>
+      </div>
+    </div>
   );
 }
 
-function AmbientBackdrop() {
+/* ── Gallery Card ── */
+
+function GalleryCard({
+  character,
+  isSelected,
+  isHovered,
+  onSelect,
+  onHover,
+  onLeave,
+}: {
+  character: CharacterDisplay;
+  isSelected: boolean;
+  isHovered: boolean;
+  onSelect: () => void;
+  onHover: () => void;
+  onLeave: () => void;
+}) {
+  const preview = pickPreview(character.artRefs);
+  const rarityKey = getRarityKey(character.rarity);
+  const rarityInfo = RARITY_ACCENT[rarityKey];
+  const accentColor = character.color ?? rarityInfo.accent;
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      onMouseEnter={onHover}
+      onMouseLeave={onLeave}
+      className={`group relative overflow-hidden rounded-xl border text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${
+        isSelected
+          ? 'border-white/30 bg-white/[0.08]'
+          : 'border-white/[0.06] bg-white/[0.02] hover:border-white/[0.15] hover:bg-white/[0.05]'
+      }`}
+      aria-pressed={isSelected}
+      aria-label={`Select ${character.name}`}
+    >
+      {/* Glow on selected */}
+      {isSelected && (
+        <div
+          className="pointer-events-none absolute inset-0 opacity-20 blur-2xl"
+          style={{ background: accentColor }}
+        />
+      )}
+
+      {/* Art */}
+      <div className="relative aspect-square overflow-hidden">
+        {preview ? (
+          <img
+            src={preview}
+            alt={character.name}
+            className={`h-full w-full object-cover transition-transform duration-300 ${
+              isSelected || isHovered ? 'scale-110' : 'scale-100'
+            }`}
+            loading="lazy"
+            decoding="async"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center bg-gradient-to-br from-white/[0.04] to-transparent">
+            <span className="font-display text-2xl font-black tracking-[0.14em] text-white/10">
+              {character.name.slice(0, 2).toUpperCase()}
+            </span>
+          </div>
+        )}
+
+        {/* Selected indicator bar */}
+        {isSelected && (
+          <div
+            className="absolute bottom-0 left-0 right-0 h-[3px]"
+            style={{
+              background: accentColor,
+              boxShadow: `0 0 12px ${accentColor}`,
+            }}
+          />
+        )}
+      </div>
+
+      {/* Label */}
+      <div className="relative z-10 px-3 py-2.5">
+        <p className="truncate text-sm font-semibold text-white">{character.name}</p>
+        <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">
+          {rarityInfo.label}
+        </p>
+      </div>
+    </button>
+  );
+}
+
+/* ── Empty State ── */
+
+function EmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.02] px-8 py-16 text-center">
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.04] text-2xl text-white/20">
+        {'\u2726'}
+      </div>
+      <h3 className="mt-5 font-display text-2xl font-bold text-white">No pals yet</h3>
+      <p className="mt-2 max-w-sm text-sm leading-relaxed text-white/40">
+        Claim a code to add your first pal. Once collected, your character gallery will come alive here.
+      </p>
+      <div className="mt-6 flex gap-3">
+        <Link
+          href="/claim"
+          className="inline-flex items-center rounded-lg bg-[var(--cp-cyan)] px-6 py-3 text-sm font-bold uppercase tracking-wider text-black transition-all hover:brightness-110"
+        >
+          Claim a Pal
+        </Link>
+        <Link
+          href="/explore"
+          className="inline-flex items-center rounded-lg border border-white/[0.1] px-6 py-3 text-sm font-bold uppercase tracking-wider text-white/50 transition-all hover:border-white/25 hover:text-white/80"
+        >
+          Explore
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+/* ── Hub Particles ── */
+
+function HubParticles({ count, accentColor }: { count: number; accentColor: string }) {
   return (
     <>
-      <div className="pointer-events-none absolute -top-40 left-[-15%] h-[460px] w-[460px] rounded-full bg-gradient-to-br from-rose-500/30 via-purple-500/20 to-sky-400/20 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-52 right-[-10%] h-[520px] w-[520px] rounded-full bg-gradient-to-br from-sky-400/25 via-fuchsia-400/15 to-amber-300/10 blur-3xl" />
-      <div className="pointer-events-none absolute inset-x-1/2 top-8 h-72 w-72 -translate-x-1/2 rounded-full bg-gradient-to-br from-white/10 via-fuchsia-200/10 to-transparent blur-3xl" />
+      {Array.from({ length: count }, (_, i) => (
+        <div
+          key={i}
+          className="cp-profile-particle"
+          style={{
+            '--accent-color': accentColor,
+            left: `${8 + (i * 84) / count}%`,
+            bottom: '0%',
+            animationDuration: `${10 + i * 1.2}s`,
+            animationDelay: `${i * 0.7}s`,
+            opacity: 0,
+          } as React.CSSProperties}
+        />
+      ))}
     </>
   );
 }
 
-type ChecklistSnapshot = {
-  progress: Record<string, boolean>;
-  updatedAtIso: string | null;
-};
-
-type CreatePalStoryInput = {
-  ownedCount: number;
-  newestPalName: string | null;
-  lastClaimAtIso: string | null;
-  checklistPercent: number;
-  characters: CharacterDisplay[];
-};
-
-function createPalStory({
-  ownedCount,
-  newestPalName,
-  lastClaimAtIso,
-  checklistPercent,
-  characters,
-}: CreatePalStoryInput): PalStory {
-  if (ownedCount === 0) {
-    return {
-      headline: 'Stage is ready when you are',
-      summary: 'Redeem your first physical pal to light up the dashboard with stats, art packs, and daily beats tailored to you.',
-      beats: [
-        {
-          id: 'claim',
-          label: 'Next step',
-          detail: 'Scan or enter a code to claim your first pal and unlock profile art.',
-          href: '/claim',
-        },
-        {
-          id: 'explore',
-          label: 'Preview roster',
-          detail: 'Scout Wave 1 on the Explore page to pick who you want to chase.',
-          href: '/explore',
-        },
-        {
-          id: 'tip',
-          label: 'Pro tip',
-          detail: 'Test the claim flow on mobile—note timing, haptics, and clarity as you go.',
-        },
-      ],
-    };
-  }
-
-  const now = new Date();
-  const newestPal = characters[0] ?? null;
-  const lastClaimAt = parseIsoDate(lastClaimAtIso);
-  const daysSinceClaim = lastClaimAt ? Math.floor((now.getTime() - lastClaimAt.getTime()) / MS_IN_DAY) : null;
-  const timeAgo = lastClaimAt ? formatRelativeShort(lastClaimAt, now) : null;
-  const checklistRounded = Math.round(checklistPercent);
-  const palName = newestPal?.name ?? newestPalName ?? 'your crew';
-
-  let headline = `${palName} is holding the spotlight`;
-  let summary =
-    'Review the profile art, tweak loadout details, and capture rough edges while the lights are on.';
-
-  if (daysSinceClaim !== null && daysSinceClaim <= 2) {
-    headline = `${palName} just landed on your stage`;
-    summary = 'Review every profile asset, try on cosmetics, and note anything that breaks the arrival magic.';
-  } else if (checklistRounded < 100 && checklistRounded >= 40) {
-    headline = 'Beta missions are halfway there';
-    summary = `You’re ${checklistRounded}% through the checklist. Knock out the next tasks to unlock bonus drops.`;
-  } else if (ownedCount >= 3 && (daysSinceClaim ?? 0) > 2) {
-    headline = 'Your crew is warming up';
-    summary = 'Line up your pals head-to-head and track who’s leading the charge before the next wave hits.';
-  } else if (checklistRounded < 40) {
-    headline = 'Kick off your beta checklist';
-    summary = 'Complete missions on the checklist so the team sees how the journey feels on day one.';
-  }
-
-  const beats: PalStory['beats'] = [
-    {
-      id: 'spotlight',
-      label: 'Spotlight beat',
-      detail: timeAgo
-        ? `${palName} arrived ${timeAgo}. Equip a look or rename them while the energy is fresh.`
-        : `Open ${palName} and validate portrait/card/banner quality.`,
-      href: newestPal ? `/character/${newestPal.id}` : '/me',
-    },
-  ];
-
-  if (checklistRounded < 100) {
-    beats.push({
-      id: 'missions',
-      label: 'Mission cue',
-      detail: `Checklist is ${checklistRounded}% complete. Tackle the next task so we can unblock the next drop.`,
-      href: '#beta-checklist',
-    });
-  }
-
-  if (ownedCount > 1) {
-    beats.push({
-      id: 'compare',
-      label: 'Crew sync',
-      detail: 'Run a quick compare to see which pal is tournament-ready and who needs more love.',
-      href: '/compare',
-    });
-  } else if (!beats.find((beat) => beat.id === 'compare')) {
-    beats.push({
-      id: 'play',
-      label: 'Keep momentum',
-      detail: 'Jump into the runner and feel out how your pal handles boosts today.',
-      href: '/play',
-    });
-  }
-
-  if (daysSinceClaim !== null && daysSinceClaim >= 7) {
-    const freshBeat = {
-      id: 'fresh-claim',
-      label: 'Fresh energy',
-      detail: 'It’s been a while since your last code. Try redeeming a new pal to keep the stage lively.',
-      href: '/claim',
-    } satisfies PalStory['beats'][number];
-    beats.splice(Math.min(1, beats.length), 0, freshBeat);
-  }
-
-  return {
-    headline,
-    summary,
-    beats: beats.slice(0, 3),
-  };
-}
-
-function parseIsoDate(iso: string | null): Date | null {
-  if (!iso) return null;
-  const parsed = new Date(iso);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-}
+/* ── Helpers ── */
 
 function formatRelativeShort(date: Date, now: Date): string {
   const diffMs = now.getTime() - date.getTime();
@@ -474,5 +618,3 @@ function formatRelativeShort(date: Date, now: Date): string {
   const years = Math.floor(days / 365);
   return `${years}y ago`;
 }
-
-const MS_IN_DAY = 1000 * 60 * 60 * 24;
