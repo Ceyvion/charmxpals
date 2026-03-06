@@ -4,6 +4,12 @@ import type { Repo, Character } from '@/lib/repo';
 import { resolveCharacterByIdentifier } from '@/lib/characterLookup';
 
 function createRepo(characters: Character[]): Repo {
+  const normalize = (value: string) => value.trim().toLowerCase();
+  const slugify = (value: string) =>
+    normalize(value)
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
   return {
     kind: 'memory',
     async upsertDevUser({ handle, email }) {
@@ -33,8 +39,23 @@ function createRepo(characters: Character[]): Repo {
     async listOwnershipsByUser() {
       return [];
     },
+    async listOwnedAvatarIdsByUser() {
+      return [];
+    },
     async getCharacterById(id) {
       return characters.find((character) => character.id === id) ?? null;
+    },
+    async getCharacterBySlug(slug) {
+      const normalizedSlug = normalize(slug);
+      return characters.find((character) => normalize(character.slug ?? '') === normalizedSlug) ?? null;
+    },
+    async getCharacterByNameSlug(nameSlug) {
+      const normalizedNameSlug = normalize(nameSlug);
+      return characters.find((character) => slugify(character.name) === normalizedNameSlug) ?? null;
+    },
+    async getCharacterByCodeSeries(codeSeries) {
+      const normalizedCodeSeries = normalize(codeSeries);
+      return characters.find((character) => normalize(character.codeSeries ?? '') === normalizedCodeSeries) ?? null;
     },
     async getCharactersByIds(ids) {
       return characters.filter((character) => ids.includes(character.id));
@@ -79,7 +100,7 @@ describe('resolveCharacterByIdentifier', () => {
     const repo = createRepo([]);
     const character = await resolveCharacterByIdentifier(repo, 'shadow-mantis');
     expect(character?.name).toBe('Shadow Mantis');
-    expect(character?.artRefs?.thumbnail).toBe('/assets/characters/shadow-mantis/thumb.png');
+    expect(character?.artRefs?.thumbnail).toBe('/assets/characters/shadow-mantis/thumb.webp');
   });
 
   it('resolves every requested legacy identifier with non-placeholder art', async () => {
@@ -104,5 +125,14 @@ describe('resolveCharacterByIdentifier', () => {
       expect(character?.artRefs?.thumbnail).toContain('/assets/characters/');
       expect(character?.artRefs?.thumbnail).not.toContain('card-placeholder.svg');
     }
+  });
+
+  it('does not scan paginated roster on unknown identifiers', async () => {
+    const repo = createRepo([]);
+    repo.listCharacters = async () => {
+      throw new Error('listCharacters should not be called');
+    };
+    const character = await resolveCharacterByIdentifier(repo, 'unknown-character-key');
+    expect(character).toBeNull();
   });
 });

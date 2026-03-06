@@ -1,48 +1,33 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Home hero responsiveness', () => {
-  const sizes = [
-    { w: 390, h: 844, label: 'iPhone portrait' },
-    { w: 844, h: 390, label: 'phone landscape' },
-    { w: 768, h: 1024, label: 'tablet portrait' },
-    { w: 1024, h: 768, label: 'tablet landscape' },
-    { w: 1440, h: 900, label: 'desktop' },
-  ];
-
-  for (const s of sizes) {
-    test(`no overlap and readable @ ${s.label}`, async ({ page }) => {
-      await page.setViewportSize({ width: s.w, height: s.h });
-      await page.goto('/');
-
-      const head = page.getByTestId('home-hero-head');
-      const deck = page.getByTestId('home-hero-deck');
-      await expect(head).toBeVisible();
-      await expect(deck).toBeVisible();
-
-      const headBox = await head.boundingBox();
-      const deckBox = await deck.boundingBox();
-      expect(headBox).not.toBeNull();
-      expect(deckBox).not.toBeNull();
-      if (!headBox || !deckBox) return;
-
-      // Assert deck sits below hero text with at least 8px gap
-      expect(headBox.y + headBox.height).toBeLessThanOrEqual(deckBox.y + 0.001);
-    });
-  }
-
-  test('mobile deck is horizontally scrollable', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
+test.describe('Home hero', () => {
+  test('hero renders without horizontal overflow', async ({ page }) => {
     await page.goto('/');
+
+    const head = page.getByTestId('home-hero-head');
     const deck = page.getByTestId('home-hero-deck');
-    const sw = await deck.evaluate((el) => ({ scrollWidth: el.scrollWidth, clientWidth: el.clientWidth }));
-    expect(sw.scrollWidth).toBeGreaterThan(sw.clientWidth);
+
+    await expect(head).toBeVisible();
+    await expect(deck).toBeVisible();
+    await expect(head.getByRole('heading', { level: 1 })).toBeVisible();
+
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(overflow).toBeLessThanOrEqual(1);
   });
 
-  test('desktop deck uses layered positioning', async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
+  test('primary claim CTA is available and points to claim', async ({ page }) => {
     await page.goto('/');
-    const pos = await page.locator('.cp-hero-deck .card').first().evaluate((el) => getComputedStyle(el).position);
-    expect(pos).toBe('absolute');
+
+    const claimCta = page.getByRole('link', { name: /claim your pal/i }).first();
+    await expect(claimCta).toBeVisible();
+    await expect(claimCta).toHaveAttribute('href', '/claim');
+  });
+
+  test('featured roster links to character profiles', async ({ page }) => {
+    await page.goto('/');
+
+    const profileLinks = page.locator('[data-testid="home-hero-deck"] a[href^="/character/"]');
+    await expect(profileLinks.first()).toBeVisible();
+    expect(await profileLinks.count()).toBeGreaterThan(0);
   });
 });
-

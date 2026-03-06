@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { signIn, useSession } from 'next-auth/react';
 
+import { trackEvent } from '@/lib/analyticsClient';
 import { hmacSHA256Hex } from '@/lib/webcrypto';
 import UltraClaimInterface from '@/components/claim/UltraClaimInterface';
 import type { CharacterBasic } from '@/components/CharacterCard';
@@ -176,8 +177,11 @@ export default function ClaimPageClient() {
     }
     if (sanitized !== code) setCode(sanitized);
 
+    let stage: 'verify' | 'start' | 'complete' = 'verify';
+
     try {
       if (!isAuthenticated) {
+        trackEvent('claim_login_prompt', { source: 'claim_submit' });
         setMessage({ kind: 'error', text: 'Sign in to claim your CharmXPal.' });
         promptSignIn();
         setLoading(false);
@@ -197,6 +201,10 @@ export default function ClaimPageClient() {
       const preview = toCharacterPreview(verifyJson.character);
       setCharacter(preview);
       setUnitStatus(verifyJson.status);
+      trackEvent('claim_verify_result', {
+        status: verifyJson.status,
+        has_preview: Boolean(preview),
+      });
 
       if (verifyJson.status === 'not_found') {
         throw new Error('Code not recognized. Double-check and retry.');
@@ -213,6 +221,7 @@ export default function ClaimPageClient() {
         throw new Error('Character data missing. Please contact support.');
       }
 
+      stage = 'start';
       const startRes = await fetch('/api/claim/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -233,6 +242,7 @@ export default function ClaimPageClient() {
 
       const signature = await hmacSHA256Hex(sanitized, startJson.challengeDigest);
 
+      stage = 'complete';
       const completeRes = await fetch('/api/claim/complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -255,6 +265,10 @@ export default function ClaimPageClient() {
       setClaimedCharacterId(completeJson.characterId);
       setClaimedAt(completeJson.claimedAt ?? null);
       setUnitStatus('claimed');
+      trackEvent('claim_complete_success', {
+        status: 'claimed',
+        character_id_present: Boolean(completeJson.characterId),
+      });
 
       const heroName = preview.name || 'CharmXPal';
       setMessage({
@@ -263,6 +277,10 @@ export default function ClaimPageClient() {
       });
     } catch (error) {
       const text = error instanceof Error ? error.message : 'System glitch. Reload and retry.';
+      trackEvent('claim_error', {
+        stage,
+        authenticated: isAuthenticated,
+      });
       setMessage({ kind: 'error', text });
     } finally {
       setLoading(false);

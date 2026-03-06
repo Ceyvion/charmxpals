@@ -6,10 +6,19 @@ import { pulsegridTracks, type PulsegridNote, type PulsegridTrack } from '@/data
 type GameState = 'menu' | 'countdown' | 'playing' | 'paused' | 'over';
 type JudgmentKind = 'perfect' | 'great' | 'good' | 'miss';
 
+export type RunnerProgressPayload = {
+  trackId: string;
+  progress: number;
+  furthestNoteIndex: number;
+};
+
 type RunnerProps = {
   stats?: Record<string, number> | null;
   audio?: { enabled: boolean; playHit?: () => void; playMiss?: () => void; playPulse?: () => void } | null;
-  onGameOver?: (finalScore: number, maxCombo: number, trackId: string) => void;
+  onRunStart?: (trackId: string) => void;
+  onTrackChange?: (trackId: string) => void;
+  onProgress?: (payload: RunnerProgressPayload) => void;
+  onGameOver?: (finalScore: number, maxCombo: number, trackId: string, summary: RunnerProgressPayload) => void;
 };
 
 type RuntimeNote = PulsegridNote & {
@@ -75,11 +84,17 @@ const readStat = (stats: Record<string, number> | null | undefined, key: string,
   return fallback;
 };
 
-export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
+export default function Runner({ stats, audio, onRunStart, onTrackChange, onProgress, onGameOver }: RunnerProps) {
   const [selectedTrackId, setSelectedTrackId] = useState(pulsegridTracks[0]?.id ?? '');
   const selectedTrack = useMemo<PulsegridTrack | null>(() => {
     return pulsegridTracks.find((track) => track.id === selectedTrackId) ?? pulsegridTracks[0] ?? null;
   }, [selectedTrackId]);
+
+  useEffect(() => {
+    if (selectedTrack) {
+      onTrackChange?.(selectedTrack.id);
+    }
+  }, [onTrackChange, selectedTrack]);
 
   const rhythmRating = useMemo(() => readStat(stats, 'rhythm', 62), [stats]);
   const flowRating = useMemo(() => readStat(stats, 'flow', 58), [stats]);
@@ -140,6 +155,9 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
   const maxComboRef = useRef(0);
   const progressRef = useRef(0);
   const lastProgressUpdateRef = useRef(0);
+  const lastReportedNoteIndexRef = useRef(0);
+  const lastReportedProgressRef = useRef(0);
+  const lastReportAtRef = useRef(0);
 
   const worldRef = useRef({
     notes: [] as RuntimeNote[],
@@ -184,6 +202,9 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
     setProgress(0);
     progressRef.current = 0;
     lastProgressUpdateRef.current = 0;
+    lastReportedNoteIndexRef.current = 0;
+    lastReportedProgressRef.current = 0;
+    lastReportAtRef.current = 0;
     setCountdownKind('start');
   }, []);
 
@@ -229,20 +250,42 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
     setCountdown(Math.ceil(COUNTDOWN_MS / 1000));
     setCountdownKind('start');
     setGameState('countdown');
+    onRunStart?.(selectedTrack.id);
     if (audio?.enabled) audio.playPulse?.();
-  }, [audio, resetWorld, selectedTrack]);
+  }, [audio, onRunStart, resetWorld, selectedTrack]);
 
-  const submitRun = useCallback(() => {
+  const emitProgress = useCallback((payload: RunnerProgressPayload, force = false) => {
+    if (!onProgress) return;
+    const now = performance.now();
+    const noteAdvance = payload.furthestNoteIndex - lastReportedNoteIndexRef.current;
+    const progressAdvance = payload.progress - lastReportedProgressRef.current;
+    if (!force && now - lastReportAtRef.current < 2500 && noteAdvance < 24 && progressAdvance < 0.08) {
+      return;
+    }
+    lastReportedNoteIndexRef.current = payload.furthestNoteIndex;
+    lastReportedProgressRef.current = payload.progress;
+    lastReportAtRef.current = now;
+    onProgress(payload);
+  }, [onProgress]);
+
+  const submitRun = useCallback((summary: RunnerProgressPayload) => {
     const world = worldRef.current;
     if (world.didSubmit || !selectedTrack) return;
     world.didSubmit = true;
-    onGameOver?.(scoreRef.current, maxComboRef.current, selectedTrack.id);
+    onGameOver?.(scoreRef.current, maxComboRef.current, selectedTrack.id, summary);
   }, [onGameOver, selectedTrack]);
 
   const finishGame = useCallback(
     (complete = false) => {
       if (gameState === 'over') return;
       const audioEl = audioRef.current;
+      const world = worldRef.current;
+      const finalProgress = complete ? 1 : progressRef.current;
+      const summary: RunnerProgressPayload = {
+        trackId: selectedTrack?.id ?? '',
+        progress: Math.max(0, Math.min(1, finalProgress)),
+        furthestNoteIndex: Math.max(0, world.nextIndex),
+      };
       audioEl?.pause();
       setGameState('over');
       setCountdown(null);
@@ -251,9 +294,10 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
         lastProgressUpdateRef.current = performance.now();
         setProgress(1);
       }
-      submitRun();
+      emitProgress(summary, true);
+      submitRun(summary);
     },
-    [gameState, submitRun],
+    [emitProgress, gameState, selectedTrack, submitRun],
   );
 
   const pauseGame = useCallback(() => {
@@ -487,6 +531,13 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
             lastProgressUpdateRef.current = now;
             setProgress(nextProgress);
           }
+          if (selectedTrack) {
+            emitProgress({
+              trackId: selectedTrack.id,
+              progress: nextProgress,
+              furthestNoteIndex: Math.max(0, world.nextIndex),
+            });
+          }
         }
       }
 
@@ -664,7 +715,7 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [audio, countdown, countdownKind, finishGame, gameState, handleMiss, missWindow, selectedTrack, trackDurationMs, travelMs]);
+  }, [audio, countdown, countdownKind, emitProgress, finishGame, gameState, handleMiss, missWindow, selectedTrack, trackDurationMs, travelMs]);
 
   useEffect(() => {
     const audioEl = audioRef.current;
@@ -758,7 +809,7 @@ export default function Runner({ stats, audio, onGameOver }: RunnerProps) {
 
       <div className="relative mt-6">
         <canvas ref={canvasRef} className="w-full rounded-[32px] border border-white/20 bg-slate-900/30 shadow-[0_32px_120px_rgba(99,102,241,0.35)] backdrop-blur" />
-        <audio ref={audioRef} src={selectedTrack?.audioSrc} preload="auto" />
+        <audio ref={audioRef} src={selectedTrack?.audioSrc} preload="metadata" />
 
         {(gameState === 'menu' || gameState === 'over') && (
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-6 bg-gradient-to-b from-[#fdf9ff]/80 via-[#f3f8ff]/70 to-[#f5f1ff]/80 text-center">

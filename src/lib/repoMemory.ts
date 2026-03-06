@@ -1,12 +1,39 @@
 import { randomBytes } from 'crypto';
 import { v4 as uuid } from 'uuid';
 import { hashClaimCode } from './crypto';
-import type { Repo, User, Character, PhysicalUnit, ClaimChallenge } from './repo';
+import type { Repo, User, Character, PhysicalUnit, ClaimChallenge, Ownership } from './repo';
 import { characterLore } from '@/data/characterLore';
 
 type CharacterSet = { id: string; name: string; description: string | null };
 
 const now = () => new Date();
+
+function normalize(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function slugify(value: string): string {
+  return normalize(value)
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+const SPRITE_PATH_RE = /\/assets\/characters\/([^/]+)\/sprite\.[a-z0-9]+(?:[?#].*)?$/i;
+
+function parseAvatarIdFromSpriteRef(spriteRef: unknown): string | null {
+  if (typeof spriteRef !== 'string') return null;
+  const match = spriteRef.trim().match(SPRITE_PATH_RE);
+  if (!match) return null;
+  const avatarId = normalize(match[1]);
+  return avatarId || null;
+}
+
+function toAvatarId(character: Character | null): string | null {
+  if (!character) return null;
+  const fromSlug = normalize(character.slug ?? '');
+  if (fromSlug) return fromSlug;
+  return parseAvatarIdFromSpriteRef(character.artRefs?.sprite);
+}
 
 // Demo data (mirrors the default Redis seed)
 const data = (() => {
@@ -81,7 +108,7 @@ if (!memorySecret) {
     units,
     challenges: [] as ClaimChallenge[],
     abuse: [] as unknown[],
-    ownerships: [] as Array<{ id: string; userId: string; characterId: string; source: string; cosmetics: string[]; createdAt: Date }>,
+    ownerships: [] as Ownership[],
   };
 })();
 
@@ -155,9 +182,36 @@ export const memoryRepo: Repo = {
   async listOwnershipsByUser(userId) {
     return data.ownerships.filter((o) => o.userId === userId);
   },
+  async listOwnedAvatarIdsByUser(userId) {
+    const ownerships = data.ownerships.filter((ownership) => ownership.userId === userId);
+    if (ownerships.length === 0) return [];
+
+    const byCharacterId = new Map(data.characters.map((character) => [character.id, character]));
+    const avatarIds = new Set<string>();
+    for (const ownership of ownerships) {
+      const avatarId = toAvatarId(byCharacterId.get(ownership.characterId) ?? null);
+      if (avatarId) avatarIds.add(avatarId);
+    }
+    return Array.from(avatarIds);
+  },
 
   async getCharacterById(id) {
     return data.characters.find((c) => c.id === id) || null;
+  },
+  async getCharacterBySlug(slug) {
+    const normalizedSlug = normalize(slug);
+    if (!normalizedSlug) return null;
+    return data.characters.find((character) => normalize(character.slug ?? '') === normalizedSlug) ?? null;
+  },
+  async getCharacterByNameSlug(nameSlug) {
+    const normalizedNameSlug = normalize(nameSlug);
+    if (!normalizedNameSlug) return null;
+    return data.characters.find((character) => slugify(character.name) === normalizedNameSlug) ?? null;
+  },
+  async getCharacterByCodeSeries(codeSeries) {
+    const normalizedSeries = normalize(codeSeries);
+    if (!normalizedSeries) return null;
+    return data.characters.find((character) => normalize(character.codeSeries ?? '') === normalizedSeries) ?? null;
   },
   async getCharactersByIds(ids) {
     if (!ids.length) return [];

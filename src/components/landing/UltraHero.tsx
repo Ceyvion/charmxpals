@@ -1,8 +1,10 @@
 "use client";
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { worldTagline } from '@/data/characterLore';
+import { trackEvent } from '@/lib/analyticsClient';
 
 type HeroCharacter = {
   id: string;
@@ -48,11 +50,11 @@ export default function UltraHero({ characters = [] }: { characters?: HeroCharac
         <div className="cp-card-hero overflow-hidden">
           <div className={`${compact ? 'h-32' : 'h-36'} relative overflow-hidden bg-[var(--cp-gray-100)]`}>
             {media ? (
-              <img
+              <Image
                 src={media}
                 alt={card.name}
-                loading="lazy"
-                decoding="async"
+                fill
+                sizes={compact ? "(min-width: 640px) 220px, 100vw" : "(min-width: 640px) 320px, 100vw"}
                 className="absolute inset-0 h-full w-full object-cover"
               />
             ) : (
@@ -99,7 +101,7 @@ export default function UltraHero({ characters = [] }: { characters?: HeroCharac
       <div className="relative z-10 w-full px-4 py-24">
         <div className="cp-container max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-12 items-center">
-            <div className="space-y-8">
+            <div className="space-y-8" data-testid="home-hero-head">
               <div
                 className={`inline-flex items-center gap-3 transition-all duration-700 ${
                   mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
@@ -143,13 +145,21 @@ export default function UltraHero({ characters = [] }: { characters?: HeroCharac
                 }`}
                 style={{ transitionDelay: '320ms' }}
               >
-                <Link href="/claim" className="cp-cta-primary font-display">
+                <Link
+                  href="/claim"
+                  className="cp-cta-primary font-display"
+                  onClick={() => trackEvent('home_cta_click', { target: 'claim', source: 'hero' })}
+                >
                   <span>Claim Your Pal</span>
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.4} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
                 </Link>
-                <Link href="/play" className="cp-cta-ghost font-display">
+                <Link
+                  href="/play"
+                  className="cp-cta-ghost font-display"
+                  onClick={() => trackEvent('home_cta_click', { target: 'play', source: 'hero' })}
+                >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -186,6 +196,7 @@ export default function UltraHero({ characters = [] }: { characters?: HeroCharac
                 mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
               }`}
               style={{ transitionDelay: '240ms' }}
+              data-testid="home-hero-deck"
             >
               <div className="relative max-w-lg mx-auto">
                 <div className="cp-panel p-6 sm:p-8 bg-[var(--cp-white)]">

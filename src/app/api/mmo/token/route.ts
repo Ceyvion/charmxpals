@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getRepo } from '@/lib/repo';
 import { rateLimitCheck } from '@/lib/rateLimit';
-import { normalizeAvatarId, resolveAvatarId } from '@/lib/mmo/avatarId';
+import { getClientIp } from '@/lib/ip';
+import { normalizeAvatarId } from '@/lib/mmo/avatarId';
 import { signToken, type MmoSessionClaims } from '@/lib/mmo/token';
 import { ensurePlazaServer } from '@/lib/mmo/serverRuntime';
 import { resolveConfiguredWsBase, resolveServerWsBase } from '@/lib/mmo/wsUrl';
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
   const mode: 'plaza' | 'arena' = modeParam === 'arena' ? 'arena' : 'plaza';
 
   // Simple rate limit
-  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'local';
+  const ip = getClientIp(request.url, request.headers);
   const rl = await rateLimitCheck(`mmo-token:${ip}`, { windowMs: 15_000, max: 10, prefix: 'mmo' });
   if (!rl.allowed) {
     return NextResponse.json({ ok: false, error: 'rate_limited' }, { status: 429, headers: { 'Retry-After': Math.max(0, Math.ceil((rl.resetAt - Date.now()) / 1000)).toString() } });
@@ -32,34 +33,13 @@ export async function GET(request: NextRequest) {
   if (!user) return NextResponse.json({ ok: false, error: 'no_user' }, { status: 404 });
 
   // Gate by ownership (dev can bypass in non-prod)
-  const owns = await repo.listOwnershipsByUser(user.id);
-  const ownedDbCharacterIds = Array.from(new Set(owns.map((o) => o.characterId)));
-  const ownedCharacters = ownedDbCharacterIds.length > 0 ? await repo.getCharactersByIds(ownedDbCharacterIds) : [];
   const configuredFallbackAvatarId = normalizeAvatarId(process.env.MMO_DEFAULT_AVATAR_ID);
   const fallbackAvatarId = configuredFallbackAvatarId || 'neon-city';
-  const avatarIdByCharacterId = new Map<string, string>();
-  const unresolvedOwnedIds: string[] = [];
-  for (const character of ownedCharacters) {
-    const avatarId = resolveAvatarId(character);
-    if (avatarId) {
-      avatarIdByCharacterId.set(character.id, avatarId);
-    } else {
-      unresolvedOwnedIds.push(character.id);
-    }
-  }
-  if (unresolvedOwnedIds.length > 0 && process.env.NODE_ENV !== 'test') {
-    console.warn('[mmo-token] Falling back avatar ID for unmapped owned characters', {
-      unresolvedCount: unresolvedOwnedIds.length,
-      sampleCharacterIds: unresolvedOwnedIds.slice(0, 5),
-    });
-  }
-  const ownedAvatarIds = Array.from(
-    new Set(
-      ownedDbCharacterIds
-        .map((characterId) => avatarIdByCharacterId.get(characterId) || fallbackAvatarId)
-        .filter((id): id is string => typeof id === 'string' && id.trim().length > 0),
-    ),
-  );
+  const ownedAvatarIds = await repo.listOwnedAvatarIdsByUser(user.id);
+  const claimedAvatarIds = ownedAvatarIds
+    .map((avatarId) => normalizeAvatarId(avatarId))
+    .filter((avatarId): avatarId is string => Boolean(avatarId));
+  const claimsOwned = claimedAvatarIds.length > 0 ? claimedAvatarIds : [fallbackAvatarId];
   if (!devAllow && ownedAvatarIds.length === 0) {
     return NextResponse.json({ ok: false, error: 'no_ownership' }, { status: 403 });
   }
@@ -95,7 +75,7 @@ export async function GET(request: NextRequest) {
     exp: now + ttlSec,
     nonce: randomUUID(),
     scope: [mode === 'arena' ? 'arena:join' : 'plaza:join'],
-    owned: ownedAvatarIds,
+    owned: claimsOwned,
     mode,
   };
   const token = signToken(claims);

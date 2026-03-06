@@ -14,25 +14,36 @@ export const redisKeys = {
   userByEmail: `${PREFIX}:user:email`,
   userByHandle: `${PREFIX}:user:handle`,
   characters: `${PREFIX}:characters`,
+  characterOrder: `${PREFIX}:character:order`,
+  characterBySlug: `${PREFIX}:character:slug`,
+  characterByNameSlug: `${PREFIX}:character:nameSlug`,
+  characterByCodeSeries: `${PREFIX}:character:series`,
+  characterIndexVersion: `${PREFIX}:character:indexVersion`,
   characterSets: `${PREFIX}:characterSets`,
   units: `${PREFIX}:units`,
   unitByCodeHash: `${PREFIX}:unit:code`,
   ownershipsPrefix: `${PREFIX}:ownerships`,
+  ownershipAvatarIdsPrefix: `${PREFIX}:ownership:avatarIds`,
   challenges: `${PREFIX}:challenges`,
   abuse: `${PREFIX}:abuse`,
 } as const;
 
 const KEYS = redisKeys;
+const CHARACTER_INDEX_VERSION = '1';
+const OWNED_AVATAR_CACHE_TTL_SECONDS = 120;
+const AVATAR_ID_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const SPRITE_PATH_RE = /\/assets\/characters\/([^/]+)\/sprite\.[a-z0-9]+(?:[?#].*)?$/i;
 
 type StoredUser = User & { createdAt: string; updatedAt: string };
 type StoredCharacter = Character & { createdAt: string; order: number };
 type StoredUnit = Omit<PhysicalUnit, 'claimedAt'> & { createdAt: string; claimedAt: string | null };
-type StoredOwnership = { id: string; userId: string; characterId: string; source: string; cosmetics: string[]; createdAt: string };
+type StoredOwnership = { id: string; userId: string; characterId: string; source: string; cosmetics: string[]; createdAt: string; avatarId?: string | null };
 type StoredChallenge = Omit<ClaimChallenge, 'expiresAt'> & { createdAt: string; expiresAt: string };
 
 const redis = getRedis();
 
 let readyPromise: Promise<void> | null = null;
+let characterIndexPromise: Promise<void> | null = null;
 
 async function ensureReady(): Promise<void> {
   if (!readyPromise) {
@@ -42,6 +53,89 @@ async function ensureReady(): Promise<void> {
     });
   }
   await readyPromise;
+}
+
+function normalize(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function slugify(value: string): string {
+  return normalize(value)
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function toCharacterOrder(value: unknown): number {
+  if (value && typeof value === 'object' && 'order' in value) {
+    const orderValue = (value as { order?: unknown }).order;
+    if (typeof orderValue === 'number' && Number.isFinite(orderValue)) return orderValue;
+  }
+  return 0;
+}
+
+async function rebuildCharacterIndexes(client: Redis): Promise<void> {
+  const raw = await client.hvals(KEYS.characters);
+  const parsed = (raw || [])
+    .map((entry: unknown) => parseJson<StoredCharacter>(entry))
+    .filter((entry: StoredCharacter | null): entry is StoredCharacter => Boolean(entry));
+
+  parsed.sort((a: StoredCharacter, b: StoredCharacter) => toCharacterOrder(a) - toCharacterOrder(b));
+
+  const orderedIds: string[] = [];
+  const bySlug: Record<string, string> = {};
+  const byNameSlug: Record<string, string> = {};
+  const byCodeSeries: Record<string, string> = {};
+
+  for (const character of parsed) {
+    orderedIds.push(character.id);
+
+    const slug = normalize(character.slug ?? '');
+    if (slug && !bySlug[slug]) {
+      bySlug[slug] = character.id;
+    }
+
+    const nameSlug = slugify(character.name);
+    if (nameSlug && !byNameSlug[nameSlug]) {
+      byNameSlug[nameSlug] = character.id;
+    }
+
+    const codeSeries = normalize(character.codeSeries ?? '');
+    if (codeSeries && !byCodeSeries[codeSeries]) {
+      byCodeSeries[codeSeries] = character.id;
+    }
+  }
+
+  await client.del(KEYS.characterOrder);
+  await client.del(KEYS.characterBySlug);
+  await client.del(KEYS.characterByNameSlug);
+  await client.del(KEYS.characterByCodeSeries);
+
+  if (orderedIds.length > 0) {
+    await client.rpush(KEYS.characterOrder, ...orderedIds);
+  }
+  if (Object.keys(bySlug).length > 0) {
+    await client.hset(KEYS.characterBySlug, bySlug);
+  }
+  if (Object.keys(byNameSlug).length > 0) {
+    await client.hset(KEYS.characterByNameSlug, byNameSlug);
+  }
+  if (Object.keys(byCodeSeries).length > 0) {
+    await client.hset(KEYS.characterByCodeSeries, byCodeSeries);
+  }
+
+  await client.set(KEYS.characterIndexVersion, CHARACTER_INDEX_VERSION);
+}
+
+async function ensureCharacterIndexes(): Promise<void> {
+  const currentVersion = (await redis.get(KEYS.characterIndexVersion)) as string | null;
+  if (currentVersion === CHARACTER_INDEX_VERSION) return;
+
+  if (!characterIndexPromise) {
+    characterIndexPromise = rebuildCharacterIndexes(redis).finally(() => {
+      characterIndexPromise = null;
+    });
+  }
+  await characterIndexPromise;
 }
 
 async function seedIfNeeded(client: Redis): Promise<void> {
@@ -119,6 +213,43 @@ async function seedIfNeeded(client: Redis): Promise<void> {
     await client.hset(KEYS.characters, Object.fromEntries(characterEntries));
   }
 
+  const orderedIds = [...characters]
+    .sort((a, b) => a.order - b.order)
+    .map((entry) => entry.data.id);
+  const slugIndex: Record<string, string> = {};
+  const nameSlugIndex: Record<string, string> = {};
+  const seriesIndex: Record<string, string> = {};
+
+  for (const entry of [...characters].sort((a, b) => a.order - b.order)) {
+    const id = entry.data.id;
+    const normalizedSlug = normalize(entry.data.slug ?? '');
+    if (normalizedSlug && !slugIndex[normalizedSlug]) {
+      slugIndex[normalizedSlug] = id;
+    }
+    const nameSlug = slugify(entry.data.name);
+    if (nameSlug && !nameSlugIndex[nameSlug]) {
+      nameSlugIndex[nameSlug] = id;
+    }
+    const series = normalize(entry.data.codeSeries ?? '');
+    if (series && !seriesIndex[series]) {
+      seriesIndex[series] = id;
+    }
+  }
+
+  if (orderedIds.length) {
+    await client.rpush(KEYS.characterOrder, ...orderedIds);
+  }
+  if (Object.keys(slugIndex).length) {
+    await client.hset(KEYS.characterBySlug, slugIndex);
+  }
+  if (Object.keys(nameSlugIndex).length) {
+    await client.hset(KEYS.characterByNameSlug, nameSlugIndex);
+  }
+  if (Object.keys(seriesIndex).length) {
+    await client.hset(KEYS.characterByCodeSeries, seriesIndex);
+  }
+  await client.set(KEYS.characterIndexVersion, CHARACTER_INDEX_VERSION);
+
   await client.hset(KEYS.characterSets, {
     [rosterSetSlug]: JSON.stringify({ id: rosterSetId, name: rosterSetName }),
   });
@@ -135,6 +266,10 @@ function ownershipKey(userId: string): string {
   return `${KEYS.ownershipsPrefix}:${userId}`;
 }
 
+function ownershipAvatarKey(userId: string): string {
+  return `${KEYS.ownershipAvatarIdsPrefix}:${userId}`;
+}
+
 function parseJson<T>(value: unknown): T | null {
   if (value == null) return null;
   if (typeof value === 'string') {
@@ -148,6 +283,37 @@ function parseJson<T>(value: unknown): T | null {
     return value as T;
   }
   return null;
+}
+
+function normalizeAvatarId(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const normalized = normalize(value);
+  if (!normalized) return null;
+  return AVATAR_ID_RE.test(normalized) ? normalized : null;
+}
+
+function parseAvatarIdFromSpriteRef(spriteRef: unknown): string | null {
+  if (typeof spriteRef !== 'string') return null;
+  const trimmed = spriteRef.trim();
+  if (!trimmed) return null;
+
+  const directMatch = trimmed.match(SPRITE_PATH_RE);
+  if (directMatch) return normalizeAvatarId(directMatch[1]);
+
+  try {
+    const url = new URL(trimmed);
+    const pathMatch = url.pathname.match(SPRITE_PATH_RE);
+    if (pathMatch) return normalizeAvatarId(pathMatch[1]);
+  } catch {
+    // Not an absolute URL; no-op.
+  }
+
+  return null;
+}
+
+function avatarIdFromCharacter(character: Character | null): string | null {
+  if (!character) return null;
+  return normalizeAvatarId(character.slug) ?? parseAvatarIdFromSpriteRef(character.artRefs?.sprite);
 }
 
 async function readUser(id: string): Promise<User | null> {
@@ -332,6 +498,8 @@ export const repoRedis: Repo = {
     await ensureReady();
     const claimedAtIso = new Date().toISOString();
     const claimedAtDate = new Date(claimedAtIso);
+    const userOwnershipKey = ownershipKey(userId);
+    const userOwnershipAvatarKey = ownershipAvatarKey(userId);
 
     if (challengeId) {
       const ownershipId = uuid();
@@ -350,13 +518,23 @@ export const repoRedis: Repo = {
         unitObj.claimedBy = ARGV[3]
         unitObj.claimedAt = ARGV[4]
         redis.call("HSET", KEYS[1], ARGV[1], cjson.encode(unitObj))
-        local ownership = cjson.encode({id=ARGV[5], userId=ARGV[3], characterId=unitObj.characterId, source="claim", cosmetics={}, createdAt=ARGV[4]})
-        redis.call("LPUSH", KEYS[3], ownership)
+        local avatarId = ""
+        local character = redis.call("HGET", KEYS[4], unitObj.characterId)
+        if character then
+          local characterObj = cjson.decode(character)
+          if characterObj and characterObj.slug and string.len(characterObj.slug) > 0 then
+            avatarId = string.lower(characterObj.slug)
+          end
+        end
+        local ownershipObj = {id=ARGV[5], userId=ARGV[3], characterId=unitObj.characterId, source="claim", cosmetics={}, createdAt=ARGV[4]}
+        if avatarId ~= "" then ownershipObj.avatarId = avatarId end
+        redis.call("LPUSH", KEYS[3], cjson.encode(ownershipObj))
+        redis.call("DEL", KEYS[5])
         return {1, unitObj.characterId, ARGV[4]}
       `;
       const result = (await redis.eval(
         lua,
-        [KEYS.units, KEYS.challenges, ownershipKey(userId)],
+        [KEYS.units, KEYS.challenges, userOwnershipKey, KEYS.characters, userOwnershipAvatarKey],
         [unitId, challengeId, userId, claimedAtIso, ownershipId],
       )) as unknown;
       if (Array.isArray(result) && Number(result[0]) === 1) {
@@ -388,8 +566,14 @@ export const repoRedis: Repo = {
       cosmetics: [],
       createdAt: claimedAtIso,
     };
+    const characterRaw = await redis.hget(KEYS.characters, stored.characterId);
+    const avatarId = avatarIdFromCharacter(toCharacter(characterRaw));
+    if (avatarId) {
+      ownership.avatarId = avatarId;
+    }
 
-    await redis.lpush(ownershipKey(userId), JSON.stringify(ownership));
+    await redis.lpush(userOwnershipKey, JSON.stringify(ownership));
+    await redis.del(userOwnershipAvatarKey);
 
     return { characterId: stored.characterId, claimedAt: claimedAtDate };
   },
@@ -410,8 +594,99 @@ export const repoRedis: Repo = {
       }));
   },
 
+  async listOwnedAvatarIdsByUser(userId) {
+    await ensureReady();
+    if (!userId) return [];
+
+    const cacheKey = ownershipAvatarKey(userId);
+    const cached = await redis.get(cacheKey);
+    if (Array.isArray(cached)) {
+      return cached
+        .map((entry) => normalizeAvatarId(entry))
+        .filter((avatarId): avatarId is string => Boolean(avatarId));
+    }
+    if (typeof cached === 'string') {
+      const parsed = parseJson<unknown[]>(cached);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .map((entry) => normalizeAvatarId(entry))
+          .filter((avatarId): avatarId is string => Boolean(avatarId));
+      }
+    }
+
+    const items = (await redis.lrange(ownershipKey(userId), 0, -1)) as string[] | null;
+    const ownerships = (items || [])
+      .map((entry) => parseJson<StoredOwnership>(entry))
+      .filter((parsed): parsed is StoredOwnership => Boolean(parsed));
+    if (ownerships.length === 0) {
+      await redis.set(cacheKey, JSON.stringify([]), { ex: OWNED_AVATAR_CACHE_TTL_SECONDS });
+      return [];
+    }
+
+    const avatarIds = new Set<string>();
+    const unresolvedCharacterIds: string[] = [];
+
+    for (const ownership of ownerships) {
+      const avatarId = normalizeAvatarId(ownership.avatarId);
+      if (avatarId) {
+        avatarIds.add(avatarId);
+        continue;
+      }
+      if (ownership.characterId) {
+        unresolvedCharacterIds.push(ownership.characterId);
+      }
+    }
+
+    if (unresolvedCharacterIds.length > 0) {
+      const characters = await repoRedis.getCharactersByIds(Array.from(new Set(unresolvedCharacterIds)));
+      for (const character of characters) {
+        const avatarId = avatarIdFromCharacter(character);
+        if (avatarId) {
+          avatarIds.add(avatarId);
+        }
+      }
+    }
+
+    const result = Array.from(avatarIds);
+    await redis.set(cacheKey, JSON.stringify(result), { ex: OWNED_AVATAR_CACHE_TTL_SECONDS });
+    return result;
+  },
+
   async getCharacterById(id) {
     await ensureReady();
+    const raw = await redis.hget(KEYS.characters, id);
+    return toCharacter(raw);
+  },
+
+  async getCharacterBySlug(slug) {
+    await ensureReady();
+    await ensureCharacterIndexes();
+    const normalizedSlug = normalize(slug);
+    if (!normalizedSlug) return null;
+    const id = (await redis.hget(KEYS.characterBySlug, normalizedSlug)) as string | null;
+    if (!id) return null;
+    const raw = await redis.hget(KEYS.characters, id);
+    return toCharacter(raw);
+  },
+
+  async getCharacterByNameSlug(nameSlug) {
+    await ensureReady();
+    await ensureCharacterIndexes();
+    const normalizedNameSlug = normalize(nameSlug);
+    if (!normalizedNameSlug) return null;
+    const id = (await redis.hget(KEYS.characterByNameSlug, normalizedNameSlug)) as string | null;
+    if (!id) return null;
+    const raw = await redis.hget(KEYS.characters, id);
+    return toCharacter(raw);
+  },
+
+  async getCharacterByCodeSeries(codeSeries) {
+    await ensureReady();
+    await ensureCharacterIndexes();
+    const normalizedCodeSeries = normalize(codeSeries);
+    if (!normalizedCodeSeries) return null;
+    const id = (await redis.hget(KEYS.characterByCodeSeries, normalizedCodeSeries)) as string | null;
+    if (!id) return null;
     const raw = await redis.hget(KEYS.characters, id);
     return toCharacter(raw);
   },
@@ -435,37 +710,18 @@ export const repoRedis: Repo = {
 
   async listCharacters(params) {
     await ensureReady();
+    await ensureCharacterIndexes();
     const limit = params?.limit ?? 20;
     const offset = params?.offset ?? 0;
+    if (limit <= 0) return [];
 
-    const raw = await redis.hvals(KEYS.characters);
-    const parsed = (raw || [])
-      .map((entry: unknown) => parseJson<StoredCharacter>(entry))
-      .filter((entry: StoredCharacter | null): entry is StoredCharacter => Boolean(entry));
-    parsed.sort((a: StoredCharacter, b: StoredCharacter) => {
-      const orderA = typeof a.order === 'number' ? a.order : 0;
-      const orderB = typeof b.order === 'number' ? b.order : 0;
-      return orderA - orderB;
-    });
-    return parsed.slice(offset, offset + limit).map((character: StoredCharacter) => ({
-      id: character.id,
-      setId: character.setId,
-      name: character.name,
-      description: character.description,
-      rarity: character.rarity,
-      stats: character.stats,
-      artRefs: character.artRefs ?? {},
-      codeSeries: character.codeSeries ?? null,
-      slug: character.slug ?? null,
-      realm: character.realm ?? null,
-      color: character.color ?? null,
-      title: character.title ?? null,
-      vibe: character.vibe ?? null,
-      danceStyle: character.danceStyle ?? null,
-      coreCharm: character.coreCharm ?? null,
-      personality: character.personality ?? null,
-      tagline: character.tagline ?? null,
-    } satisfies Character));
+    const ids = (await redis.lrange(KEYS.characterOrder, offset, offset + limit - 1)) as string[] | null;
+    if (!ids || ids.length === 0) return [];
+
+    const raw = (await redis.hmget(KEYS.characters, ...ids)) as Record<string, unknown> | null;
+    return ids
+      .map((id) => toCharacter(raw ? raw[id] : null))
+      .filter((character): character is Character => Boolean(character));
   },
 
   async logAbuse({ type, actorRef, metadata }) {

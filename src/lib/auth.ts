@@ -3,6 +3,7 @@ import type { NextAuthOptions, User } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
 import { getRepo } from '@/lib/repo';
+import { isProductionRuntime } from '@/lib/runtime';
 
 function hashSecret(value: string) {
   return createHash('sha256').update(value).digest();
@@ -10,19 +11,34 @@ function hashSecret(value: string) {
 
 function resolveNextAuthSecret() {
   const configured = process.env.NEXTAUTH_SECRET?.trim();
-  const fallback = process.env.CODE_HASH_SECRET?.trim();
+  if (configured) return configured;
 
-  if (!configured && fallback) {
-    const warningMessage =
-      process.env.NODE_ENV === 'production'
-        ? '[auth] NEXTAUTH_SECRET is missing; using CODE_HASH_SECRET to keep local start working.'
-        : '[auth] NEXTAUTH_SECRET is missing; using CODE_HASH_SECRET for local/dev session encryption.';
-    console.info(warningMessage);
-    return fallback;
+  if (!isProductionRuntime()) {
+    const fallback = process.env.CODE_HASH_SECRET?.trim();
+    if (fallback) {
+      console.info('[auth] NEXTAUTH_SECRET is missing; using CODE_HASH_SECRET for local/dev session encryption.');
+      return fallback;
+    }
   }
 
-  return configured;
+  return undefined;
 }
+
+function resolveBetaAccessSecret() {
+  const configured = process.env.BETA_ACCESS_SECRET?.trim();
+  if (configured) return configured;
+
+  if (!isProductionRuntime()) {
+    const devFallback = process.env.DEV_AUTH_PASS?.trim() || 'admin';
+    console.info('[auth] BETA_ACCESS_SECRET is missing; using DEV_AUTH_PASS/admin for local development.');
+    return devFallback;
+  }
+
+  return undefined;
+}
+
+const NEXTAUTH_SECRET = resolveNextAuthSecret();
+const BETA_ACCESS_SECRET = resolveBetaAccessSecret();
 
 function secureCompare(a: string, b: string): boolean {
   const bufferA = hashSecret(a);
@@ -40,12 +56,6 @@ function normalizeEmails(input: string | undefined) {
     .split(',')
     .map((value) => value.trim().toLowerCase())
     .filter(Boolean);
-}
-
-const NEXTAUTH_SECRET = resolveNextAuthSecret();
-
-if (process.env.NODE_ENV === 'production' && !NEXTAUTH_SECRET) {
-  throw new Error('NEXTAUTH_SECRET or CODE_HASH_SECRET is required in production.');
 }
 
 export const authOptions: NextAuthOptions = {
@@ -72,18 +82,11 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Email and access code are required.');
         }
 
-        const betaSecret = process.env.BETA_ACCESS_SECRET;
-        const devFallback =
-          process.env.NODE_ENV !== 'production'
-            ? process.env.DEV_AUTH_PASS || 'admin'
-            : null;
-
-        const expectedSecret = betaSecret || devFallback;
-        if (!expectedSecret) {
+        if (!BETA_ACCESS_SECRET) {
           throw new Error('Login is not enabled. Configure BETA_ACCESS_SECRET.');
         }
 
-        if (!secureCompare(expectedSecret, accessCode)) {
+        if (!secureCompare(BETA_ACCESS_SECRET, accessCode)) {
           return null;
         }
 

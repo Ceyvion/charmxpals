@@ -1,20 +1,12 @@
-"use client";
-
 import Link from "next/link";
-import { signOut, useSession } from "next-auth/react";
 import AppNav from "@/components/AppNav";
+import HeaderAuthControls from "@/components/HeaderAuthControls";
+import AnalyticsTracker from "@/components/AnalyticsTracker";
 
 export default function LayoutChrome({ children }: { children: React.ReactNode }) {
-  const { data: session, status } = useSession();
-  const authenticated = status === 'authenticated';
-  const displayName = session?.user?.name || session?.user?.email || 'You';
-
-  const handleSignOut = () => {
-    signOut({ callbackUrl: '/' }).catch(() => {});
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-[var(--cp-bg)]">
+      <AnalyticsTracker />
       <header className="cp-header sticky top-0 z-40">
         <div className="cp-container">
           <div className="flex items-center justify-between h-14">
@@ -28,29 +20,7 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
 
             <AppNav />
 
-            <div className="flex items-center gap-2">
-              {authenticated ? (
-                <>
-                  <span className="hidden sm:inline-flex items-center rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white/50">
-                    {displayName}
-                  </span>
-                  <button
-                    onClick={handleSignOut}
-                    className="px-3 py-1.5 rounded-lg border border-white/[0.08] bg-transparent text-white/40 text-xs font-semibold uppercase tracking-wider hover:border-white/20 hover:text-white/70 transition-all duration-200"
-                  >
-                    Sign out
-                  </button>
-                </>
-              ) : (
-                <Link
-                  href="/login"
-                  prefetch={false}
-                  className="inline-flex items-center px-4 py-2 rounded-lg bg-[var(--cp-cyan)] text-black text-xs font-bold uppercase tracking-wider hover:brightness-110 transition-all duration-200"
-                >
-                  Sign in
-                </Link>
-              )}
-            </div>
+            <HeaderAuthControls />
           </div>
         </div>
       </header>
@@ -63,7 +33,7 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
             <div>
               <h3 className="text-lg font-bold mb-4 font-display text-white">CHARM PALS</h3>
               <p className="text-white/35 text-sm leading-relaxed">
-                The ultimate platform for physical-digital collectibles with immersive gameplay and social features.
+                Claim a physical collectible, unlock your pal, and move from roster to playable beta surfaces fast.
               </p>
             </div>
             <div>
@@ -75,19 +45,19 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
               </ul>
             </div>
             <div>
-              <h4 className="font-bold mb-4 text-white/70 text-xs uppercase tracking-[0.2em]">Company</h4>
+              <h4 className="font-bold mb-4 text-white/70 text-xs uppercase tracking-[0.2em]">Experiences</h4>
               <ul className="space-y-2.5">
-                <li><a href="#" className="text-sm text-white/35 hover:text-[var(--cp-cyan)] transition-colors">About</a></li>
-                <li><a href="#" className="text-sm text-white/35 hover:text-[var(--cp-cyan)] transition-colors">Blog</a></li>
-                <li><a href="#" className="text-sm text-white/35 hover:text-[var(--cp-cyan)] transition-colors">Careers</a></li>
+                <li><Link href="/play" prefetch={false} className="text-sm text-white/35 hover:text-[var(--cp-cyan)] transition-colors">Play</Link></li>
+                <li><Link href="/arena" prefetch={false} className="text-sm text-white/35 hover:text-[var(--cp-cyan)] transition-colors">Arena</Link></li>
+                <li><Link href="/compare" prefetch={false} className="text-sm text-white/35 hover:text-[var(--cp-cyan)] transition-colors">Compare</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold mb-4 text-white/70 text-xs uppercase tracking-[0.2em]">Support</h4>
               <ul className="space-y-2.5">
-                <li><a href="#" className="text-sm text-white/35 hover:text-[var(--cp-cyan)] transition-colors">FAQ</a></li>
-                <li><a href="#" className="text-sm text-white/35 hover:text-[var(--cp-cyan)] transition-colors">Contact</a></li>
-                <li><a href="#" className="text-sm text-white/35 hover:text-[var(--cp-cyan)] transition-colors">Privacy Policy</a></li>
+                <li><Link href="/support" prefetch={false} className="text-sm text-white/35 hover:text-[var(--cp-cyan)] transition-colors">Support</Link></li>
+                <li><a href="mailto:charmxpals.contact@gmail.com" className="text-sm text-white/35 hover:text-[var(--cp-cyan)] transition-colors">Contact</a></li>
+                <li><Link href="/privacy" prefetch={false} className="text-sm text-white/35 hover:text-[var(--cp-cyan)] transition-colors">Privacy Policy</Link></li>
               </ul>
             </div>
           </div>

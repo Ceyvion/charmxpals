@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getRepo } from '@/lib/repo';
 import { withCharacterLore, type CharacterWithLore } from '@/lib/characterLore';
@@ -9,6 +10,16 @@ import LiveStatsMarquee from '@/components/landing/LiveStatsMarquee';
 import MagneticCTA from '@/components/landing/MagneticCTA';
 import Interactive3DScanner from '@/components/landing/Interactive3DScanner';
 import Interactive3DPreview from '@/components/landing/Interactive3DPreview';
+
+export const metadata: Metadata = {
+  title: 'Scan a Charm. Meet Your Pal.',
+  description: 'Claim your physical collectible, unlock a playable pal, and move from unboxing to beta gameplay in seconds.',
+  alternates: {
+    canonical: '/',
+  },
+};
+
+export const dynamic = 'force-dynamic';
 
 const LEGACY_ACTIVE_NAMES = new Set(['blaze the dragon']);
 
@@ -134,7 +145,7 @@ export default async function Home() {
               <div
                 className="relative min-h-[280px] md:min-h-[360px] bg-cover bg-center bg-[var(--cp-gray-900)]"
                 style={{
-                  backgroundImage: 'url(/assets/arena/maps/neon-grid.png)',
+                  backgroundImage: 'url(/assets/arena/maps/neon-grid.webp)',
                 }}
               />
             </div>

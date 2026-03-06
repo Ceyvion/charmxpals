@@ -121,3 +121,21 @@ Original prompt: you need to use all skills and research aavailbibe and make thi
 
 - If needed, tune progression economy values further after user playtesting feedback (credits-per-run and cost curve are now intentionally faster).
 - Optional next polish: add lightweight procedural audio stingers for wave start, level-up, and boss spawn events.
+
+## 2026-03-06 - Integrity chunk 7 (server-owned arena + runner attempts)
+
+- Arena progression:
+  - Moved arena daily mission credit onto the authoritative arena WebSocket server instead of browser POSTs.
+  - Added `server/mmo/arenaMatchTracker.ts` so reconnecting users only count once per arena round for match credit.
+  - Updated `src/components/ArenaClient.tsx` to stop mutating daily progress directly and instead reflect server-derived progress plus sync fetches.
+- Runner integrity:
+  - Added server-side attempt records in `src/lib/scoreSession.ts` and a new checkpoint route at `src/app/api/score/progress/route.ts`.
+  - `src/app/api/score/session/route.ts` now persists attempt state and uses track-based submit timing instead of a flat 30-second floor.
+  - `src/components/Runner.tsx` now emits debounced/final progress checkpoints, and `src/app/play/runner/RunnerClient.tsx` flushes a final checkpoint before posting the score.
+- Targeted verification:
+  - `npm test -- src/lib/scoreSession.test.ts server/mmo/__tests__/arenaMatchTracker.test.ts server/mmo/__tests__/plazaServer.test.ts src/lib/arenaProgressStore.test.ts` passes.
+
+### TODO / Next-agent suggestions
+
+- If this repo keeps the local Phaser battle meta loop, the next trust gap is still `BattlePhaserGame` localStorage-backed credits/perks.
+- Runner attempt tracking is materially stronger, but it still depends on client-reported checkpoints; a true anti-cheat pass would require more authoritative simulation or richer server telemetry.

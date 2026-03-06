@@ -1,37 +1,43 @@
 import { NextRequest } from 'next/server';
+
 import { getTopScores, submitScore } from '@/lib/leaderboard';
+import { getClientIp } from '@/lib/ip';
 import { rateLimitCheck } from '@/lib/rateLimit';
+import { getRepo } from '@/lib/repo';
+import {
+  consumeScoreSessionNonce,
+  getRunnerScoreLimits,
+  getScoreAttemptRecord,
+  validateRunnerScoreAttempt,
+  verifyScoreSession,
+} from '@/lib/scoreSession';
 import { getSafeServerSession } from '@/lib/serverSession';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const mode = searchParams.get('mode') || 'runner';
-  const top = await getTopScores(mode, 20);
-  return Response.json({ success: true, top });
+  const trackId = searchParams.get('trackId');
+  const top = await getTopScores(mode, 20, { trackId });
+  return Response.json(
+    { success: true, top },
+    { headers: { 'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30' } },
+  );
 }
 
 export async function POST(req: NextRequest) {
-  // Rate limit: 30 submissions per minute per IP
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0] || req.ip || 'unknown';
+  const ip = getClientIp(req.url, req.headers);
   const rateLimitResult = await rateLimitCheck(`score-submit:${ip}`, {
     max: 30,
     windowMs: 60_000,
     prefix: 'rl',
   });
   if (!rateLimitResult.allowed) {
-    return Response.json(
-      { success: false, error: 'rate limit exceeded' },
-      { status: 429 }
-    );
+    return Response.json({ success: false, error: 'rate limit exceeded' }, { status: 429 });
   }
 
-  // Require authentication
   const session = await getSafeServerSession();
   if (!session?.user?.id) {
-    return Response.json(
-      { success: false, error: 'unauthorized' },
-      { status: 401 }
-    );
+    return Response.json({ success: false, error: 'unauthorized' }, { status: 401 });
   }
 
   try {
@@ -39,17 +45,86 @@ export async function POST(req: NextRequest) {
     const mode = (body?.mode as string) || 'runner';
     const score = Number(body?.score ?? 0);
     const coins = typeof body?.coins === 'number' ? Number(body.coins) : undefined;
-    const name = typeof body?.name === 'string'
-      ? body.name.slice(0, 32)
-      : session.user.name || session.user.email || 'Anonymous';
+    const trackId = typeof body?.trackId === 'string' ? body.trackId : null;
+    const sessionToken = typeof body?.sessionToken === 'string' ? body.sessionToken : '';
 
     if (!Number.isFinite(score) || score <= 0) {
       return Response.json({ success: false, error: 'invalid score' }, { status: 400 });
     }
+    if (!sessionToken) {
+      return Response.json({ success: false, error: 'missing_score_session' }, { status: 400 });
+    }
 
-    const result = await submitScore({ mode, score, coins, name });
+    const claims = verifyScoreSession(sessionToken);
+    if (!claims || claims.sub !== session.user.id || claims.mode !== mode) {
+      return Response.json({ success: false, error: 'invalid_score_session' }, { status: 400 });
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    if (claims.nbf > now) {
+      return Response.json({ success: false, error: 'score_session_too_fresh' }, { status: 400 });
+    }
+
+    if (mode === 'runner') {
+      if (!trackId || claims.trackId !== trackId) {
+        return Response.json({ success: false, error: 'track_mismatch' }, { status: 400 });
+      }
+      const limits = getRunnerScoreLimits(trackId);
+      if (!limits) {
+        return Response.json({ success: false, error: 'invalid_track' }, { status: 400 });
+      }
+      if (score > limits.maxScore) {
+        return Response.json({ success: false, error: 'score_exceeds_limit' }, { status: 400 });
+      }
+      if (typeof coins === 'number' && coins > limits.maxCombo) {
+        return Response.json({ success: false, error: 'combo_exceeds_limit' }, { status: 400 });
+      }
+      const attempt = await getScoreAttemptRecord(claims.nonce);
+      if (!attempt || attempt.sub !== session.user.id || attempt.trackId !== trackId) {
+        return Response.json({ success: false, error: 'missing_score_attempt' }, { status: 400 });
+      }
+      if (!validateRunnerScoreAttempt(attempt, limits, score)) {
+        return Response.json({ success: false, error: 'incomplete_score_attempt' }, { status: 400 });
+      }
+    }
+
+    const consumed = await consumeScoreSessionNonce(claims.nonce, Math.max(1, claims.exp - now));
+    if (!consumed) {
+      return Response.json({ success: false, error: 'score_session_already_used' }, { status: 409 });
+    }
+
+    const repo = await getRepo();
+    const user = await repo.getUserById(session.user.id);
+    const displayName = resolveLeaderboardDisplayName(
+      user?.handle,
+      session.user.name,
+      session.user.email,
+    );
+
+    const result = await submitScore({
+      mode,
+      score,
+      coins,
+      trackId,
+      userId: session.user.id,
+      displayName,
+    });
     return Response.json(result);
   } catch {
     return Response.json({ success: false, error: 'bad request' }, { status: 400 });
   }
+}
+
+function resolveLeaderboardDisplayName(handle?: string | null, name?: string | null, email?: string | null) {
+  const preferred = normalizeDisplayName(handle) || normalizeDisplayName(name);
+  if (preferred) return preferred;
+
+  const emailLocal = typeof email === 'string' ? email.split('@')[0] : '';
+  return normalizeDisplayName(emailLocal) || 'Player';
+}
+
+function normalizeDisplayName(value?: string | null) {
+  if (!value) return null;
+  const normalized = value.replace(/\s+/g, ' ').trim().slice(0, 32);
+  return normalized || null;
 }

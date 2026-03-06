@@ -1,4 +1,5 @@
 import { getRedis } from './redis';
+import { hasPersistenceEnv, shouldAllowEphemeralFallback } from './runtime';
 
 type ChecklistRecord = {
   progress: Record<string, boolean>;
@@ -7,21 +8,16 @@ type ChecklistRecord = {
 
 const memoryStore = new Map<string, ChecklistRecord>();
 
-function hasRedisEnv() {
-  return Boolean(
-    process.env.UPSTASH_REDIS_REST_URL &&
-    process.env.UPSTASH_REDIS_REST_TOKEN &&
-    process.env.CODE_HASH_SECRET,
-  );
-}
-
 function keyFor(userId: string) {
   return `beta:checklist:${userId}`;
 }
 
 export async function getBetaChecklistProgress(userId: string): Promise<ChecklistRecord | null> {
   if (!userId) return null;
-  if (!hasRedisEnv()) {
+  if (!hasPersistenceEnv()) {
+    if (!shouldAllowEphemeralFallback()) {
+      throw new Error('Redis-backed checklist persistence is required in production.');
+    }
     return memoryStore.get(userId) ?? null;
   }
 
@@ -47,7 +43,10 @@ export async function setBetaChecklistProgress(userId: string, progress: Record<
     updatedAt: new Date().toISOString(),
   };
 
-  if (!hasRedisEnv()) {
+  if (!hasPersistenceEnv()) {
+    if (!shouldAllowEphemeralFallback()) {
+      throw new Error('Redis-backed checklist persistence is required in production.');
+    }
     memoryStore.set(userId, payload);
     return payload;
   }

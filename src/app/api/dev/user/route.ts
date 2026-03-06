@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     try {
       // Lightweight dev cookie to allow server components to render user inventory.
       res.cookies.set('cp_user', user.id, {
-        httpOnly: false,
+        httpOnly: true,
         sameSite: 'lax',
         path: '/',
         maxAge: 60 * 60 * 24 * 30, // 30 days

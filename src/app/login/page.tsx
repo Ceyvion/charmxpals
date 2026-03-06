@@ -3,8 +3,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn, useSession } from 'next-auth/react';
+import AuthSessionProvider from '@/components/AuthSessionProvider';
+import { trackEvent } from '@/lib/analyticsClient';
 
 export default function LoginPage() {
+  return (
+    <AuthSessionProvider>
+      <LoginPageInner />
+    </AuthSessionProvider>
+  );
+}
+
+function LoginPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { status } = useSession();
@@ -25,6 +35,7 @@ export default function LoginPage() {
     event.preventDefault();
     setError(null);
     setLoading(true);
+    trackEvent('login_submit', { has_email: Boolean(email.trim()) });
     try {
       const result = await signIn('credentials', {
         email,
@@ -35,6 +46,7 @@ export default function LoginPage() {
       if (result?.error) {
         throw new Error(result.error === 'CredentialsSignin' ? 'Invalid email or access code.' : result.error);
       }
+      trackEvent('login_success', { next });
       if (result?.url) {
         router.push(result.url);
         router.refresh();
@@ -44,6 +56,7 @@ export default function LoginPage() {
       router.refresh();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
+      trackEvent('login_failure', { reason: message });
       setError(message);
     } finally {
       setLoading(false);

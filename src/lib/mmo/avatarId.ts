@@ -2,7 +2,7 @@ import { withCharacterLore } from '@/lib/characterLore';
 import type { Character } from '@/lib/repo';
 
 const AVATAR_ID_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const SPRITE_PATH_RE = /\/assets\/characters\/([^/]+)\/sprite\.png(?:[?#].*)?$/i;
+const SPRITE_PATH_RE = /\/assets\/characters\/([^/]+)\/sprite\.[a-z0-9]+(?:[?#].*)?$/i;
 
 export function normalizeAvatarId(value: unknown): string | null {
   if (typeof value !== 'string') return null;

@@ -1,6 +1,7 @@
 import { beforeEach, afterEach, describe, expect, it } from 'vitest';
 import WebSocket from 'ws';
 
+import { getArenaProgress, resetArenaProgressStoreForTests } from '../../../src/lib/arenaProgressStore';
 import { startPlazaServer, type PlazaServer } from '../plazaServer';
 import { signToken } from '../../../src/lib/mmo/token';
 
@@ -11,11 +12,11 @@ type TestClient = {
   events: Array<{ type: string; payload: any }>;
 };
 
-async function waitForExpect(fn: () => void, timeout = 1_000, interval = 20) {
+async function waitForExpect(fn: () => void | Promise<void>, timeout = 1_000, interval = 20) {
   const start = Date.now();
   while (true) {
     try {
-      fn();
+      await fn();
       return;
     } catch (err) {
       if (Date.now() - start >= timeout) {
@@ -97,11 +98,16 @@ describe('plaza server', () => {
 
   beforeEach(async () => {
     process.env.MMO_WS_SECRET = TEST_SECRET;
+    delete process.env.UPSTASH_REDIS_REST_URL;
+    delete process.env.UPSTASH_REDIS_REST_TOKEN;
+    process.env.CODE_HASH_SECRET = process.env.CODE_HASH_SECRET || 'test-secret';
+    resetArenaProgressStoreForTests();
     server = await startPlazaServer({ port: 0, secret: TEST_SECRET, logger: () => {} });
   });
 
   afterEach(async () => {
     await server.dispose();
+    resetArenaProgressStoreForTests();
   });
 
   it('emits player-count changes and reports active users', async () => {
@@ -182,6 +188,25 @@ describe('plaza server', () => {
       );
       expect(snapshot).toBeTruthy();
       expect(snapshot?.payload.pickups.length).toBeGreaterThan(0);
+    });
+
+    client.ws.close();
+    await waitForExpect(() => expect(server.getPlayerCount()).toBe(0));
+  });
+
+  it('records arena pulse progress from server-observed casts', async () => {
+    const client = await openClient(server, 'arena-user', 'arena-session', {
+      scope: ['arena:join'],
+      mode: 'arena',
+    });
+
+    client.ws.send(JSON.stringify({ type: 'ability_cast', ability: 'pulse' }));
+
+    await waitForExpect(async () => {
+      const progress = await getArenaProgress('arena-user');
+      expect(progress.pulses).toBe(1);
+      expect(progress.eliminations).toBe(0);
+      expect(progress.matches).toBe(0);
     });
 
     client.ws.close();

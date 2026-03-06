@@ -12,7 +12,7 @@ function makeCharacter(overrides: Partial<Character> = {}): Character {
     rarity: 4,
     stats: {},
     artRefs: {
-      sprite: '/assets/characters/ember-heights/sprite.png',
+      sprite: '/assets/characters/ember-heights/sprite.webp',
     },
     codeSeries: 'Red Dash',
     slug: 'ember-heights',
@@ -38,6 +38,7 @@ describe('avatar ID mapping', () => {
 
   it('extracts avatar IDs from sprite refs (path or absolute URL)', () => {
     expect(avatarIdFromSpriteRef('/assets/characters/NEON-city/sprite.png?v=2')).toBe('neon-city');
+    expect(avatarIdFromSpriteRef('/assets/characters/NEON-city/sprite.webp?v=2')).toBe('neon-city');
     expect(avatarIdFromSpriteRef('https://cdn.example.com/assets/characters/rhythm-reef/sprite.png?x=1')).toBe('rhythm-reef');
     expect(avatarIdFromSpriteRef('/assets/characters/neon-city/thumb.png')).toBeNull();
   });

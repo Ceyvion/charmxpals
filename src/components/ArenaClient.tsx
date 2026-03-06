@@ -30,6 +30,12 @@ import {
   getShakeOffset,
 } from '@/lib/mmo/arenaFx';
 import type { ArenaFxState } from '@/lib/mmo/arenaFx';
+import {
+  emptyArenaDailyProgress,
+  incrementArenaDailyProgress,
+  toArenaProgressDateKey,
+  type ArenaDailyProgress,
+} from '@/lib/arenaProgress';
 
 type ArenaClientProps = { height?: number };
 
@@ -73,31 +79,16 @@ const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(ma
 const lerp = (from: number, to: number, t: number) => from + (to - from) * t;
 const asArenaEventData = (value: unknown): ArenaEventData =>
   typeof value === 'object' && value !== null ? (value as ArenaEventData) : {};
-const DAILY_RESET_HOUR_UTC = 6;
 const ARENA_MAPS: Array<{ id: ArenaMapId; label: string; src: string; summary: string }> = [
-  { id: 'neon-grid', label: 'Neon Grid', src: '/assets/arena/maps/neon-grid.png', summary: 'Wide lanes and long chases.' },
-  { id: 'crystal-rift', label: 'Crystal Rift', src: '/assets/arena/maps/crystal-rift.png', summary: 'Mid-lane ambushes and tight pivots.' },
-  { id: 'voltage-foundry', label: 'Voltage Foundry', src: '/assets/arena/maps/voltage-foundry.png', summary: 'Fast rotations around pressure zones.' },
+  { id: 'neon-grid', label: 'Neon Grid', src: '/assets/arena/maps/neon-grid.webp', summary: 'Wide lanes and long chases.' },
+  { id: 'crystal-rift', label: 'Crystal Rift', src: '/assets/arena/maps/crystal-rift.webp', summary: 'Mid-lane ambushes and tight pivots.' },
+  { id: 'voltage-foundry', label: 'Voltage Foundry', src: '/assets/arena/maps/voltage-foundry.webp', summary: 'Fast rotations around pressure zones.' },
 ];
 
 const STREAK_LABELS: Record<number, string> = {
   3: 'Triple Kill!',
   5: 'Rampage!',
   7: 'Unstoppable!',
-};
-
-type DailyProgress = {
-  dateKey: string;
-  pulses: number;
-  eliminations: number;
-  matches: number;
-};
-
-const missionStorageKey = 'cp:arena:daily-progress';
-const emptyProgress = (dateKey: string): DailyProgress => ({ dateKey, pulses: 0, eliminations: 0, matches: 0 });
-const toDateKey = (now = Date.now()) => {
-  const shifted = now - DAILY_RESET_HOUR_UTC * 60 * 60 * 1000;
-  return new Date(shifted).toISOString().slice(0, 10);
 };
 
 export default function ArenaClient({ height = 500 }: ArenaClientProps) {
@@ -120,7 +111,7 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
   const [selectedMap, setSelectedMap] = useState<ArenaMapId>('neon-grid');
   const selectedMapRef = useRef<ArenaMapId>('neon-grid');
   const [clockMs, setClockMs] = useState(() => Date.now());
-  const [dailyProgress, setDailyProgress] = useState<DailyProgress>(() => emptyProgress(toDateKey()));
+  const [dailyProgress, setDailyProgress] = useState<ArenaDailyProgress>(() => emptyArenaDailyProgress());
 
   const readyRef = useRef(false);
   const tokenRef = useRef<string | null>(null);
@@ -134,7 +125,6 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
   const pingSentAt = useRef<number | null>(null);
   const pingTimerRef = useRef<number | null>(null);
   const abilityTimerRef = useRef<number | null>(null);
-  const matchTrackedRef = useRef(false);
   const spriteCacheRef = useRef<Map<string, HTMLImageElement>>(new Map());
   const fxRef = useRef<ArenaFxState>(createFxState());
   const pickupsRef = useRef<Map<string, ArenaPickup & { fadeIn?: number }>>(new Map());
@@ -145,25 +135,45 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
     setFeed((prev) => [...prev.slice(-19), entry]);
   }, []);
 
-  const syncDailyProgress = useCallback((mutate: (current: DailyProgress) => DailyProgress) => {
+  const applyDailyProgress = useCallback((record: ArenaDailyProgress) => {
     setDailyProgress((prev) => {
-      const dateKey = toDateKey();
-      const current = prev.dateKey === dateKey ? prev : emptyProgress(dateKey);
-      const next = mutate(current);
-      try {
-        window.localStorage.setItem(missionStorageKey, JSON.stringify(next));
-      } catch {
-        // ignore storage errors
-      }
-      return next;
+      if (prev.dateKey !== record.dateKey) return record;
+      return {
+        ...record,
+        pulses: Math.max(prev.pulses, record.pulses),
+        eliminations: Math.max(prev.eliminations, record.eliminations),
+        matches: Math.max(prev.matches, record.matches),
+      };
     });
+  }, []);
+
+  const loadDailyProgress = useCallback(async () => {
+    try {
+      const response = await fetch('/api/arena/daily-progress', { cache: 'no-store' });
+      if (!response.ok) return;
+      const payload = (await response.json()) as { success?: boolean; record?: ArenaDailyProgress };
+      if (payload.success && payload.record) {
+        applyDailyProgress(payload.record);
+      }
+    } catch {
+      // no-op
+    }
+  }, [applyDailyProgress]);
+
+  const applyDerivedDailyProgress = useCallback((event: 'pulse' | 'elimination') => {
+    setDailyProgress((prev) => incrementArenaDailyProgress(prev, event, Date.now()));
   }, []);
 
   const getSprite = useCallback((characterId: string) => {
     const cached = spriteCacheRef.current.get(characterId);
     if (cached) return cached;
     const image = new Image();
-    image.src = `/assets/characters/${characterId}/sprite.png`;
+    image.src = `/assets/characters/${characterId}/sprite.webp`;
+    image.onerror = () => {
+      if (image.src.includes('/sprite.webp')) {
+        image.src = `/assets/characters/${characterId}/sprite.png`;
+      }
+    };
     spriteCacheRef.current.set(characterId, image);
     return image;
   }, []);
@@ -214,7 +224,6 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
     if (!ws || ws.readyState !== WebSocket.OPEN || !readyRef.current) return;
     if (cooldownRef.current > 0) return;
     ws.send(JSON.stringify({ type: 'ability_cast', ability: 'pulse' }));
-    syncDailyProgress((current) => ({ ...current, pulses: current.pulses + 1 }));
     cooldownRef.current = 850;
     setCooldownMs(850);
     if (abilityTimerRef.current) {
@@ -228,7 +237,7 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
         abilityTimerRef.current = null;
       }
     }, 50);
-  }, [syncDailyProgress]);
+  }, []);
 
   const handleSelectAvatar = useCallback((value: string) => {
     setSelectedChar(value);
@@ -256,27 +265,8 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
   }, [selectedMap]);
 
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(missionStorageKey);
-      if (raw) {
-        const parsed = JSON.parse(raw) as Partial<DailyProgress>;
-        if (parsed && typeof parsed.dateKey === 'string') {
-          if (parsed.dateKey === toDateKey()) {
-            setDailyProgress({
-              dateKey: parsed.dateKey,
-              pulses: Number(parsed.pulses || 0),
-              eliminations: Number(parsed.eliminations || 0),
-              matches: Number(parsed.matches || 0),
-            });
-          } else {
-            setDailyProgress(emptyProgress(toDateKey()));
-          }
-        }
-      }
-    } catch {
-      // ignore storage errors
-    }
-  }, []);
+    void loadDailyProgress();
+  }, [loadDailyProgress]);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -288,9 +278,22 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
   }, []);
 
   useEffect(() => {
+    const dateKey = toArenaProgressDateKey(clockMs);
+    setDailyProgress((prev) => (
+      prev.dateKey === dateKey ? prev : emptyArenaDailyProgress(dateKey, new Date(clockMs).toISOString())
+    ));
+  }, [clockMs]);
+
+  useEffect(() => {
     const map = ARENA_MAPS.find((entry) => entry.id === selectedMap);
     const image = new Image();
-    image.src = map?.src || '/assets/arena/maps/neon-grid.png';
+    image.src = map?.src || '/assets/arena/maps/neon-grid.webp';
+    image.onerror = () => {
+      if (image.src.includes('.webp')) {
+        const fallback = (map?.src || '/assets/arena/maps/neon-grid.webp').replace('.webp', '.png');
+        image.src = fallback;
+      }
+    };
     image.onload = () => {
       mapImageRef.current = image;
     };
@@ -393,6 +396,7 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
           setYouId(message.sessionId);
           youIdRef.current = message.sessionId;
           killStreakRef.current = 0;
+          void loadDailyProgress();
           if (pingTimerRef.current) clearInterval(pingTimerRef.current);
           pingTimerRef.current = window.setInterval(() => {
             const current = wsRef.current;
@@ -416,10 +420,7 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
             map.set(other.id, hydratePlayer(other));
           }
           replacePlayers(map);
-          if (!matchTrackedRef.current) {
-            matchTrackedRef.current = true;
-            syncDailyProgress((current) => ({ ...current, matches: current.matches + 1 }));
-          }
+          void loadDailyProgress();
           appendFeed({ id: `joined-${Date.now()}`, text: 'Entered Rift Arena.', ts: Date.now() });
           break;
         }
@@ -488,11 +489,15 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
             const actor = typeof data.actor === 'string' ? data.actor : 'Someone';
             const victims = Array.isArray(data.victims) ? data.victims : [];
             const hitCount = victims.length;
+            const isLocalActor = data.actorId === youIdRef.current;
             appendFeed({
               id: `combat-${Date.now()}`,
               text: hitCount > 0 ? `${actor} cast pulse and hit ${hitCount} target${hitCount > 1 ? 's' : ''}.` : `${actor} cast pulse.`,
               ts: Date.now(),
             });
+            if (isLocalActor) {
+              applyDerivedDailyProgress('pulse');
+            }
 
             // --- VFX: pulse shockwave + hit effects ---
             const fx = fxRef.current;
@@ -518,7 +523,7 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
             const isLocalDeath = typeof data.victimId === 'string' && data.victimId === youIdRef.current;
 
             if (isLocalKill) {
-              syncDailyProgress((current) => ({ ...current, eliminations: current.eliminations + 1 }));
+              applyDerivedDailyProgress('elimination');
               killStreakRef.current += 1;
               const streakLabel = STREAK_LABELS[killStreakRef.current];
               if (streakLabel) {
@@ -550,8 +555,8 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
             const msg = typeof data.message === 'string' ? data.message : 'Arena map rotated.';
             appendFeed({ id: `rotation-${Date.now()}`, text: msg, ts: Date.now() });
           } else if (message.event === 'match_end') {
-            matchTrackedRef.current = false;
             killStreakRef.current = 0;
+            void loadDailyProgress();
             appendFeed({ id: `end-${Date.now()}`, text: typeof data.message === 'string' ? data.message : 'Match finished.', ts: Date.now() });
           } else if (message.event === 'system') {
             const msg = typeof data.message === 'string' ? data.message : 'System message';
@@ -589,7 +594,6 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
 
     ws.onclose = () => {
       readyRef.current = false;
-      matchTrackedRef.current = false;
       if (pingTimerRef.current) {
         clearInterval(pingTimerRef.current);
         pingTimerRef.current = null;
@@ -606,7 +610,6 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
 
     return () => {
       readyRef.current = false;
-      matchTrackedRef.current = false;
       if (pingTimerRef.current) {
         clearInterval(pingTimerRef.current);
         pingTimerRef.current = null;
@@ -614,7 +617,7 @@ export default function ArenaClient({ height = 500 }: ArenaClientProps) {
       ws.close();
       wsRef.current = null;
     };
-  }, [appendFeed, hydratePlayer, replacePlayers, syncDailyProgress, updatePlayers, wsUrl]);
+  }, [appendFeed, applyDerivedDailyProgress, hydratePlayer, loadDailyProgress, replacePlayers, updatePlayers, wsUrl]);
 
   // --- Input ---
   useEffect(() => {

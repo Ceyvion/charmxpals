@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useRef, useCallback, type CSSProperties } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 
 import RevealOnView from '@/components/RevealOnView';
 import HexRadar from '@/components/champion/HexRadar';
@@ -101,8 +102,8 @@ function buildArtCandidates(artRefs?: Record<string, string>, slug?: string | nu
   }
   if (slug) {
     const base = `/assets/characters/${slug}`;
-    push(`${base}/signature.png`); push(`${base}/banner.png`);
-    push(`${base}/portrait.png`); push(`${base}/card.png`); push(`${base}/thumb.png`);
+    push(`${base}/signature.webp`); push(`${base}/banner.webp`);
+    push(`${base}/portrait.webp`); push(`${base}/card.webp`); push(`${base}/thumb.webp`);
   }
   push('/card-placeholder.svg');
   return [...new Set(candidates)];
@@ -391,25 +392,28 @@ export default function CharacterPageClient({ character }: { character: Characte
                 </div>
 
                 {/* Image */}
-                {currentArt ? (
-                  <img
-                    src={currentArt}
-                    alt={character.name}
-                    className="h-[55vh] min-h-[380px] w-full object-cover object-center transition-transform duration-700 ease-out"
-                    style={{
-                      transform: `scale(1.02) translate(${mousePos.x * 4}px, ${mousePos.y * 3}px)`,
-                    }}
-                    loading="eager"
-                    decoding="async"
-                    onError={() => {
-                      setArtIndex((i) => (i >= artCandidates.length - 1 ? i : i + 1));
-                    }}
-                  />
-                ) : (
-                  <div className="flex h-[380px] items-center justify-center bg-white/[0.02] text-5xl font-black text-white/10">
-                    {character.name.slice(0, 2).toUpperCase()}
-                  </div>
-                )}
+                <div className="relative h-[55vh] min-h-[380px] w-full">
+                  {currentArt ? (
+                    <Image
+                      src={currentArt}
+                      alt={character.name}
+                      fill
+                      priority
+                      sizes="(min-width: 1280px) 480px, (min-width: 1024px) 45vw, 100vw"
+                      className="object-cover object-center transition-transform duration-700 ease-out"
+                      style={{
+                        transform: `scale(1.02) translate(${mousePos.x * 4}px, ${mousePos.y * 3}px)`,
+                      }}
+                      onError={() => {
+                        setArtIndex((i) => (i >= artCandidates.length - 1 ? i : i + 1));
+                      }}
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center bg-white/[0.02] text-5xl font-black text-white/10">
+                      {character.name.slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                </div>
 
                 {/* Scanline effect */}
                 <div className="pointer-events-none absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(255,255,255,0.01)_2px,rgba(255,255,255,0.01)_4px)]" />

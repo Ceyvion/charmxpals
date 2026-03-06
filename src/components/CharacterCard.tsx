@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -166,11 +167,11 @@ export default function CharacterCard({ c, owned = false }: { c: CharacterBasic;
           <div className="cp-card-face cp-card-front">
             <div className="cp-card-media">
               {media ? (
-                <img
+                <Image
                   src={media}
                   alt={c.name}
-                  loading="lazy"
-                  decoding="async"
+                  fill
+                  sizes="(min-width: 1280px) 360px, (min-width: 640px) 50vw, 100vw"
                   className="cp-card-art"
                 />
               ) : (

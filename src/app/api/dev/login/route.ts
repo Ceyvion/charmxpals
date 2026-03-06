@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getRepo } from '@/lib/repo';
 
 function devEnabled() {
-  if (process.env.NODE_ENV !== 'production') return true;
-  return process.env.DEV_AUTH_ENABLED === '1';
+  return process.env.NODE_ENV !== 'production';
 }
 
 export async function POST(req: NextRequest) {
@@ -24,7 +23,7 @@ export async function POST(req: NextRequest) {
 
     const res = NextResponse.json({ success: true, user: { id: user.id, handle: user.handle, email: user.email } });
     res.cookies.set('cp_user', user.id, {
-      httpOnly: false,
+      httpOnly: true,
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24 * 30,

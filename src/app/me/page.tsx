@@ -1,9 +1,20 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { getRepo } from '@/lib/repo';
 import { getSafeServerSession } from '@/lib/serverSession';
 import { withCharacterLore, type CharacterWithLore } from '@/lib/characterLore';
 import MeDashboard from './MeDashboard';
+
+export const metadata: Metadata = {
+  title: 'My Pals',
+  description: 'View your synced roster, recent claims, and playable CharmPals beta surfaces.',
+  alternates: {
+    canonical: '/me',
+  },
+};
+
+export const dynamic = 'force-dynamic';
 
 export default async function MePage() {
   const session = await getSafeServerSession();

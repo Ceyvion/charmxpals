@@ -58,8 +58,8 @@ class FakeRedis {
       return value;
     }
 
-    if (keys.length === 3 && args.length === 5 && lua.includes('LPUSH')) {
-      const [unitsKey, challengesKey, ownershipKey] = keys;
+    if (keys.length === 5 && args.length === 5 && lua.includes('LPUSH')) {
+      const [unitsKey, challengesKey, ownershipKey, charactersKey, ownershipAvatarKey] = keys;
       const [unitId, challengeId, userId, claimedAtIso, ownershipId] = args;
       const unitRaw = this.hashes.get(unitsKey)?.get(unitId) ?? null;
       if (!unitRaw) return [0, 'unit_not_found'];
@@ -80,6 +80,11 @@ class FakeRedis {
       const unitBucket = this.hashes.get(unitsKey)!;
       unitBucket.set(unitId, JSON.stringify(unit));
 
+      const characterRaw = this.hashes.get(charactersKey)?.get(unit.characterId) ?? null;
+      const character = characterRaw ? (JSON.parse(characterRaw) as any) : null;
+      const avatarId = typeof character?.slug === 'string' && character.slug.trim().length > 0
+        ? character.slug.trim().toLowerCase()
+        : null;
       const ownership = {
         id: ownershipId,
         userId,
@@ -87,10 +92,12 @@ class FakeRedis {
         source: 'claim',
         cosmetics: [],
         createdAt: claimedAtIso,
+        avatarId,
       };
       const list = this.lists.get(ownershipKey) ?? [];
       list.unshift(JSON.stringify(ownership));
       this.lists.set(ownershipKey, list);
+      this.strings.delete(ownershipAvatarKey);
 
       return [1, unit.characterId, claimedAtIso];
     }
@@ -144,6 +151,20 @@ describe('repoRedis atomic claim', () => {
         userId,
         consumed: false,
         createdAt: nowIso,
+      }),
+    });
+    await fakeRedis.hset(redisKeys.characters, {
+      'char-1': JSON.stringify({
+        id: 'char-1',
+        setId: 'set-1',
+        name: 'Test Character',
+        description: null,
+        rarity: 3,
+        stats: {},
+        artRefs: { sprite: '/assets/characters/neon-city/sprite.webp' },
+        slug: 'neon-city',
+        createdAt: nowIso,
+        order: 1,
       }),
     });
 

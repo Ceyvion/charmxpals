@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { worldTagline } from '@/data/characterLore';
 import { useSfx } from '@/lib/sfx';
 
@@ -204,15 +205,18 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
           </div>
           <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
             <input
+              type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by name…"
               className="cp-search w-full sm:min-w-[220px]"
+              aria-label="Search characters"
               onFocus={playHover}
             />
             <select
               value={sortBy}
               className="cp-search w-full pr-10 sm:w-auto"
+              aria-label="Sort characters"
               onFocus={playHover}
               onChange={(e) => {
                 setSortBy(e.target.value as typeof sortBy);
@@ -285,7 +289,7 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
                         <div className="flex flex-1 items-center gap-4">
                           <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-[var(--cp-radius-md)] border border-[var(--cp-border)] bg-[var(--cp-gray-100)]">
                             {media ? (
-                              <img src={media} alt={character.name} className="h-full w-full object-cover" loading="lazy" decoding="async" />
+                              <Image src={media} alt={character.name} fill sizes="64px" className="object-cover" />
                             ) : (
                               <div className="flex h-full w-full items-center justify-center bg-[var(--cp-gray-100)] text-sm font-bold uppercase tracking-[0.2em] text-[var(--cp-text-muted)]">
                                 {character.name.slice(0, 2)}
@@ -308,24 +312,6 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
                             {(character.tagline || character.description) && (
                               <p className="line-clamp-2 text-sm text-[var(--cp-text-muted)]">{character.tagline || character.description}</p>
                             )}
-                            <div className="mt-3 flex flex-wrap gap-2 sm:hidden">
-                              <Link
-                                href={`/character/${character.id}`}
-                                className="inline-flex items-center justify-center rounded-[var(--cp-radius-sm)] border border-[var(--cp-border)] bg-[var(--cp-white)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--cp-text-secondary)] transition-colors hover:border-[var(--cp-border-strong)] hover:text-[var(--cp-text-primary)]"
-                                data-explore-action
-                                onClick={(event) => event.stopPropagation()}
-                              >
-                                Profile
-                              </Link>
-                              <Link
-                                href="/play"
-                                className="inline-flex items-center justify-center rounded-[var(--cp-radius-sm)] border border-[var(--cp-border)] bg-[var(--cp-white)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--cp-text-secondary)] transition-colors hover:border-[var(--cp-border-strong)] hover:text-[var(--cp-text-primary)]"
-                                data-explore-action
-                                onClick={(event) => event.stopPropagation()}
-                              >
-                                Play Mode
-                              </Link>
-                            </div>
                           </div>
                         </div>
                         <div className="hidden w-[140px] shrink-0 flex-col items-end justify-center gap-2 text-sm sm:flex">
@@ -410,14 +396,20 @@ function SpotlightCard({ character, media, owned, variant }: SpotlightCardProps)
       />
       <div className="relative p-6 md:p-8">
         <div className="flex flex-col gap-5 md:flex-row md:items-start">
-          <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-[var(--cp-radius-lg)] border-2 border-[var(--cp-border)] bg-[var(--cp-gray-100)] md:h-32 md:w-32">
-            {media ? (
-              <img src={media} alt={character.name} className="h-full w-full object-cover" loading="lazy" decoding="async" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-[var(--cp-gray-100)] text-lg font-bold uppercase tracking-[0.2em] text-[var(--cp-text-muted)]">
-                {character.name.slice(0, 2)}
-              </div>
-            )}
+            <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-[var(--cp-radius-lg)] border-2 border-[var(--cp-border)] bg-[var(--cp-gray-100)] md:h-32 md:w-32">
+              {media ? (
+                <Image
+                  src={media}
+                  alt={character.name}
+                  fill
+                  sizes="(min-width: 768px) 128px, 112px"
+                  className="object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-[var(--cp-gray-100)] text-lg font-bold uppercase tracking-[0.2em] text-[var(--cp-text-muted)]">
+                  {character.name.slice(0, 2)}
+                </div>
+              )}
           </div>
           <div className="min-w-0 flex-1">
             {character.realm && <div className="cp-kicker">{character.realm}</div>}
@@ -514,7 +506,7 @@ function SpotlightCard({ character, media, owned, variant }: SpotlightCardProps)
 
 function pickMedia(artRefs?: Record<string, string>): string | null {
   if (!artRefs) return null;
-  return artRefs.portrait || artRefs.thumbnail || artRefs.card || artRefs.square || Object.values(artRefs)[0] || null;
+  return artRefs.thumbnail || artRefs.card || artRefs.portrait || artRefs.square || Object.values(artRefs)[0] || null;
 }
 
 function getRarity(rarity: number): RarityKey {

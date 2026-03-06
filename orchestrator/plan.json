@@ -122,6 +122,34 @@
       "area": "backend"
     },
     {
+      "id": "PERF-2",
+      "title": "Perf: MMO token avatar cache + API runtime overhead pass",
+      "detail": "Cache owned avatar IDs for MMO token minting, bound in-memory rate-limit fallback growth, replace sync style-status FS reads, and add short cache headers for read-heavy GET APIs.",
+      "status": "done",
+      "area": "backend"
+    },
+    {
+      "id": "PERF-3",
+      "title": "Perf: Character identifier miss-path hardening",
+      "detail": "Remove paginated roster scans for unknown character identifiers and rely on indexed lookups plus lore fallback to avoid O(n) miss-path cost.",
+      "status": "done",
+      "area": "backend"
+    },
+    {
+      "id": "PERF-4",
+      "title": "Perf: Session provider scope reduction in app shell",
+      "detail": "Remove global SessionProvider from root layout, scope session context to auth-dependent routes, and keep root header auth controls lightweight without next-auth/react in the shared shell path.",
+      "status": "done",
+      "area": "frontend"
+    },
+    {
+      "id": "PERF-5",
+      "title": "Perf: Header navigation de-JS pass",
+      "detail": "Convert global header navigation to server-rendered markup and remove AppNav from client runtime modules to shrink always-loaded interactive shell code.",
+      "status": "done",
+      "area": "frontend"
+    },
+    {
       "id": "A1.13",
       "title": "Landing visual refinement (soft sci-fi + playful)",
       "detail": "Refresh palette, typography, and landing sections for a refined sci-fi collectible aesthetic.",
@@ -289,7 +317,7 @@
     {
       "id": "C1",
       "title": "Mini-game polish + score submit",
-      "detail": "Runner loop, collision, score persistence, and leaderboards.",
+      "detail": "Runner loop, collision, score persistence, track-aware leaderboards, and server-backed attempt validation.",
       "status": "done",
       "area": "gameplay"
     },
@@ -304,7 +332,7 @@
       "id": "C3",
       "title": "CI: typecheck, lint, build",
       "detail": "GitHub Actions workflow for PRs to run tsc, eslint, next build.",
-      "status": "todo",
+      "status": "done",
       "area": "dx"
     },
     {

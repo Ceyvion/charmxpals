@@ -8,10 +8,10 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   webServer: {
-    command: 'npm run build && npm start -p 4010',
+    command: 'npm run build && node ./node_modules/next/dist/bin/next start -p 4010',
     port: 4010,
-    reuseExistingServer: true,
-    timeout: 120_000,
+    reuseExistingServer: !process.env.CI,
+    timeout: 180_000,
   },
   projects: [
     { name: 'Desktop Chrome', use: { ...devices['Desktop Chrome'] } },
@@ -19,4 +19,3 @@ export default defineConfig({
     { name: 'Pixel 7', use: { ...devices['Pixel 7'] } },
   ],
 });
-

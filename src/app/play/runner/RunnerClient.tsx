@@ -1,11 +1,12 @@
 "use client";
 
 import Link from 'next/link';
-import Runner from '@/components/Runner';
+import Runner, { type RunnerProgressPayload } from '@/components/Runner';
 import TopRuns from '@/components/TopRuns';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { TinyAudioOnce } from '@/lib/audio';
 import { pulsegridTracks } from '@/data/pulsegridTracks';
+import { trackEvent } from '@/lib/analyticsClient';
 
 function findStat(stats: Record<string, number> | null, key: string) {
   if (!stats) return null;
@@ -21,6 +22,13 @@ export default function RunnerClient({ cid }: { cid?: string }) {
   const [stats, setStats] = useState<Record<string, number> | null>(null);
   const [audioEnabled, setAudioEnabled] = useState(false);
   const [lastScore, setLastScore] = useState<{ score: number; maxCombo: number; trackId: string } | null>(null);
+  const [scoreSessionToken, setScoreSessionToken] = useState<string | null>(null);
+  const [selectedTrackId, setSelectedTrackId] = useState(() => pulsegridTracks[0]?.id ?? '');
+  const scoreSessionTokenRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    scoreSessionTokenRef.current = scoreSessionToken;
+  }, [scoreSessionToken]);
 
   useEffect(() => {
     let cancelled = false;
@@ -39,13 +47,66 @@ export default function RunnerClient({ cid }: { cid?: string }) {
     playPulse: () => { if (audioEnabled) TinyAudioOnce.pulse(); },
   }), [audioEnabled]);
 
-  const submitScore = async (score: number, maxCombo: number, trackId: string) => {
-    setLastScore({ score, maxCombo, trackId });
+  const issueScoreSession = async (trackId: string) => {
+    setScoreSessionToken(null);
+    scoreSessionTokenRef.current = null;
     try {
+      const response = await fetch('/api/score/session', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ mode: 'runner', trackId }),
+      });
+      if (!response.ok) return;
+      const payload = (await response.json()) as { success?: boolean; token?: string };
+      if (payload.success && payload.token) {
+        setScoreSessionToken(payload.token);
+        scoreSessionTokenRef.current = payload.token;
+      }
+    } catch {
+      // no-op
+    }
+  };
+
+  const reportProgress = async (payload: RunnerProgressPayload) => {
+    const token = scoreSessionTokenRef.current;
+    if (!token) return;
+    try {
+      await fetch('/api/score/progress', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'runner',
+          trackId: payload.trackId,
+          progress: payload.progress,
+          furthestNoteIndex: payload.furthestNoteIndex,
+          sessionToken: token,
+        }),
+      });
+    } catch {
+      // no-op
+    }
+  };
+
+  const submitScore = async (
+    score: number,
+    maxCombo: number,
+    trackId: string,
+    summary: RunnerProgressPayload,
+  ) => {
+    setLastScore({ score, maxCombo, trackId });
+    trackEvent('runner_score_submitted', {
+      score,
+      max_combo: maxCombo,
+      track_id: trackId,
+    });
+    try {
+      await reportProgress(summary);
+      const token = scoreSessionTokenRef.current;
+      if (!token) return;
       await fetch('/api/score', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ mode: 'runner', score, coins: maxCombo, trackId }),
+        body: JSON.stringify({ mode: 'runner', score, coins: maxCombo, trackId, sessionToken: token }),
       });
     } catch {}
   };
@@ -75,14 +136,21 @@ export default function RunnerClient({ cid }: { cid?: string }) {
             Synth Audio
           </label>
         </div>
-        <Runner stats={stats} audio={audio} onGameOver={(s, c, trackId) => submitScore(s, c, trackId)} />
+        <Runner
+          stats={stats}
+          audio={audio}
+          onRunStart={issueScoreSession}
+          onTrackChange={setSelectedTrackId}
+          onProgress={(payload) => { void reportProgress(payload); }}
+          onGameOver={(s, c, trackId, summary) => submitScore(s, c, trackId, summary)}
+        />
         {lastScore && (
           <div className="mt-3 text-center text-sm text-slate-500">
             Submitted {lastScore.score.toLocaleString()} pts • Max Combo {lastScore.maxCombo}{' '}
             {lastRunTrack ? `on ${lastRunTrack.title}` : ''}
           </div>
         )}
-        <TopRuns mode="runner" coinsLabel="Max Combo" />
+        <TopRuns mode="runner" trackId={selectedTrackId} coinsLabel="Max Combo" />
         <div className="mt-6 text-center">
           <Link href="/play" className="px-5 py-2.5 border border-slate-200 text-slate-600 rounded-lg font-semibold hover:bg-white/70 hover:text-slate-900 transition">
             Game Hub

@@ -1,4 +1,9 @@
 import { memoryRepo } from './repoMemory';
+import {
+  canUseMemoryMode,
+  hasPersistenceEnv,
+  isProductionRuntime,
+} from '@/lib/runtime';
 
 export type UnitStatus = 'available' | 'claimed' | 'blocked';
 
@@ -31,6 +36,14 @@ export type PhysicalUnit = {
   claimedAt: Date | null;
   status: UnitStatus;
 };
+export type Ownership = {
+  id: string;
+  userId: string;
+  characterId: string;
+  source: string;
+  cosmetics: string[];
+  createdAt: Date;
+};
 export type ClaimChallenge = {
   id: string;
   codeHash: string;
@@ -57,10 +70,14 @@ export type Repo = {
   // Units/ownership
   findUnitByCodeHash(codeHash: string): Promise<PhysicalUnit | null>;
   claimUnitAndCreateOwnership(params: { unitId: string; userId: string; challengeId?: string }): Promise<{ characterId: string; claimedAt: Date }>;
-  listOwnershipsByUser(userId: string): Promise<Array<{ id: string; userId: string; characterId: string; source: string; cosmetics: string[]; createdAt: Date }>>;
+  listOwnershipsByUser(userId: string): Promise<Ownership[]>;
+  listOwnedAvatarIdsByUser(userId: string): Promise<string[]>;
 
   // Characters
   getCharacterById(id: string): Promise<Character | null>;
+  getCharacterBySlug(slug: string): Promise<Character | null>;
+  getCharacterByNameSlug(nameSlug: string): Promise<Character | null>;
+  getCharacterByCodeSeries(codeSeries: string): Promise<Character | null>;
   getCharactersByIds(ids: string[]): Promise<Character[]>;
   listCharacters(params?: { limit?: number; offset?: number }): Promise<Character[]>;
 
@@ -68,23 +85,23 @@ export type Repo = {
   logAbuse(event: { type: string; actorRef: string; metadata: unknown }): Promise<void>;
 };
 
-const memoryFlag = process.env.USE_MEMORY_DB;
-const defaultMemory = !process.env.VERCEL && process.env.NODE_ENV !== 'production';
-const forceMemory = memoryFlag === '1' || (!memoryFlag && defaultMemory);
-const hasRedisEnv = Boolean(
-  process.env.UPSTASH_REDIS_REST_URL &&
-  process.env.UPSTASH_REDIS_REST_TOKEN &&
-  process.env.CODE_HASH_SECRET,
-);
-
 let repoPromise: Promise<Repo> | null = null;
 
 export async function getRepo(): Promise<Repo> {
-  if (forceMemory || !hasRedisEnv) return memoryRepo;
+  if (canUseMemoryMode()) return memoryRepo;
+  if (!hasPersistenceEnv()) {
+    if (isProductionRuntime()) {
+      throw new Error('Redis persistence is required in production.');
+    }
+    return memoryRepo;
+  }
   if (!repoPromise) {
     repoPromise = import('./repoRedis')
       .then((m) => m.repoRedis as Repo)
       .catch((err) => {
+        if (isProductionRuntime()) {
+          throw err;
+        }
         console.warn('Redis repo unavailable; falling back to memory. Set USE_MEMORY_DB=1 to silence.', err);
         return memoryRepo as Repo;
       });

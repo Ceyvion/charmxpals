@@ -7,7 +7,7 @@
     "dev:plaza": "node ./scripts/dev-plaza.mjs",
     "dev:webpack": "node ./scripts/dev-guard.mjs --no-turbo",
     "dev:safe": "NEXT_PUBLIC_DISABLE_3D=1 node ./scripts/dev-guard.mjs --no-turbo",
-    "build": "node ./node_modules/next/dist/bin/next build",
+    "build": "rm -rf .next && node ./node_modules/next/dist/bin/next build",
     "start": "node ./scripts/start-guard.mjs",
     "start:kill-dev": "node ./scripts/start-guard.mjs --kill-dev",
     "start:force": "node ./scripts/start-guard.mjs --force",
@@ -18,6 +18,7 @@
     "import:cxp": "ts-node --transpile-only scripts/import-cxp.ts",
     "imagegen:manifests": "npx ts-node --transpile-only --project tsconfig.scripts.json scripts/build-imagegen-manifests.ts",
     "imagegen:stage": "npx ts-node --transpile-only --project tsconfig.scripts.json scripts/stage-image-assets.ts",
+    "assets:optimize": "python3 scripts/optimize-assets.py",
     "orchestrator": "node scripts/orchestrator.mjs",
     "e2e": "playwright test"
   },

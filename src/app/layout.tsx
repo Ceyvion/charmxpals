@@ -2,15 +2,36 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Space_Grotesk, Teko } from 'next/font/google';
 import LayoutChrome from '@/components/LayoutChrome';
-import AuthSessionProvider from '@/components/AuthSessionProvider';
+import { getSiteUrl } from '@/lib/site';
 
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], variable: '--font-space' });
 const teko = Teko({ subsets: ['latin'], weight: ['500', '700'], variable: '--font-teko' });
 
 export const metadata: Metadata = {
-  title: 'CharmPals — Scan a Charm. Meet Your Pal.',
-  description: 'Unlock a pal from your physical charm and jump into multiplayer arenas and arcade modes in seconds.',
+  metadataBase: new URL(getSiteUrl()),
+  title: {
+    default: 'CharmPals',
+    template: '%s | CharmPals',
+  },
+  description: 'Claim your physical collectible, unlock your pal, and jump into the CharmPals beta in seconds.',
+  applicationName: 'CharmPals',
   icons: { icon: '/favicon.ico' },
+  manifest: '/manifest.webmanifest',
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'CharmPals',
+    description: 'Claim your physical collectible, unlock your pal, and jump into the CharmPals beta in seconds.',
+    type: 'website',
+    url: '/',
+    siteName: 'CharmPals',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'CharmPals',
+    description: 'Claim your physical collectible, unlock your pal, and jump into the CharmPals beta in seconds.',
+  },
 };
 
 export default function RootLayout({
@@ -21,9 +42,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${spaceGrotesk.variable} ${teko.variable} font-sans`}>
-        <AuthSessionProvider>
-          <LayoutChrome>{children}</LayoutChrome>
-        </AuthSessionProvider>
+        <LayoutChrome>{children}</LayoutChrome>
       </body>
     </html>
   );

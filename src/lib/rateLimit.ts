@@ -1,6 +1,7 @@
 import type { Redis } from '@upstash/redis';
 
 import { getRedis } from '@/lib/redis';
+import { hasRedisEnv, shouldAllowEphemeralFallback } from '@/lib/runtime';
 
 type Key = string;
 
@@ -10,6 +11,8 @@ type Bucket = {
 };
 
 const store = new Map<Key, Bucket>();
+const MEMORY_SWEEP_INTERVAL = 256;
+let memoryChecksSinceSweep = 0;
 
 let sharedRedis: Redis | null | undefined;
 let loggedRedisFallback = false;
@@ -26,12 +29,8 @@ type RateLimitResult = {
   resetAt: number;
 };
 
-function hasRedisConfig() {
-  return Boolean(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
-}
-
 function getSharedRedis(): Redis | null {
-  if (!hasRedisConfig()) {
+  if (!hasRedisEnv()) {
     return null;
   }
   if (sharedRedis === undefined) {
@@ -44,7 +43,18 @@ function getSharedRedis(): Redis | null {
   return sharedRedis ?? null;
 }
 
+function sweepExpiredMemoryBuckets(now: number): void {
+  memoryChecksSinceSweep += 1;
+  if (memoryChecksSinceSweep % MEMORY_SWEEP_INTERVAL !== 0) return;
+  for (const [key, bucket] of store) {
+    if (now >= bucket.resetAt) {
+      store.delete(key);
+    }
+  }
+}
+
 function memoryRateLimit(key: string, cfg: RateLimitConfig, now: number): RateLimitResult {
+  sweepExpiredMemoryBuckets(now);
   const current = store.get(key);
 
   if (!current || now >= current.resetAt) {
@@ -94,6 +104,9 @@ export async function rateLimitCheck(keyPart: string, cfg: RateLimitConfig): Pro
         loggedRedisFallback = true;
       }
     }
+  }
+  if (!shouldAllowEphemeralFallback()) {
+    throw new Error('Redis-backed rate limiting is required in production.');
   }
   return memoryRateLimit(key, cfg, now);
 }

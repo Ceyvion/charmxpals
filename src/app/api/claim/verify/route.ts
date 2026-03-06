@@ -3,6 +3,7 @@ import { getRepo } from '@/lib/repo';
 import { hashClaimCode } from '@/lib/crypto';
 import { rateLimitCheck } from '@/lib/rateLimit';
 import { getClientIp } from '@/lib/ip';
+import { withCharacterLore } from '@/lib/characterLore';
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,23 +42,24 @@ export async function POST(request: NextRequest) {
     }
 
     const character = await repo.getCharacterById(unit.characterId);
+    const enriched = withCharacterLore(character);
 
     return Response.json({
       status: unit.status,
-      character: character
+      character: enriched
         ? {
-            id: character.id,
-            name: character.name,
-            description: character.description,
-            rarity: character.rarity,
-            artRefs: character.artRefs,
-            stats: character.stats,
-            realm: character.realm ?? null,
-            title: character.title ?? null,
-            tagline: character.tagline ?? null,
-            codeSeries: character.codeSeries ?? null,
-            slug: character.slug ?? null,
-            color: character.color ?? null,
+            id: enriched.id,
+            name: enriched.name,
+            description: enriched.description,
+            rarity: enriched.rarity,
+            artRefs: enriched.artRefs,
+            stats: enriched.stats,
+            realm: enriched.realm ?? null,
+            title: enriched.title ?? null,
+            tagline: enriched.tagline ?? null,
+            codeSeries: enriched.codeSeries ?? null,
+            slug: enriched.slug ?? null,
+            color: enriched.color ?? null,
           }
         : null,
     });

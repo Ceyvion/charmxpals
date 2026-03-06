@@ -686,7 +686,7 @@ function CharacterAvatar({
   if (media) {
     return (
       <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border-2 border-[var(--cp-border)] bg-[var(--cp-gray-100)]">
-        <Image src={media} alt={name} fill sizes="40px" className="object-cover" priority={false} unoptimized />
+        <Image src={media} alt={name} fill sizes="40px" className="object-cover" />
         <span className="absolute inset-0 border border-black/10" aria-hidden />
       </span>
     );

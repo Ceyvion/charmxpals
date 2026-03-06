@@ -258,14 +258,167 @@
   - `src/components/landing/HorizontalCharacterShowcase.tsx` rendered text-only cards (no media layer), so character art could never appear.
   - Redis roster data includes legacy/inactive animal entries intermixed with active lore entries; landing page previously pulled first 8 rows raw by order.
   - Legacy rows used placeholder-only art refs, including `Blaze the Dragon`.
-- Fixes:
-  - Added resolved art rendering with ordered candidate fallback logic in `src/components/landing/HorizontalCharacterShowcase.tsx`.
-  - Updated `src/app/page.tsx` to build a curated landing roster: active lore-backed entries only, plus explicit Blaze retention, deduped and capped to 8.
-  - Enhanced `src/lib/characterLore.ts` to match lore by character name and provide a deterministic Blaze fallback art slug (`volcanic-lab`) when placeholder refs are detected.
+
+## Repository Analysis Plan (2026-03-06)
+
+- [x] Review project guidance, historical task notes, and current orchestrator context.
+- [x] Inspect the main app routes, landing/claim/play/profile flows, and shared layout/navigation.
+- [x] Inspect repository, auth, API, MMO, and config/runtime layers.
+- [x] Verify the current quality gates and note any drift or failures.
+- [x] Summarize the biggest gaps and a strategic ladder for continuous improvement.
+
+### Repository Analysis Review (2026-03-06)
+
+- Verification:
+  - `npm test` passes (`9` files, `31` tests).
+  - `npm run lint` passes with existing `no-explicit-any` warnings.
+  - `npm run build` passes locally.
+  - `npm run e2e` does not complete; Playwright times out waiting for its configured web server bootstrap.
+- Biggest gaps:
+  - Product narrative and IA drift: the landing page, README, and beta surfaces promise a broader, more mature product than the shipped flows actually support.
+  - No real measurement loop: analytics are documented but not implemented, so funnel and retention work is guesswork.
+  - Competitive/progression integrity is weak: score submission, some progression state, and daily mission tracking still trust the client too much.
+  - Production runtime mode is inconsistent: some persistence paths silently fall back to memory while other routes hard-require Redis.
+  - Auth is still a beta gate rather than a durable identity system, with dev-oriented escape hatches and weak secret discipline.
+  - Realtime/gameplay architecture is still POC-grade: single-process in-memory state, shallow rooming, weak reconnect/resume semantics, and limited observability.
+  - Quality protection is thin: narrow browser coverage, stale docs/config claims, no CI workflow, and fragile E2E startup.
+- Recommended ladder:
+  - 1. Tighten the product wedge and make marketing/copy match reality.
+  - 2. Instrument the core funnel and add operational telemetry.
+  - 3. Make production config deterministic and remove silent fallback behavior.
+  - 4. Harden auth, secrets, score integrity, and redeem/rate-limit paths.
+  - 5. Pick one flagship gameplay loop and deepen it with durable progression.
+  - 6. Rebuild the safety net: CI, stronger integration/E2E coverage, and release smoke checks.
+
+## Continuous Improvement Implementation Plan (2026-03-06)
+
+- [x] Add SEO/shareability foundations across the App Router (`metadata`, `robots`, `sitemap`, `manifest`, character metadata).
+- [x] Add lightweight first-party analytics for the main funnel and instrument key user actions.
+- [x] Remove obvious trust/privacy issues and tighten a few user-facing UX/accessibility edges.
+- [x] Repair Playwright startup drift and stale selectors so browser tests are usable again.
+- [x] Verify with targeted tests, lint, build, and E2E where feasible.
+
+### Continuous Improvement Implementation Review (2026-03-06)
+
+- SEO/shareability:
+  - Added a central site URL helper plus richer root metadata in `src/app/layout.tsx`.
+  - Added `robots`, `sitemap`, and `manifest` routes.
+  - Added route metadata for home, claim, explore, me, login/play/arena/plaza layouts, support/privacy, dynamic character pages, and public profiles.
+- Analytics:
+  - Added a first-party analytics ingestion route at `src/app/api/analytics/event/route.ts`.
+  - Added lightweight client tracking helpers and a global page-view tracker.
+  - Instrumented key funnel actions on home CTAs, login submit/success/failure, claim verify/complete/error, and runner score submission.
+- Trust/privacy/UX:
+  - Removed public email exposure from `/u/[handle]`.
+  - Replaced dead footer placeholder links with real routes/contact paths.
+  - Added basic support and privacy pages.
+  - Tightened a few accessibility edges (`aria-label`s on explore controls and nav labeling).
+- Browser safety net:
+  - Switched Playwright web-server bootstrap to `next start` after build, with a more realistic timeout.
+  - Rewrote the home spec around current UI selectors and fixed explore spotlight assertions to target visible content.
+- Verification:
+  - `npm run lint` passes with pre-existing warnings only.
+  - `npm test` passes (`9` files, `31` tests).
+  - `npm run build` passes.
+  - `npm run e2e` passes (`18` tests).
+
+## Progression Integrity Plan (2026-03-06)
+
+- [x] Make runner leaderboards track-aware instead of mixing different songs into one board.
+- [x] Bind leaderboard entries to authenticated users and only keep each user’s best daily run per board.
+- [x] Move arena daily mission progress from browser-local storage to account-backed persistence.
+- [x] Verify with targeted tests plus full lint, test, build, and e2e runs.
+
+## Arena Authority Plan (2026-03-06)
+
+- [x] Move arena mission credit off the client mutation API and onto server-observed WebSocket gameplay events.
+- [x] Make match credit deduplicate per user per arena round so reconnects cannot farm daily progress.
+- [x] Update the arena client/UI to stop mutating progress directly and only reflect server-derived progress.
+- [x] Add targeted regression tests for authoritative arena progress attribution.
+- [x] Verify with full lint, test, build, and e2e runs.
+
+## Runner Attempt Tracking Plan (2026-03-06)
+
+- [x] Persist server-side runner attempt records when score sessions are issued.
+- [x] Accept runner progress checkpoints during a run and use them to validate final submissions.
+- [x] Update the runner client to report checkpoint progress and flush a final checkpoint before score submission.
+- [x] Add unit coverage for runner attempt lifecycle and validation helpers.
+- [x] Verify inside the full lint, test, build, and e2e sweep.
+
+### Progression Integrity Review (2026-03-06)
+
+- Leaderboard integrity:
+  - Updated `src/lib/leaderboard.ts` so runner boards are scoped per track, entries are bound to authenticated users, and each user only retains their best daily result for a given board.
+  - Updated `src/app/api/score/route.ts` to stop trusting client-supplied leaderboard names and derive display names from authenticated user identity instead.
+  - Wired the runner UI in `src/app/play/runner/RunnerClient.tsx`, `src/components/Runner.tsx`, and `src/components/TopRuns.tsx` so the leaderboard follows the currently selected track.
+- Arena progression sync:
+  - Added account-backed arena mission persistence in `src/lib/arenaProgressStore.ts` and `src/app/api/arena/daily-progress/route.ts`.
+  - Aligned `src/components/ArenaClient.tsx` with the new server-backed mission path and added rollover handling so daily progress resets cleanly at the arena reset boundary.
+- Mobile Explore reliability:
+  - Simplified the mobile roster interaction in `src/app/explore/ExploreClient.tsx` so tappable roster rows are not competing with nested action buttons.
+  - Hardened `e2e/explore.responsive.spec.ts` to wait for DOM readiness rather than full image-load completion, which was brittle on WebKit.
+- Verification:
+  - `npm test` passes (41 tests).
+  - `npm run lint` passes (warnings only, pre-existing).
+  - `npm run build` passes.
+  - `npm run e2e` passes (18/18).
+- Residual risk:
+  - Leaderboards are materially more trustworthy, but full anti-cheat still requires server-authoritative gameplay state instead of score validation alone.
+
+### Arena Authority Review (2026-03-06)
+
+- Arena progression authority:
+  - `server/mmo/plazaServer.ts` now records pulse, elimination, and match mission credit from authoritative arena WebSocket events instead of trusting browser POSTs.
+  - Added `server/mmo/arenaMatchTracker.ts` so reconnecting users only count once per arena round before the next match reset.
+  - `src/app/api/arena/daily-progress/route.ts` is now read-only; client mutation is explicitly rejected.
+- Arena client:
+  - `src/components/ArenaClient.tsx` no longer POSTs pulse/elimination/match events and instead reflects server-derived progress with optimistic UI only for server-issued combat/score events plus sync fetches on join/match-end.
+- Verification:
+  - Added regression coverage in `server/mmo/__tests__/arenaMatchTracker.test.ts` and `server/mmo/__tests__/plazaServer.test.ts`.
+
+### Runner Attempt Tracking Review (2026-03-06)
+
+- Runner score integrity:
+  - `src/lib/scoreSession.ts` now persists server-side attempt records, derives track-specific minimum submit timing, and validates final submissions against recorded checkpoint progress.
+  - Added `src/app/api/score/progress/route.ts` for authenticated runner checkpoint updates during a live run.
+  - `src/app/api/score/session/route.ts` now creates attempt records when a runner session is issued, and `src/app/api/score/route.ts` now rejects high-score submissions that do not have enough tracked run progress.
+- Runner client:
+  - `src/components/Runner.tsx` now emits debounced checkpoint progress and a forced final checkpoint on run end.
+  - `src/app/play/runner/RunnerClient.tsx` now reports those checkpoints and flushes the final checkpoint before score submission.
+- Verification:
+  - Added unit coverage in `src/lib/scoreSession.test.ts`.
+
+## Runtime Hardening Plan (2026-03-06)
+
+- [x] Make runtime mode deterministic across repo modules and remove unsafe production fallbacks.
+- [x] Harden auth and secret handling so production does not inherit dev-oriented behavior.
+- [x] Improve health/readiness visibility and add baseline CI.
+- [x] Tighten score submission integrity beyond raw client-trusted POSTs.
+- [x] Verify with lint, tests, build, and any targeted new checks.
+
+### Runtime Hardening Review (2026-03-06)
+
+- Runtime/config:
+  - Added `src/lib/runtime.ts` to centralize environment detection, runtime diagnostics, and production-safe persistence rules.
+  - Updated repo-backed modules (`src/lib/repo.ts`, `src/lib/rateLimit.ts`, `src/lib/leaderboard.ts`, `src/lib/betaChecklistStore.ts`, `src/lib/analyticsStore.ts`) so production no longer silently drops to in-memory stores.
+- Auth/secrets:
+  - Hardened `src/lib/auth.ts`, `src/lib/serverSession.ts`, and `src/lib/mmo/token.ts` so production fails closed at runtime instead of inheriting dev fallback secrets or anonymous session behavior.
+  - Locked down dev-only auth helpers in `src/app/api/dev/login/route.ts` and `src/app/api/dev/user/route.ts` to non-production usage with `httpOnly` cookies.
+- Operational visibility:
+  - Expanded `src/app/api/health/route.ts` and `src/app/api/status/route.ts` to report degraded runtime/repo/redis states with proper `503` behavior.
+  - Added baseline GitHub Actions verification in `.github/workflows/ci.yml`.
+  - Removed `eslint.ignoreDuringBuilds` from `next.config.js` so release builds and CI use the same lint gate.
+- Score integrity:
+  - Added signed, short-lived, one-time score sessions in `src/lib/scoreSession.ts` and `src/app/api/score/session/route.ts`.
+  - Updated `src/app/api/score/route.ts`, `src/app/play/runner/RunnerClient.tsx`, and `src/components/Runner.tsx` so runner submissions require a server-issued session token and stay within track-derived score ceilings.
 - Verification:
   - `npm run lint` passes (warnings only, pre-existing).
-  - `curl -s http://localhost:3000` content check confirms inactive names like `Frost Wolf` no longer appear in landing output.
-  - Same output contains Blaze fallback art paths (`/assets/characters/volcanic-lab/portrait.png`, `/assets/characters/volcanic-lab/thumb.png`) and no `card-placeholder.svg` usage for showcased landing cards.
+  - `npm test` passes (33 tests).
+  - `npm run build` passes.
+  - `npm run e2e` passes (18/18).
+- Residual risk:
+  - MMO/plaza transport is still a single-runtime prototype and not horizontally scalable.
+  - Score validation is now materially stronger, but fully authoritative gameplay would still require more server-side simulation than this pass introduced.
 
 ## MMO Hosted WS Runtime Fix Plan (2026-02-17)
 
@@ -657,3 +810,257 @@
   - `npm run lint` (passes; existing unrelated warnings remain).
   - `npm test` (passes; 30/30 tests).
   - `npm run build` (passes).
+
+## Static Asset Strategy Audit Plan (2026-02-28)
+
+- [x] Inventory static image/audio assets and quantify format + size distribution.
+- [x] Detect WebP/AVIF coverage gaps and identify largest asset files.
+- [x] Detect duplicate variants (exact content duplicates and same-base multi-format variants).
+- [x] Produce prioritized migration strategy for Next.js asset optimization (critical -> optional).
+- [x] Add audit review summary with findings and recommended rollout sequence.
+
+### Static Asset Strategy Audit Review (2026-02-28)
+
+- Scope and totals:
+  - Scanned static media extensions across repo (excluding build/dependency outputs): 351 files, 824,128,646 bytes total.
+  - `public/` dominates runtime payload: 345 files, 817,745,642 bytes.
+- Format mix in `public/`:
+  - `png`: 336 files, 806,180,112 bytes (98.59% of bytes).
+  - `mp3`: 2 files, 11,560,630 bytes (1.41% of bytes).
+  - `svg` + `ico`: 7 files, 4,900 bytes combined.
+- WebP/AVIF coverage:
+  - Raster image bases in `public/`: 336.
+  - With sibling `.webp`: 0. With sibling `.avif`: 0. With both: 0.
+  - No `.webp`/`.avif` references found in source/config; no `images.formats` config in `next.config.js`.
+- Duplicate variant findings:
+  - 56 exact-content duplicate groups (SHA-256), 277 files involved, 551,442,419 duplicated bytes.
+  - In `public/assets/characters`, all 55 character folders have 5 identical files (`banner/card/portrait/sprite/thumb`): 551,363,644 duplicated bytes.
+  - This duplicate waste is 67.42% of all bytes currently under `public/`.
+  - No same-base multi-format variants found (0 bases with multiple raster formats).
+- Largest files (runtime-relevant):
+  - `public/audio/pulsegrid/sunshine.mp3` (6.50 MB, ~284s, 192 kbps).
+  - `public/audio/pulsegrid/luwan-house.mp3` (4.52 MB, ~148s, 256 kbps).
+  - Many character PNGs in the 2.4-3.1 MB range each; dimensions are predominantly `1024x1536` (275 files) and `1536x1024` (58 files).
+- Serving strategy observations:
+  - Source uses native `<img>` broadly and only one `next/image`, which is explicitly `unoptimized`; this bypasses automatic format/size optimization.
+  - Art refs and sprite parsing hardcode `.png` paths/regex, increasing migration coupling.
+
+## Backend/API Runtime Performance Audit Plan (2026-02-28)
+
+- [x] Map API route request paths and identify hot call chains into auth/session, repo, Redis, and rate limiting.
+- [x] Audit Redis access patterns for round-trip count, batching opportunities, and algorithmic inefficiencies.
+- [x] Audit auth/session and rate-limit overhead for unnecessary per-request cost.
+- [x] Identify synchronous/blocking work and server-side caching opportunities across backend/runtime paths.
+- [x] Deliver prioritized findings with file references and practical remediations.
+- [x] Add a review note summarizing evidence and residual risk.
+
+### Backend/API Runtime Performance Audit Review (2026-02-28)
+
+- Scope covered:
+  - All API route handlers under `src/app/api/**/route.ts` plus shared runtime paths in `src/lib/repo*.ts`, `src/lib/rateLimit.ts`, `src/lib/serverSession.ts`, `src/lib/leaderboard.ts`, and `server/mmo/plazaServer.ts`.
+- Highest-impact bottlenecks found:
+  - Character lookup path does full roster scans with repeated `hvals` + sort operations.
+  - Claim completion path uses multiple pre-validation Redis reads before the final atomic mutation.
+  - MMO token mint path does repeated per-request ownership fetch/parse and character hydration.
+- Runtime/caching observations:
+  - Read-heavy GET paths lack response caching directives and server-side memoization.
+  - Rate-limit memory fallback has unbounded key retention and inconsistent IP normalization in one route.
+  - A dev status endpoint performs synchronous filesystem reads on-request.
+- Residual risk:
+  - As roster size and ownership volume grow, current O(n) and O(n^2)-like lookup paths will increase p95 latency and Redis egress disproportionately without indexing/caching changes.
+
+## Frontend Performance Audit Plan (2026-02-28)
+
+- [x] Map App Router client/server boundaries and identify unnecessary client-rendered route shells.
+- [x] Inspect bundle composition for shared-chunk pressure, heavy dependencies, and route-level code splitting.
+- [x] Audit dynamic import usage and whether heavy modules are isolated to user-intent paths.
+- [x] Audit image usage patterns (`next/image`, eager loading, raw `<img>` usage, and asset size distribution).
+- [x] Identify hydration/render bottlenecks in high-frequency interactive components.
+- [x] Deliver prioritized P0/P1/P2 risk list with file references and concrete optimization recommendations.
+- [x] Add audit review summary.
+
+### Frontend Performance Audit Review (2026-02-28)
+
+- Evidence gathered from source inspection plus production build output (`npm run build`) and emitted chunk manifests.
+- Key findings include:
+  - Root layout-wide client/auth wrapper inflates shared client JS and hydration cost across all routes.
+  - Very large image assets are served as raw PNGs (many 2-3 MB each; `public/assets/characters` totals ~757 MB) with multiple eager/raw image usages.
+  - Rich lore dataset and realtime/game surfaces place avoidable pressure on client bundle parse/render paths.
+- No code changes were applied as part of this audit; recommendations are documented in the final report.
+
+## 2026-02-28 - Performance Phase 1 (Image Delivery)
+
+### Plan
+- [ ] Configure Next image optimization defaults (formats + cache TTL).
+- [ ] Migrate core UI image surfaces from `<img>` to `next/image` where safe.
+- [ ] Remove explicit image optimizer bypass (`unoptimized`) and eager loads on non-critical surfaces.
+- [ ] Prefer lower-cost art variants in roster/list/card contexts.
+- [ ] Validate via production build and spot-check for type/runtime regressions.
+
+### Progress
+- [x] Configure Next image optimization defaults (formats + cache TTL).
+- [x] Migrate core UI image surfaces from `<img>` to `next/image` where safe.
+- [x] Remove explicit image optimizer bypass (`unoptimized`) and eager loads on non-critical surfaces.
+- [x] Prefer lower-cost art variants in roster/list/card contexts.
+- [x] Validate via production build and spot-check for type/runtime regressions.
+
+### Review
+- `npm run test`: pass (9 files, 30 tests).
+- `npm run build`: pass.
+- `npm run lint`: pass with existing pre-existing `no-explicit-any` warnings in unrelated files.
+- Net result: image delivery now uses Next optimization across core surfaces, `unoptimized` removal in compare avatar, and sprite ref parsing is extension-agnostic for future WebP/AVIF migration.
+
+
+## 2026-02-28 - Performance Phase 2 (Asset Pipeline + Dedup)
+
+### Plan
+- [ ] Add an automated asset optimizer script to generate role-specific image sizes and next-gen formats.
+- [ ] Update character art reference generators to prefer WebP (with PNG compatibility assets retained).
+- [ ] Update hardcoded fallback paths and arena map/sprite loaders to use WebP-first sources.
+- [ ] Run optimizer against current `public/assets` and measure size impact.
+- [ ] Re-run tests/build/lint and document results.
+
+### Progress
+- [x] Add an automated asset optimizer script to generate role-specific image sizes and next-gen formats.
+- [x] Update character art reference generators to prefer WebP (with PNG compatibility assets retained).
+- [x] Update hardcoded fallback paths and arena map/sprite loaders to use WebP-first sources.
+- [x] Run optimizer against current `public/assets` and measure size impact.
+- [x] Re-run tests/build/lint and document results.
+
+### Review
+- Added `scripts/optimize-assets.py` and `npm run assets:optimize`.
+- Optimizer output: `public` asset footprint reduced from `779.86 MiB` to `353.90 MiB` (`-425.96 MiB`).
+- Runtime image format coverage after run: `336` WebP files and `336` AVIF files generated.
+- PNG compatibility assets remain in place but resized/compressed and no longer identical-role duplicates.
+- Validation:
+  - `npm run test`: pass (30/30)
+  - `npm run lint`: pass with pre-existing warnings in unrelated files
+  - `npm run build`: pass
+
+
+## 2026-02-28 - Performance Phase 3 (Redis Character Indexing)
+
+### Plan
+- [x] Add indexed character lookup APIs to repo contract (`slug`, `nameSlug`, `codeSeries`).
+- [x] Implement Redis character indexes and ordered ID list to avoid `hvals + parse + sort` on every list call.
+- [x] Update identifier resolution to use O(1) repo lookups before fallback pagination scan.
+- [x] Keep memory repo parity and update tests/stubs.
+- [x] Validate with lint/test/build.
+
+### Review
+- Added Redis keys for character indexes and order list in `repoRedis` and seeded/populated index structures.
+- Added lazy index rebuild guard (`characterIndexVersion`) for existing seeded deployments.
+- `listCharacters` now reads paged IDs from Redis list + `hmget` by ID order instead of full hash scans.
+- `resolveCharacterByIdentifier` now checks id -> slug -> nameSlug -> codeSeries via repo methods before fallback scan.
+- Validation:
+  - `npm run lint`: pass with pre-existing warnings only
+  - `npm run test`: pass (30/30)
+  - `npm run build`: pass
+
+## 2026-02-28 - Performance Phase 4 (Token + Runtime Overhead)
+
+### Plan
+- [x] Add a repo-level owned-avatar lookup (`listOwnedAvatarIdsByUser`) with Redis short-TTL caching and claim-path invalidation.
+- [x] Switch `/api/mmo/token` ownership hydration to the cached repo API and normalize rate-limit IP extraction.
+- [x] Bound memory fallback growth in `rateLimit` by sweeping expired buckets periodically.
+- [x] Replace synchronous filesystem reads in `/api/style/status` with async reads plus a short in-process cache.
+- [x] Add short CDN cache headers on read-heavy public GET endpoints (`/api/character/[id]`, `/api/score`).
+- [x] Validate with lint/test/build.
+
+### Review
+- Added `listOwnedAvatarIdsByUser` to repo contract + memory/Redis implementations.
+- Redis ownership writes now include `avatarId` when claim data is created, and invalidate per-user avatar cache on new ownership claims.
+- MMO token minting no longer hydrates full owned-character records on each call; it uses cached avatar IDs from repo, with fallback avatar handling preserved.
+- `src/lib/rateLimit.ts` now sweeps expired in-memory buckets every fixed interval to prevent unbounded map growth when Redis is unavailable.
+- `src/app/api/style/status/route.ts` now uses `fs/promises` with a 30-second in-process cache instead of per-request sync filesystem reads.
+- Added response caching headers:
+  - `/api/character/[id]`: `s-maxage=60`, `stale-while-revalidate=300`
+  - `/api/score` GET: `s-maxage=10`, `stale-while-revalidate=30`
+- Validation:
+  - `npm run lint`: pass with pre-existing `no-explicit-any` warnings only
+  - `npm run test`: pass (30/30)
+  - `npm run build`: pass
+
+## 2026-02-28 - Performance Phase 5 (Identifier Miss Path)
+
+### Plan
+- [x] Remove paginated full-roster fallback scans from identifier resolution now that id/slug/nameSlug/codeSeries indexes are in place.
+- [x] Add a regression test that fails if `resolveCharacterByIdentifier` falls back to `listCharacters` on unknown identifiers.
+- [x] Validate with lint/test/build.
+
+### Review
+- `src/lib/characterLookup.ts` no longer performs `listCharacters` pagination loops for unknown identifiers.
+- Unknown identifiers now resolve in O(1) lookup attempts + lore fallback only, preventing expensive repeated Redis/list scans on 404-like traffic.
+- Added test coverage in `src/lib/characterLookup.test.ts` to ensure paginated scan is not reintroduced.
+- Validation:
+  - `npm run lint`: pass with pre-existing warnings only
+  - `npm run test`: pass (31/31)
+  - `npm run build`: pass
+
+## 2026-02-28 - Performance Phase 6 (Session Scope + Layout Shell)
+
+### Plan
+- [x] Remove global `SessionProvider` wrapping the entire app shell in root layout.
+- [x] Scope session provider usage to routes that require `useSession` (`/claim`, `/login`).
+- [x] Refactor layout chrome away from `useSession` and remove `next-auth/react` dependency from the always-loaded header path.
+- [x] Validate with lint/test/build and capture bundle impact notes.
+
+### Review
+- `src/app/layout.tsx` no longer wraps all routes in `AuthSessionProvider`.
+- `src/app/claim/page.tsx` and `src/app/login/page.tsx` now provide local session context only where `useSession` is used.
+- `src/components/LayoutChrome.tsx` was simplified to a non-session-aware shell.
+- Added `src/components/HeaderAuthControls.tsx` with lightweight session probing (`/api/auth/session`) and direct signout flow (`/api/auth/csrf` + `/api/auth/signout`) so root shell no longer imports `next-auth/react`.
+- Validation:
+  - `npm run lint`: pass with pre-existing warnings only
+  - `npm run test`: pass (31/31)
+  - `npm run build`: pass
+- Bundle note:
+  - Shared first-load JS remains `87.4 kB` at current build granularity, but global session hydration scope is reduced and auth client deps are no longer on the root chrome import path.
+
+## 2026-02-28 - Performance Phase 7 (Header Nav De-JS)
+
+### Plan
+- [x] Convert `AppNav` from client component to server-rendered markup (no React hooks/client runtime).
+- [x] Keep desktop + mobile header navigation functional without route-level JS state.
+- [x] Validate with lint/test/build and confirm `AppNav` is no longer in client module manifests.
+
+### Review
+- `src/components/AppNav.tsx` no longer uses `usePathname`, `useState`, `useEffect`, or `use client`.
+- Mobile menu now uses native `<details>/<summary>` behavior instead of JS-managed open/close state.
+- Validation:
+  - `npm run lint`: pass with pre-existing warnings only
+  - `npm run test`: pass (31/31)
+  - `npm run build`: pass
+- Manifest evidence:
+  - `AppNav` entry is removed from `.next` client module manifests after this change; only `HeaderAuthControls` remains as the root-shell auth client island.
+
+## Leaderboard + Arena Progress Integrity Plan (2026-03-06)
+
+- [x] Partition runner leaderboards by track and bind submissions to authenticated users instead of client-supplied names.
+- [x] Preserve only each user's best run per board/day so repeated submissions do not crowd out the leaderboard.
+- [x] Add a server-backed arena daily progress store + API so mission progress is account-owned instead of localStorage-only.
+- [x] Update runner and arena clients to consume the hardened leaderboard/progress paths.
+- [x] Add targeted tests and verify with lint, tests, build, and e2e.
+
+### Leaderboard + Arena Progress Integrity Review (2026-03-06)
+
+- Leaderboards:
+  - `src/lib/leaderboard.ts` now stores runner results per track/day and keeps only the best entry per authenticated user on a given board.
+  - `src/app/api/score/route.ts` now resolves leaderboard names from authenticated user identity instead of trusting client-submitted names.
+  - `src/components/TopRuns.tsx` and `src/app/play/runner/RunnerClient.tsx` now request/render track-specific runner boards.
+- Arena progress:
+  - Added authenticated arena progress sync in `src/app/api/arena/daily-progress/route.ts`.
+  - `src/components/ArenaClient.tsx` now updates daily mission progress from server-backed records instead of browser-local totals, using server-observed arena events for match/elimination/pulse progression.
+  - `src/lib/arenaProgress.ts` and `src/lib/arenaProgressStore.ts` now provide shared date-key/event helpers plus persistence wrappers and test helpers.
+- Build/test hardening:
+  - `package.json` build now clears `.next` before `next build`, matching the clean-build path that avoids the repo’s intermittent stale-cache rename failure.
+  - `playwright.config.ts` now uses `npm run build` so E2E startup follows the same verified build path.
+  - Added regression coverage in `src/lib/leaderboard.test.ts` and `src/lib/arenaProgressStore.test.ts`.
+- Verification:
+  - `npm run lint` passes (warnings only, pre-existing).
+  - `npm test` passes (37/37).
+  - `npm run build` passes.
+  - `npm run e2e` passes (18/18).
+- Residual risk:
+  - Arena mission progress is now account-owned, but event attribution is still client-initiated for progress sync rather than fully authored by the MMO server.
+  - Playwright still showed one transient iPhone `/explore` timeout on the first run before passing cleanly on rerun, so the mobile E2E harness likely still has some instability outside these changes.

@@ -5,9 +5,15 @@ import { EventEmitter } from 'events';
 import type WebSocket from 'ws';
 
 import type { MmoSessionClaims } from '../../src/lib/mmo/token';
+import { incrementArenaDailyProgressEvent } from '../../src/lib/arenaProgressStore';
 import { filterProfanity } from '../../src/lib/profanity';
 import { MAP_DATA, clampToWalkable, isInSpeedZone, isInPowerZone } from '../../src/lib/mmo/mapData';
 import type { ArenaMapId as MapDataMapId } from '../../src/lib/mmo/mapData';
+import {
+  completeArenaMatch,
+  createArenaMatchTracker,
+  markArenaMatchParticipant,
+} from './arenaMatchTracker';
 
 type Vec2 = { x: number; y: number };
 type GameMode = 'plaza' | 'arena';
@@ -248,6 +254,7 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
   const snapshotMs = opts.snapshotMs ?? defaultOptions.snapshotMs;
   const log = opts.logger || console.log;
   let cachedArenaConfig: ArenaConfig | null = buildArenaConfig();
+  const arenaMatchTracker = createArenaMatchTracker();
 
   const safeSend = (ws: WebSocket, payload: unknown) => {
     if (ws.readyState !== WS_READY_STATE_OPEN) return;
@@ -281,6 +288,21 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
 
   const emitPlayerCount = () => {
     events.emit('player-count', clients.size);
+  };
+
+  const recordArenaProgressEvent = (userId: string, event: 'pulse' | 'elimination' | 'match') => {
+    if (!userId) return;
+    void incrementArenaDailyProgressEvent(userId, event).catch((error) => {
+      const message = error instanceof Error ? error.message : String(error);
+      log(`[arena-progress] failed to record ${event} for ${userId}: ${message}`);
+    });
+  };
+
+  const awardArenaMatchCompletion = (participantIds: Iterable<string>) => {
+    const uniqueParticipantIds = Array.from(new Set(participantIds)).filter(Boolean);
+    uniqueParticipantIds.forEach((userId) => {
+      recordArenaProgressEvent(userId, 'match');
+    });
   };
 
   const toPlayerState = (id: string, client: ClientState) => ({
@@ -317,6 +339,7 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
     safeSend(client.ws, { type: 'joined', you, others });
 
     if (client.mode === 'arena') {
+      markArenaMatchParticipant(arenaMatchTracker, client.userId);
       const arenaConfig = cachedArenaConfig ?? buildArenaConfig();
       safeSend(client.ws, {
         type: 'event',
@@ -348,6 +371,7 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
       return;
     }
     client.lastAbilityAt = now;
+    recordArenaProgressEvent(client.userId, 'pulse');
 
     // Dynamic range: empowered in the power zone
     const effectiveRange = client.inPowerZone ? ABILITY_RANGE_EMPOWERED : ABILITY_RANGE;
@@ -374,6 +398,7 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
         const deathPos = { ...target.pos };
         target.deaths += 1;
         client.kills += 1;
+        recordArenaProgressEvent(client.userId, 'elimination');
         target.hp = 100;
         target.pos = spawnForMode('arena', currentMapId);
         target.axes = { x: 0, y: 0 };
@@ -399,6 +424,11 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
     });
 
     if (client.kills >= ARENA_KILL_TARGET) {
+      const nextMatchParticipants = Array.from(clients.values())
+        .filter((arenaClient) => arenaClient.mode === 'arena' && arenaClient.joined)
+        .map((arenaClient) => arenaClient.userId);
+      const completedParticipantIds = completeArenaMatch(arenaMatchTracker, nextMatchParticipants);
+      awardArenaMatchCompletion(completedParticipantIds);
       const winnerName = client.displayName;
       broadcast(
         {

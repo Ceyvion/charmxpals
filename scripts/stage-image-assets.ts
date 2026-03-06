@@ -1,3 +1,4 @@
+import { execFileSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
@@ -10,8 +11,6 @@ const ARENA_SPRITE_SOURCE_DIR = path.resolve('output/imagegen/arena/sprites');
 const CHAR_TARGET_BASE = path.resolve('public/assets/characters');
 const ARENA_MAP_TARGET = path.resolve('public/assets/arena/maps');
 const ARENA_SPRITE_TARGET = path.resolve('public/assets/arena/sprites');
-
-const CHARACTER_VARIANTS = ['portrait.png', 'card.png', 'banner.png', 'thumb.png', 'sprite.png'];
 
 function ensureDir(dir: string) {
   fs.mkdirSync(dir, { recursive: true });
@@ -27,14 +26,15 @@ function copyIfExists(from: string, to: string) {
 function stageCharacters() {
   let copied = 0;
   for (const character of characterLore) {
-    const source = path.join(CHAR_SOURCE_DIR, `char-${character.slug}-portrait.png`);
-    if (!fs.existsSync(source)) continue;
+    const portraitSource = path.join(CHAR_SOURCE_DIR, `char-${character.slug}-portrait.png`);
+    if (!fs.existsSync(portraitSource)) continue;
+    const signatureSource = path.join(CHAR_SOURCE_DIR, `char-${character.slug}-signature.png`);
     const targetDir = path.join(CHAR_TARGET_BASE, character.slug);
     ensureDir(targetDir);
-    for (const variant of CHARACTER_VARIANTS) {
-      fs.copyFileSync(source, path.join(targetDir, variant));
-      copied += 1;
-    }
+    fs.copyFileSync(portraitSource, path.join(targetDir, 'portrait.png'));
+    copied += 1;
+    fs.copyFileSync(fs.existsSync(signatureSource) ? signatureSource : portraitSource, path.join(targetDir, 'signature.png'));
+    copied += 1;
   }
   return copied;
 }
@@ -59,8 +59,20 @@ function main() {
 
   const characterCopies = stageCharacters();
   const arenaCopies = stageArena();
+  let optimizerRan = false;
 
-  console.log(`Staged ${characterCopies} character asset files and ${arenaCopies} arena asset files.`);
+  try {
+    execFileSync('python3', [path.resolve('scripts/optimize-assets.py'), '--quiet'], { stdio: 'inherit' });
+    optimizerRan = true;
+  } catch (error) {
+    console.warn('Asset optimizer failed to run automatically. Run `npm run assets:optimize` manually.', error);
+  }
+
+  console.log(
+    `Staged ${characterCopies} base character files and ${arenaCopies} arena asset files.${
+      optimizerRan ? ' Optimizer completed.' : ''
+    }`,
+  );
 }
 
 main();

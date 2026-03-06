@@ -1,6 +1,7 @@
 "use client";
 
 import Link from 'next/link';
+import { trackEvent } from '@/lib/analyticsClient';
 
 export default function MagneticCTA() {
   return (
@@ -27,6 +28,7 @@ export default function MagneticCTA() {
             <Link
               href="/claim"
               className="cp-cta-primary font-display text-base md:text-lg"
+              onClick={() => trackEvent('home_cta_click', { target: 'claim', source: 'closing_cta' })}
             >
               <span>Claim Your CharmXPal</span>
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,18 +56,21 @@ export default function MagneticCTA() {
             <Link
               href="/explore"
               className="cp-cta-ghost font-display text-sm"
+              onClick={() => trackEvent('home_cta_click', { target: 'explore', source: 'closing_cta' })}
             >
               Browse Roster
             </Link>
             <Link
               href="/play"
               className="cp-cta-ghost font-display text-sm"
+              onClick={() => trackEvent('home_cta_click', { target: 'play', source: 'closing_cta' })}
             >
               Try Demo
             </Link>
             <Link
               href="/plaza"
               className="cp-cta-ghost font-display text-sm"
+              onClick={() => trackEvent('home_cta_click', { target: 'plaza', source: 'closing_cta' })}
             >
               Join Plaza
             </Link>

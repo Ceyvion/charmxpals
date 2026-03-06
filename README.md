@@ -13,14 +13,16 @@ Welcome to CharmPals, a platform that links physical collectibles to digital exp
 - **Compare & Leaderboards**: Compare characters and compete on leaderboards.
 - **Social**: Connect with friends and invite them to the platform.
 - **Anti-Fraud**: Robust measures to prevent code duplication and fraud.
+- **Funnel Analytics**: Lightweight first-party event capture for the core beta funnel.
+- **Hardened Score Sessions**: Runner leaderboard submissions now require a short-lived server-issued score session.
 
 ## Tech Stack
 
 - **Frontend**: Next.js, React, TypeScript, Tailwind CSS, Framer Motion
 - **Backend**: Next.js API routes, Upstash Redis (with an in-memory fallback for local preview)
 - **Data Store**: Upstash Redis (serverless REST API)
-- **Authentication**: Passwordless (email OTP/magic link)
-- **Analytics**: PostHog
+- **Authentication**: Beta email + access code via NextAuth credentials
+- **Analytics**: First-party event ingestion API
 
 ## Getting Started
 
@@ -82,6 +84,15 @@ Update statuses in `orchestrator/plan.json` after each meaningful change to keep
 
 - Configure `BETA_ACCESS_SECRET`, `NEXTAUTH_SECRET`, and comma-separated `BETA_TESTERS` in your environment (Vercel → Settings → Environment Variables).
 - Wave-specific tester details and claim codes live in `docs/beta/WAVE1.md`; use `npm run import:cxp -- --file data/beta_wave1_codes.csv --set "Beta Wave 1"` to seed their codes into Upstash.
+
+## Analytics
+
+- Client events are posted to `POST /api/analytics/event`.
+- Current instrumentation covers page views plus key beta funnel actions on home, login, claim, and runner score submission.
+
+## CI
+
+- GitHub Actions baseline CI now runs `npm run lint`, `npm test`, and `npm run build` on pushes and pull requests.
 
 ## MVP Features
 

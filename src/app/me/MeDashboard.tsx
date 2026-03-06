@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -62,9 +63,9 @@ function getRarityKey(rarity?: number): string {
 function pickPreview(artRefs?: Record<string, string>): string | null {
   if (!artRefs) return null;
   return (
-    artRefs.portrait ||
-    artRefs.card ||
     artRefs.thumbnail ||
+    artRefs.card ||
+    artRefs.portrait ||
     artRefs.banner ||
     artRefs.full ||
     artRefs.signature ||
@@ -361,15 +362,15 @@ function CharacterShowcase({
         />
 
         {preview ? (
-          <img
+          <Image
             src={preview}
             alt={character.name}
-            className="relative z-10 aspect-[16/9] w-full object-cover transition-transform duration-700 ease-out will-change-transform"
+            fill
+            sizes="(min-width: 1024px) 55vw, 100vw"
+            className="relative z-10 object-cover transition-transform duration-700 ease-out will-change-transform"
             style={{
               transform: `scale(1.05) translate(${parallax.x}px, ${parallax.y}px)`,
             }}
-            loading="eager"
-            decoding="async"
           />
         ) : (
           <div className="relative z-10 flex aspect-[16/9] items-center justify-center bg-gradient-to-br from-white/[0.04] to-transparent">
@@ -518,14 +519,14 @@ function GalleryCard({
       {/* Art */}
       <div className="relative aspect-square overflow-hidden">
         {preview ? (
-          <img
+          <Image
             src={preview}
             alt={character.name}
-            className={`h-full w-full object-cover transition-transform duration-300 ${
+            fill
+            sizes="(min-width: 1024px) 20vw, (min-width: 768px) 25vw, 50vw"
+            className={`object-cover transition-transform duration-300 ${
               isSelected || isHovered ? 'scale-110' : 'scale-100'
             }`}
-            loading="lazy"
-            decoding="async"
           />
         ) : (
           <div className="flex h-full items-center justify-center bg-gradient-to-br from-white/[0.04] to-transparent">

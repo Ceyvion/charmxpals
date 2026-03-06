@@ -1,4 +1,5 @@
 import { createHmac } from 'crypto';
+import { isProductionRuntime } from '@/lib/runtime';
 
 type TokenPayload = Record<string, unknown>;
 
@@ -10,8 +11,19 @@ function b64url(input: Buffer | string) {
     .replace(/\//g, '_');
 }
 
+function resolveMmoTokenSecret(explicit?: string) {
+  const configured = explicit || process.env.MMO_WS_SECRET?.trim();
+  if (configured) return configured;
+
+  if (!isProductionRuntime()) {
+    return process.env.CODE_HASH_SECRET?.trim() || 'dev-secret';
+  }
+
+  throw new Error('MMO_WS_SECRET is required in production.');
+}
+
 export function signToken(payload: TokenPayload, opts?: { secret?: string }) {
-  const secret = opts?.secret || process.env.MMO_WS_SECRET || process.env.CODE_HASH_SECRET || 'dev-secret';
+  const secret = resolveMmoTokenSecret(opts?.secret);
   const header = { alg: 'HS256', typ: 'JWT' };
   const body = { iat: Math.floor(Date.now() / 1000), ...payload };
   const h = b64url(JSON.stringify(header));

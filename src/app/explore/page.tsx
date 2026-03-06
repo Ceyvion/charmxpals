@@ -1,9 +1,20 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { getRepo } from '@/lib/repo';
 import ExploreClient from './ExploreClient';
 import { withCharacterLore, type CharacterWithLore } from '@/lib/characterLore';
 import { getSafeServerSession } from '@/lib/serverSession';
+
+export const metadata: Metadata = {
+  title: 'Explore the Roster',
+  description: 'Browse the CharmPals roster, compare stats, and preview who to claim next.',
+  alternates: {
+    canonical: '/explore',
+  },
+};
+
+export const dynamic = 'force-dynamic';
 
 export default async function ExplorePage() {
   const repo = await getRepo();

@@ -15,7 +15,7 @@ type MigrationMode = 'dry-run' | 'apply';
 
 const REDIS_CHARACTERS_KEY = 'charmxpals:characters';
 const AVATAR_ID_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const SPRITE_PATH_RE = /\/assets\/characters\/([^/]+)\/sprite\.png(?:[?#].*)?$/i;
+const SPRITE_PATH_RE = /\/assets\/characters\/([^/]+)\/sprite\.[a-z0-9]+(?:[?#].*)?$/i;
 const PLACEHOLDER_ART = '/card-placeholder.svg';
 const DEFAULT_FALLBACK_SLUG = 'neon-city';
 
@@ -56,13 +56,13 @@ function avatarIdFromSpriteRef(value: unknown): string | null {
 function buildArtRefs(slug: string): Record<string, string> {
   const base = `/assets/characters/${slug}`;
   return {
-    signature: `${base}/signature.png`,
-    thumbnail: `${base}/thumb.png`,
-    card: `${base}/card.png`,
-    portrait: `${base}/portrait.png`,
-    banner: `${base}/banner.png`,
-    full: `${base}/portrait.png`,
-    sprite: `${base}/sprite.png`,
+    signature: `${base}/signature.webp`,
+    thumbnail: `${base}/thumb.webp`,
+    card: `${base}/card.webp`,
+    portrait: `${base}/portrait.webp`,
+    banner: `${base}/banner.webp`,
+    full: `${base}/portrait.webp`,
+    sprite: `${base}/sprite.webp`,
   };
 }
 

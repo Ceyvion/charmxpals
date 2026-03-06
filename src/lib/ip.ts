@@ -10,9 +10,11 @@ export function getClientIp(reqUrl: string, headers: Headers) {
 
   try {
     const url = new URL(reqUrl);
-    return url.hostname || '127.0.0.1';
+    if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+      return '127.0.0.1';
+    }
   } catch {
-    return '127.0.0.1';
+    // no-op
   }
+  return '127.0.0.1';
 }
-

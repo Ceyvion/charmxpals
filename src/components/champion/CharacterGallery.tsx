@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import Image from 'next/image';
 
 type GalleryItem = {
   key: string;
@@ -113,16 +114,18 @@ export default function CharacterGallery({ items, characterName, accentColor }: 
             }}
           />
           {selected && (
-            <img
-              src={selected.src}
-              alt={`${characterName} ${selected.key}`}
-              className="relative h-[340px] w-full object-contain transition-transform duration-500 group-hover:scale-[1.02] sm:h-[400px]"
-              loading="lazy"
-              decoding="async"
-              onError={(e) => {
-                e.currentTarget.src = '/card-placeholder.svg';
-              }}
-            />
+            <div className="relative h-[340px] w-full sm:h-[400px]">
+              <Image
+                src={selected.src}
+                alt={`${characterName} ${selected.key}`}
+                fill
+                sizes="(min-width: 640px) 100vw, 100vw"
+                className="relative object-contain transition-transform duration-500 group-hover:scale-[1.02]"
+                onError={(e) => {
+                  e.currentTarget.src = '/card-placeholder.svg';
+                }}
+              />
+            </div>
           )}
           {/* Hover overlay */}
           <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-200 group-hover:bg-black/30">
@@ -151,16 +154,18 @@ export default function CharacterGallery({ items, characterName, accentColor }: 
                 style={i === selectedIndex ? { color: accentColor } : undefined}
                 aria-label={`View ${item.key} art`}
               >
-                <img
-                  src={item.src}
-                  alt={`${characterName} ${item.key}`}
-                  className="h-16 w-20 object-cover transition-transform duration-200 group-hover/thumb:scale-105"
-                  loading="lazy"
-                  decoding="async"
-                  onError={(e) => {
-                    e.currentTarget.src = '/card-placeholder.svg';
-                  }}
-                />
+                <span className="relative block h-16 w-20">
+                  <Image
+                    src={item.src}
+                    alt={`${characterName} ${item.key}`}
+                    fill
+                    sizes="80px"
+                    className="object-cover transition-transform duration-200 group-hover/thumb:scale-105"
+                    onError={(e) => {
+                      e.currentTarget.src = '/card-placeholder.svg';
+                    }}
+                  />
+                </span>
                 <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white/70">
                   {TYPE_LABELS[item.key] ?? item.key}
                 </span>
@@ -180,9 +185,11 @@ export default function CharacterGallery({ items, characterName, accentColor }: 
           aria-label="Image lightbox"
         >
           <div className="relative max-h-[90vh] max-w-[90vw]" onClick={(e) => e.stopPropagation()}>
-            <img
+            <Image
               src={selected.src}
               alt={`${characterName} ${selected.key}`}
+              width={1400}
+              height={1400}
               className="max-h-[85vh] max-w-full rounded-lg object-contain"
               onError={(e) => {
                 e.currentTarget.src = '/card-placeholder.svg';

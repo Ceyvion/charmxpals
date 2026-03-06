@@ -1,6 +1,7 @@
 "use client";
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 
 type Character = {
@@ -42,11 +43,11 @@ const artCandidatesFor = (character: Character): string[] => {
   const refs = character.artRefs;
 
   if (refs) {
-    pushCandidate(candidates, seen, refs.signature);
-    pushCandidate(candidates, seen, refs.banner);
-    pushCandidate(candidates, seen, refs.portrait);
-    pushCandidate(candidates, seen, refs.card);
     pushCandidate(candidates, seen, refs.thumbnail);
+    pushCandidate(candidates, seen, refs.card);
+    pushCandidate(candidates, seen, refs.portrait);
+    pushCandidate(candidates, seen, refs.banner);
+    pushCandidate(candidates, seen, refs.signature);
     pushCandidate(candidates, seen, refs.full);
     pushCandidate(candidates, seen, refs.sprite);
     for (const value of Object.values(refs)) {
@@ -56,9 +57,9 @@ const artCandidatesFor = (character: Character): string[] => {
 
   if (character.slug) {
     const base = `/assets/characters/${character.slug}`;
-    pushCandidate(candidates, seen, `${base}/portrait.png`);
-    pushCandidate(candidates, seen, `${base}/card.png`);
-    pushCandidate(candidates, seen, `${base}/thumb.png`);
+    pushCandidate(candidates, seen, `${base}/thumb.webp`);
+    pushCandidate(candidates, seen, `${base}/card.webp`);
+    pushCandidate(candidates, seen, `${base}/portrait.webp`);
   }
 
   pushCandidate(candidates, seen, '/card-placeholder.svg');
@@ -130,11 +131,12 @@ export default function HorizontalCharacterShowcase({ characters }: { characters
                   style={{ borderColor: rarityBorder(char.rarity) }}
                 >
                   <div className="absolute inset-0">
-                    <img
+                    <Image
                       src={mediaSrc}
                       alt={`${char.name} character art`}
-                      className="h-full w-full object-cover object-center opacity-90 transition-transform duration-500 group-hover:scale-105"
-                      loading="lazy"
+                      fill
+                      sizes="(min-width: 768px) 400px, 320px"
+                      className="object-cover object-center opacity-90 transition-transform duration-500 group-hover:scale-105"
                       onError={() => {
                         const nextIndex = mediaIndex + 1;
                         if (nextIndex >= artCandidates.length) return;
