@@ -29,13 +29,11 @@ export async function GET(request: NextRequest) {
   if (!userId) {
     return NextResponse.json({ ok: false, error: 'unauthenticated' }, { status: 401 });
   }
-  const user = await repo.getUserById(userId);
-  if (!user) return NextResponse.json({ ok: false, error: 'no_user' }, { status: 404 });
 
   // Gate by ownership (dev can bypass in non-prod)
   const configuredFallbackAvatarId = normalizeAvatarId(process.env.MMO_DEFAULT_AVATAR_ID);
   const fallbackAvatarId = configuredFallbackAvatarId || 'neon-city';
-  const ownedAvatarIds = await repo.listOwnedAvatarIdsByUser(user.id);
+  const ownedAvatarIds = await repo.listOwnedAvatarIdsByUser(userId);
   const claimedAvatarIds = ownedAvatarIds
     .map((avatarId) => normalizeAvatarId(avatarId))
     .filter((avatarId): avatarId is string => Boolean(avatarId));
@@ -70,7 +68,7 @@ export async function GET(request: NextRequest) {
   const now = Math.floor(Date.now() / 1000);
   const ttlSec = 10 * 60; // 10 minutes
   const claims: MmoSessionClaims = {
-    sub: user.id,
+    sub: userId,
     sid: sessionId,
     exp: now + ttlSec,
     nonce: randomUUID(),

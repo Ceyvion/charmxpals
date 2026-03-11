@@ -62,6 +62,7 @@ describe('claim flow (memory repo)', () => {
       makeReq('http://local/api/claim/complete', {
         code,
         challengeId: String(json.challengeId || ''),
+        challengeToken: String(json.challengeToken || ''),
         signature,
       }),
     );
@@ -91,6 +92,7 @@ describe('claim flow (memory repo)', () => {
       makeReq('http://local/api/claim/complete', {
         code: code2,
         challengeId,
+        challengeToken: String(json.challengeToken || ''),
         signature: 'deadbeef',
       }),
     );
@@ -104,6 +106,7 @@ describe('claim flow (memory repo)', () => {
       makeReq('http://local/api/claim/complete', {
         code: code2,
         challengeId,
+        challengeToken: String(json.challengeToken || ''),
         signature: okSig,
       }),
     );
@@ -116,6 +119,7 @@ describe('claim flow (memory repo)', () => {
       makeReq('http://local/api/claim/complete', {
         code: code2,
         challengeId,
+        challengeToken: String(json.challengeToken || ''),
         signature: okSig,
       }),
     );

@@ -115,19 +115,6 @@ function readMemoryTop(key: string, limit: number): LeaderboardEntry[] {
   return entries.slice(0, limit);
 }
 
-async function trimRedisLeaderboard(client: Redis, key: string): Promise<void> {
-  const total = await client.zcard(key);
-  if (total <= MAX_ENTRIES) return;
-  const overflowCount = total - MAX_ENTRIES;
-  if (overflowCount <= 0) return;
-  const membersToRemove = await client.zrange<string[]>(key, 0, overflowCount - 1);
-  if (!membersToRemove.length) return;
-  const pipeline = client.pipeline();
-  pipeline.zrem(key, ...membersToRemove);
-  pipeline.hdel(dataKeyFor(key), ...membersToRemove);
-  await pipeline.exec();
-}
-
 async function writeRedisScore(
   client: Redis,
   key: string,
@@ -135,21 +122,62 @@ async function writeRedisScore(
 ): Promise<{ entry: LeaderboardEntry; improved: boolean }> {
   const dataKey = dataKeyFor(key);
   const memberKey = memberKeyFromEntry(entry);
-  const existingRaw = (await client.hget(dataKey, memberKey)) as string | null;
-  const existing = safeParseEntry(existingRaw);
+  const rawResult = (await client.eval(
+    `
+      local existingRaw = redis.call("HGET", KEYS[2], ARGV[1])
+      if existingRaw then
+        local ok, existing = pcall(cjson.decode, existingRaw)
+        if ok and existing and existing.score ~= nil then
+          local existingScore = tonumber(existing.score) or 0
+          local existingCoins = tonumber(existing.coins) or -1
+          local nextScore = tonumber(ARGV[3]) or 0
+          local nextCoins = tonumber(ARGV[4]) or -1
+          local improved = false
 
-  if (existing && !isImprovement(entry, existing)) {
-    return { entry: existing, improved: false };
-  }
+          if nextScore ~= existingScore then
+            improved = nextScore > existingScore
+          else
+            improved = nextCoins > existingCoins
+          end
 
-  const pipeline = client.pipeline();
-  pipeline.zadd(key, { score: entry.score, member: memberKey });
-  pipeline.hset(dataKey, { [memberKey]: JSON.stringify(entry) });
-  pipeline.expire(key, TTL_SECONDS);
-  pipeline.expire(dataKey, TTL_SECONDS);
-  await pipeline.exec();
-  await trimRedisLeaderboard(client, key);
-  return { entry, improved: true };
+          if not improved then
+            return {0, existingRaw}
+          end
+        end
+      end
+
+      redis.call("ZADD", KEYS[1], tonumber(ARGV[3]) or 0, ARGV[1])
+      redis.call("HSET", KEYS[2], ARGV[1], ARGV[2])
+      redis.call("EXPIRE", KEYS[1], tonumber(ARGV[5]) or 0)
+      redis.call("EXPIRE", KEYS[2], tonumber(ARGV[5]) or 0)
+
+      local total = redis.call("ZCARD", KEYS[1])
+      local maxEntries = tonumber(ARGV[6]) or 100
+      if total > maxEntries then
+        local overflow = total - maxEntries
+        local members = redis.call("ZRANGE", KEYS[1], 0, overflow - 1)
+        if #members > 0 then
+          redis.call("ZREM", KEYS[1], unpack(members))
+          redis.call("HDEL", KEYS[2], unpack(members))
+        end
+      end
+
+      return {1, ARGV[2]}
+    `,
+    [key, dataKey],
+    [
+      memberKey,
+      JSON.stringify(entry),
+      entry.score.toString(),
+      String(entry.coins ?? -1),
+      TTL_SECONDS.toString(),
+      MAX_ENTRIES.toString(),
+    ],
+  )) as Array<string | number>;
+
+  const improved = Number(rawResult?.[0] ?? 0) === 1;
+  const stored = safeParseEntry(typeof rawResult?.[1] === 'string' ? rawResult[1] : null) ?? entry;
+  return { entry: stored, improved };
 }
 
 async function readRedisTop(client: Redis, key: string, limit: number): Promise<LeaderboardEntry[]> {

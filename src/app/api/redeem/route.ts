@@ -91,11 +91,9 @@ export async function POST(request: NextRequest) {
       metadata: payload?.metadata ?? null,
     };
 
-    try {
-      await redis.lpush(CLAIM_LOG_KEY, JSON.stringify(logEntry));
-    } catch (error) {
+    void redis.lpush(CLAIM_LOG_KEY, JSON.stringify(logEntry)).catch((error) => {
       console.warn('[redeem] Failed to log redemption event', error);
-    }
+    });
 
     return NextResponse.json({ success: true, series, claimedAt });
   } catch (error) {

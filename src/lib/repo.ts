@@ -44,6 +44,10 @@ export type Ownership = {
   cosmetics: string[];
   createdAt: Date;
 };
+export type OwnershipWithCharacter = {
+  ownership: Ownership;
+  character: Character | null;
+};
 export type ClaimChallenge = {
   id: string;
   codeHash: string;
@@ -53,7 +57,13 @@ export type ClaimChallenge = {
   expiresAt: Date;
   userId: string | null;
   consumed: boolean;
+  unitId?: string | null;
+  secureSalt?: string | null;
 };
+
+export type ClaimStartResult =
+  | { ok: true; challenge: ClaimChallenge; secureSalt: string }
+  | { ok: false; reason: 'not_found' | 'unavailable' };
 
 export type Repo = {
   kind?: 'memory' | 'redis';
@@ -66,15 +76,31 @@ export type Repo = {
   createChallenge(data: Omit<ClaimChallenge, 'id' | 'consumed'>): Promise<ClaimChallenge>;
   getChallengeById(id: string): Promise<ClaimChallenge | null>;
   consumeChallenge(id: string): Promise<void>;
+  startClaimChallenge?(params: {
+    codeHash: string;
+    userId: string | null;
+    nonce: string;
+    timestamp: string;
+    expiresAt: Date;
+  }): Promise<ClaimStartResult>;
 
   // Units/ownership
   findUnitByCodeHash(codeHash: string): Promise<PhysicalUnit | null>;
+  getUnitById?(id: string): Promise<PhysicalUnit | null>;
   claimUnitAndCreateOwnership(params: { unitId: string; userId: string; challengeId?: string }): Promise<{ characterId: string; claimedAt: Date }>;
   listOwnershipsByUser(userId: string): Promise<Ownership[]>;
+  listOwnershipsWithCharactersByUser?(userId: string): Promise<OwnershipWithCharacter[]>;
+  listOwnedCharacterIdsByUser?(userId: string): Promise<string[]>;
   listOwnedAvatarIdsByUser(userId: string): Promise<string[]>;
+  getClaimVerifyPreview?(codeHash: string): Promise<{ status: UnitStatus; character: Character | null } | null>;
 
   // Characters
   getCharacterById(id: string): Promise<Character | null>;
+  resolveCharacterIdentifier?(params: {
+    raw: string;
+    normalized: string;
+    slugified: string;
+  }): Promise<Character | null>;
   getCharacterBySlug(slug: string): Promise<Character | null>;
   getCharacterByNameSlug(nameSlug: string): Promise<Character | null>;
   getCharacterByCodeSeries(codeSeries: string): Promise<Character | null>;

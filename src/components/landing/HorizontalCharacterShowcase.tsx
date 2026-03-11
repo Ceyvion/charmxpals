@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
+import { useOwnedCharacterIds } from '@/lib/useOwnedCharacterIds';
 
 type Character = {
   id: string;
@@ -70,6 +71,9 @@ export default function HorizontalCharacterShowcase({ characters }: { characters
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [mediaIndexById, setMediaIndexById] = useState<Record<string, number>>({});
+  const initialOwnedIds = characters.filter((character) => character.owned).map((character) => character.id);
+  const ownedIds = useOwnedCharacterIds(initialOwnedIds);
+  const ownedSet = new Set(ownedIds);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -153,7 +157,7 @@ export default function HorizontalCharacterShowcase({ characters }: { characters
                         <span className="cp-pill text-[0.6rem]">
                           {rarityLabel(char.rarity)}
                         </span>
-                        {char.owned && (
+                        {ownedSet.has(char.id) && (
                           <span className="cp-pill text-[0.6rem]" style={{ borderColor: 'var(--cp-green)', color: 'var(--cp-green)' }}>
                             Owned
                           </span>

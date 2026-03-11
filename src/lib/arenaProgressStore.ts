@@ -33,13 +33,21 @@ export function createArenaProgressRecord(dateKey = toArenaDateKey()): ArenaProg
   };
 }
 
-function keyFor(userId: string) {
-  return `arena:progress:${userId}`;
+function keyFor(userId: string, dateKey: string) {
+  return `arena:progress:${userId}:${dateKey}`;
 }
 
 function sanitizeCount(value: unknown) {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
-  return Math.max(0, Math.floor(value));
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.max(0, Math.floor(value));
+  }
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return Math.max(0, Math.floor(parsed));
+    }
+  }
+  return 0;
 }
 
 export function sanitizeArenaProgressDelta(delta: unknown): ArenaProgressDelta {
@@ -70,8 +78,14 @@ function sanitizeArenaProgressRecord(record: unknown, dateKey = toArenaDateKey()
   };
 }
 
-function parseStoredRecord(raw: string | null | undefined, dateKey = toArenaDateKey()) {
+function parseStoredRecord(
+  raw: string | Record<string, string | number | null> | null | undefined,
+  dateKey = toArenaDateKey(),
+) {
   if (!raw) return createArenaProgressRecord(dateKey);
+  if (typeof raw === 'object') {
+    return sanitizeArenaProgressRecord(raw, dateKey);
+  }
   try {
     return sanitizeArenaProgressRecord(JSON.parse(raw), dateKey);
   } catch {
@@ -86,18 +100,13 @@ export async function getArenaProgress(userId: string, dateKey = toArenaDateKey(
     if (!shouldAllowEphemeralFallback()) {
       throw new Error('Redis-backed arena progress is required in production.');
     }
-    return sanitizeArenaProgressRecord(memoryStore.get(userId), dateKey);
+    return sanitizeArenaProgressRecord(memoryStore.get(keyFor(userId, dateKey)), dateKey);
   }
 
   const redis = getRedis();
-  const raw = await redis.get<string | ArenaProgressRecord>(keyFor(userId));
-  if (!raw) return createArenaProgressRecord(dateKey);
-
-  if (typeof raw === 'string') {
-    return parseStoredRecord(raw, dateKey);
-  }
-
-  return sanitizeArenaProgressRecord(raw, dateKey);
+  const raw = await redis.hgetall<Record<string, string | number | null>>(keyFor(userId, dateKey));
+  if (!raw || Object.keys(raw).length === 0) return createArenaProgressRecord(dateKey);
+  return parseStoredRecord(raw, dateKey);
 }
 
 export async function applyArenaProgressDelta(
@@ -107,26 +116,67 @@ export async function applyArenaProgressDelta(
 ): Promise<ArenaProgressRecord> {
   if (!userId) throw new Error('userId required');
   const sanitizedDelta = sanitizeArenaProgressDelta(delta);
-  const current = await getArenaProgress(userId, dateKey);
-  const next: ArenaProgressRecord = {
-    dateKey,
-    pulses: current.pulses + (sanitizedDelta.pulses ?? 0),
-    eliminations: current.eliminations + (sanitizedDelta.eliminations ?? 0),
-    matches: current.matches + (sanitizedDelta.matches ?? 0),
-    updatedAt: new Date().toISOString(),
-  };
+  const updatedAt = new Date().toISOString();
 
   if (!hasRedisEnv()) {
     if (!shouldAllowEphemeralFallback()) {
       throw new Error('Redis-backed arena progress is required in production.');
     }
-    memoryStore.set(userId, next);
+    const storeKey = keyFor(userId, dateKey);
+    const current = sanitizeArenaProgressRecord(memoryStore.get(storeKey), dateKey);
+    const next: ArenaProgressRecord = {
+      dateKey,
+      pulses: current.pulses + (sanitizedDelta.pulses ?? 0),
+      eliminations: current.eliminations + (sanitizedDelta.eliminations ?? 0),
+      matches: current.matches + (sanitizedDelta.matches ?? 0),
+      updatedAt,
+    };
+    memoryStore.set(storeKey, next);
     return next;
   }
 
   const redis = getRedis();
-  await redis.set(keyFor(userId), JSON.stringify(next), { ex: ARENA_PROGRESS_TTL_SECONDS });
-  return next;
+  const result = (await redis.eval(
+    `
+      local pulsesDelta = tonumber(ARGV[1]) or 0
+      local eliminationsDelta = tonumber(ARGV[2]) or 0
+      local matchesDelta = tonumber(ARGV[3]) or 0
+
+      local pulses = (tonumber(redis.call("HGET", KEYS[1], "pulses") or "0") or 0) + pulsesDelta
+      local eliminations = (tonumber(redis.call("HGET", KEYS[1], "eliminations") or "0") or 0) + eliminationsDelta
+      local matches = (tonumber(redis.call("HGET", KEYS[1], "matches") or "0") or 0) + matchesDelta
+
+      redis.call(
+        "HSET",
+        KEYS[1],
+        "dateKey", ARGV[4],
+        "pulses", tostring(pulses),
+        "eliminations", tostring(eliminations),
+        "matches", tostring(matches),
+        "updatedAt", ARGV[5]
+      )
+      redis.call("EXPIRE", KEYS[1], tonumber(ARGV[6]) or 0)
+
+      return {ARGV[4], tostring(pulses), tostring(eliminations), tostring(matches), ARGV[5]}
+    `,
+    [keyFor(userId, dateKey)],
+    [
+      String(sanitizedDelta.pulses ?? 0),
+      String(sanitizedDelta.eliminations ?? 0),
+      String(sanitizedDelta.matches ?? 0),
+      dateKey,
+      updatedAt,
+      String(ARENA_PROGRESS_TTL_SECONDS),
+    ],
+  )) as Array<string | number>;
+
+  return {
+    dateKey: String(result?.[0] ?? dateKey),
+    pulses: sanitizeCount(result?.[1]),
+    eliminations: sanitizeCount(result?.[2]),
+    matches: sanitizeCount(result?.[3]),
+    updatedAt: String(result?.[4] ?? updatedAt),
+  };
 }
 
 export async function getArenaDailyProgress(userId: string, now = Date.now()) {

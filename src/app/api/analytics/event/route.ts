@@ -7,7 +7,6 @@ import {
   sanitizeAnalyticsProperties,
 } from '@/lib/analytics';
 import { getClientIp } from '@/lib/ip';
-import { getSafeServerSession } from '@/lib/serverSession';
 import { rateLimitCheck } from '@/lib/rateLimit';
 
 export async function POST(request: NextRequest) {
@@ -35,13 +34,12 @@ export async function POST(request: NextRequest) {
     return Response.json({ success: false, error: 'invalid_name' }, { status: 400 });
   }
 
-  const session = await getSafeServerSession();
   const event = {
     id: crypto.randomUUID(),
     name,
     path: sanitizeAnalyticsPath(parsed.path),
     properties: sanitizeAnalyticsProperties(parsed.properties),
-    userId: session?.user?.id ?? null,
+    userId: null,
     ip,
     userAgent: request.headers.get('user-agent'),
     createdAt: new Date().toISOString(),

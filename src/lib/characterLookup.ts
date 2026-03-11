@@ -68,11 +68,20 @@ export async function resolveCharacterByIdentifier(repo: Repo, identifier: strin
   const trimmed = decoded.trim();
   if (!trimmed) return null;
 
-  const byId = await repo.getCharacterById(trimmed);
-  if (byId) return byId;
-
   const normalizedInput = normalize(trimmed);
   const slugifiedInput = slugify(trimmed);
+
+  if (repo.resolveCharacterIdentifier) {
+    const resolved = await repo.resolveCharacterIdentifier({
+      raw: trimmed,
+      normalized: normalizedInput,
+      slugified: slugifiedInput,
+    });
+    if (resolved) return resolved;
+  }
+
+  const byId = await repo.getCharacterById(trimmed);
+  if (byId) return byId;
 
   const bySlug =
     (await repo.getCharacterBySlug(normalizedInput)) ??

@@ -2,7 +2,6 @@ import { NextRequest } from 'next/server';
 
 import { getClientIp } from '@/lib/ip';
 import { rateLimitCheck } from '@/lib/rateLimit';
-import { getSafeServerSession } from '@/lib/serverSession';
 import { updateScoreAttemptProgress, verifyScoreSession } from '@/lib/scoreSession';
 
 export async function POST(request: NextRequest) {
@@ -14,11 +13,6 @@ export async function POST(request: NextRequest) {
   });
   if (!rateLimitResult.allowed) {
     return Response.json({ success: false, error: 'rate limit exceeded' }, { status: 429 });
-  }
-
-  const session = await getSafeServerSession();
-  if (!session?.user?.id) {
-    return Response.json({ success: false, error: 'unauthorized' }, { status: 401 });
   }
 
   let body: unknown;
@@ -48,13 +42,13 @@ export async function POST(request: NextRequest) {
   }
 
   const claims = verifyScoreSession(sessionToken);
-  if (!claims || claims.sub !== session.user.id || claims.mode !== 'runner' || claims.trackId !== trackId) {
+  if (!claims || claims.mode !== 'runner' || claims.trackId !== trackId) {
     return Response.json({ success: false, error: 'invalid_score_session' }, { status: 400 });
   }
 
   const record = await updateScoreAttemptProgress({
     nonce: claims.nonce,
-    userId: session.user.id,
+    userId: claims.sub,
     trackId,
     progress,
     furthestNoteIndex,

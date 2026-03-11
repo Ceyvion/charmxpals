@@ -1,13 +1,18 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { cache } from 'react';
 import { getRepo } from '@/lib/repo';
 import { withCharacterLore, type CharacterWithLore } from '@/lib/characterLore';
 import CharacterCard from '@/components/CharacterCard';
 
-export async function generateMetadata({ params }: { params: { handle: string } }): Promise<Metadata> {
+const getUserByHandleCached = cache(async (handle: string) => {
   const repo = await getRepo();
-  const user = await repo.getUserByHandle(params.handle);
+  return repo.getUserByHandle(handle);
+});
+
+export async function generateMetadata({ params }: { params: { handle: string } }): Promise<Metadata> {
+  const user = await getUserByHandleCached(params.handle);
   if (!user) {
     return {
       title: 'Profile Not Found',
@@ -25,14 +30,27 @@ export async function generateMetadata({ params }: { params: { handle: string } 
 
 export default async function UserProfile({ params }: { params: { handle: string } }) {
   const repo = await getRepo();
-  const user = await repo.getUserByHandle(params.handle);
+  const user = await getUserByHandleCached(params.handle);
   if (!user) return notFound();
 
-  const ownerships = await repo.listOwnershipsByUser(user.id);
-  const rawCharacters = await Promise.all(ownerships.map((ownership) => repo.getCharacterById(ownership.characterId)));
-  const characters = rawCharacters
-    .map((character) => withCharacterLore(character ?? null))
-    .filter((character): character is CharacterWithLore => Boolean(character));
+  let characters: CharacterWithLore[];
+  if (repo.listOwnershipsWithCharactersByUser) {
+    characters = (await repo.listOwnershipsWithCharactersByUser(user.id))
+      .map((item) => withCharacterLore(item.character))
+      .filter((character): character is CharacterWithLore => Boolean(character));
+  } else {
+    const ownerships = await repo.listOwnershipsByUser(user.id);
+    const rawCharacters = await repo.getCharactersByIds(ownerships.map((ownership) => ownership.characterId));
+    const characterById = new Map<string, CharacterWithLore>();
+    for (const character of rawCharacters) {
+      const enriched = withCharacterLore(character ?? null);
+      if (!enriched) continue;
+      characterById.set(character.id, enriched);
+    }
+    characters = ownerships
+      .map((ownership) => characterById.get(ownership.characterId) ?? null)
+      .filter((character): character is CharacterWithLore => Boolean(character));
+  }
 
   return (
     <div className="min-h-screen py-12 px-4 bg-grid-overlay">

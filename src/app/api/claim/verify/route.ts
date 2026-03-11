@@ -36,16 +36,24 @@ export async function POST(request: NextRequest) {
 
     const codeHash = hashClaimCode(code);
     const repo = await getRepo();
-    const unit = await repo.findUnitByCodeHash(codeHash);
+    const preview = repo.getClaimVerifyPreview
+      ? await repo.getClaimVerifyPreview(codeHash)
+      : null;
+
+    const unit = preview ? null : await repo.findUnitByCodeHash(codeHash);
+    const status = preview?.status ?? unit?.status;
+    const character = preview?.character ?? (unit ? await repo.getCharacterById(unit.characterId) : null);
+
     if (!unit) {
-      return Response.json({ status: 'not_found' as const, character: null });
+      if (!preview) {
+        return Response.json({ status: 'not_found' as const, character: null });
+      }
     }
 
-    const character = await repo.getCharacterById(unit.characterId);
     const enriched = withCharacterLore(character);
 
     return Response.json({
-      status: unit.status,
+      status,
       character: enriched
         ? {
             id: enriched.id,

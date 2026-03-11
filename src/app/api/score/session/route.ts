@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
     mode: 'runner',
     trackId: limits.trackId,
     minAgeSeconds: requirements.minAgeSeconds,
+    displayName: resolveScoreDisplayName(session.user.name, session.user.email),
   });
   await createScoreAttemptRecord({
     claims,
@@ -70,3 +71,17 @@ export async function POST(request: NextRequest) {
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+function resolveScoreDisplayName(name?: string | null, email?: string | null) {
+  const preferred = normalizeDisplayName(name);
+  if (preferred) return preferred;
+
+  const emailLocal = typeof email === 'string' ? email.split('@')[0] : '';
+  return normalizeDisplayName(emailLocal) || 'Player';
+}
+
+function normalizeDisplayName(value?: string | null) {
+  if (!value) return null;
+  const normalized = value.replace(/\s+/g, ' ').trim().slice(0, 32);
+  return normalized || null;
+}

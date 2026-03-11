@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { worldTagline } from '@/data/characterLore';
 import { useSfx } from '@/lib/sfx';
+import { useOwnedCharacterIds } from '@/lib/useOwnedCharacterIds';
 
 type Character = {
   id: string;
@@ -47,8 +48,9 @@ export default function ExploreClient({ characters, ownedIds }: { characters: Ch
   const [sortBy, setSortBy] = useState<'rarity' | 'name'>('rarity');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const { playHover, playClick } = useSfx();
+  const resolvedOwnedIds = useOwnedCharacterIds(ownedIds);
 
-  const ownedSet = useMemo(() => new Set(ownedIds), [ownedIds]);
+  const ownedSet = useMemo(() => new Set(resolvedOwnedIds), [resolvedOwnedIds]);
 
   const filtered = useMemo(() => {
     let list = characters;

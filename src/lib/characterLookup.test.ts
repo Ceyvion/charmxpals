@@ -90,6 +90,19 @@ describe('resolveCharacterByIdentifier', () => {
     expect(character?.name).toBe('Storm Leviathan');
   });
 
+  it('uses repo-level identifier resolution when available', async () => {
+    const repo = createRepo(sampleCharacters);
+    repo.resolveCharacterIdentifier = async ({ raw }) => {
+      expect(raw).toBe('storm-leviathan');
+      return sampleCharacters[0] ?? null;
+    };
+    repo.getCharacterById = async () => {
+      throw new Error('getCharacterById should not be called');
+    };
+    const character = await resolveCharacterByIdentifier(repo, 'storm-leviathan');
+    expect(character?.id).toBe('char-001');
+  });
+
   it('falls back to slug match from listed characters when id lookup misses', async () => {
     const repo = createRepo(sampleCharacters);
     const character = await resolveCharacterByIdentifier(repo, 'storm-leviathan');

@@ -150,6 +150,20 @@
       "area": "frontend"
     },
     {
+      "id": "PERF-6",
+      "title": "Perf: hot path counter + ownership projection pass",
+      "detail": "Make score/arena progress atomic, materialize owned avatar ids for MMO token minting, remove repeated auth/user lookups from hot request paths, and restore cached public roster reads with client-side ownership overlays.",
+      "status": "done",
+      "area": "backend"
+    },
+    {
+      "id": "PERF-7",
+      "title": "Perf: leaderboard + claim round-trip reduction",
+      "detail": "Collapse leaderboard write/trim into one Redis script, reduce claim start/verify/complete read amplification with signed opaque challenge tokens, materialize owned character ids and hydrated inventory reads for cheap ownership/profile overlays, and add repo-level character identifier resolution to avoid serial lookup chains.",
+      "status": "done",
+      "area": "backend"
+    },
+    {
       "id": "A1.13",
       "title": "Landing visual refinement (soft sci-fi + playful)",
       "detail": "Refresh palette, typography, and landing sections for a refined sci-fi collectible aesthetic.",

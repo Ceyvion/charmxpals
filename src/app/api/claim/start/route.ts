@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 
-import { computeChallengeDigest, generateNonce, hashClaimCode } from '@/lib/crypto';
+import { computeChallengeDigest, generateNonce, hashClaimCode, signClaimToken } from '@/lib/crypto';
 import { getRepo } from '@/lib/repo';
 import { rateLimitCheck } from '@/lib/rateLimit';
 import { getClientIp } from '@/lib/ip';
@@ -38,34 +38,69 @@ export async function POST(request: NextRequest) {
     }
 
     const codeHash = hashClaimCode(code);
-
-    // Validate the physical unit exists and is available
     const repo = await getRepo();
-    const unit = await repo.findUnitByCodeHash(codeHash);
-    if (!unit) {
-      return Response.json({ success: false, error: 'Invalid code' }, { status: 400 });
-    }
-    if (unit.status !== 'available') {
-      return Response.json({ success: false, error: 'Code already claimed' }, { status: 400 });
-    }
-
-    // Generate a signed challenge bound to this unit
     const nonce = generateNonce();
     const timestamp = Date.now().toString();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+    const optimized = repo.startClaimChallenge
+      ? await repo.startClaimChallenge({ codeHash, userId, nonce, timestamp, expiresAt })
+      : null;
+
+    if (optimized && !optimized.ok) {
+      return Response.json(
+        { success: false, error: optimized.reason === 'unavailable' ? 'Code already claimed' : 'Invalid code' },
+        { status: 400 },
+      );
+    }
+
+    let challenge = optimized?.ok ? optimized.challenge : null;
+    let secureSalt = optimized?.ok ? optimized.secureSalt : null;
+
+    if (!challenge || !secureSalt) {
+      const unit = await repo.findUnitByCodeHash(codeHash);
+      if (!unit) {
+        return Response.json({ success: false, error: 'Invalid code' }, { status: 400 });
+      }
+      if (unit.status !== 'available') {
+        return Response.json({ success: false, error: 'Code already claimed' }, { status: 400 });
+      }
+      secureSalt = unit.secureSalt;
+      challenge = await repo.createChallenge({
+        codeHash,
+        nonce,
+        timestamp,
+        challengeDigest: '',
+        expiresAt,
+        userId,
+        unitId: unit.id,
+        secureSalt,
+      });
+    }
+
     const challengeDigest = computeChallengeDigest({
       codeHash,
       nonce,
       timestamp,
-      secureSalt: unit.secureSalt,
+      secureSalt,
     });
-
-    // Persist the challenge with TTL (5 minutes)
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
-    const challenge = await repo.createChallenge({ codeHash, nonce, timestamp, challengeDigest, expiresAt, userId });
+    const challengeToken = challenge?.unitId && challenge?.secureSalt
+      ? signClaimToken({
+          challengeId: challenge.id,
+          codeHash,
+          nonce,
+          timestamp,
+          unitId: challenge.unitId,
+          secureSalt: challenge.secureSalt,
+          sub: userId ?? null,
+          exp: Math.floor(expiresAt.getTime() / 1000),
+        })
+      : null;
 
     return Response.json({
       success: true,
       challengeId: challenge.id,
+      challengeToken,
       nonce,
       timestamp,
       challengeDigest,

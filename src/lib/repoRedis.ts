@@ -23,6 +23,7 @@ export const redisKeys = {
   units: `${PREFIX}:units`,
   unitByCodeHash: `${PREFIX}:unit:code`,
   ownershipsPrefix: `${PREFIX}:ownerships`,
+  ownershipCharacterIdsPrefix: `${PREFIX}:ownership:characterIds`,
   ownershipAvatarIdsPrefix: `${PREFIX}:ownership:avatarIds`,
   challenges: `${PREFIX}:challenges`,
   abuse: `${PREFIX}:abuse`,
@@ -30,7 +31,6 @@ export const redisKeys = {
 
 const KEYS = redisKeys;
 const CHARACTER_INDEX_VERSION = '1';
-const OWNED_AVATAR_CACHE_TTL_SECONDS = 120;
 const AVATAR_ID_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const SPRITE_PATH_RE = /\/assets\/characters\/([^/]+)\/sprite\.[a-z0-9]+(?:[?#].*)?$/i;
 
@@ -266,8 +266,16 @@ function ownershipKey(userId: string): string {
   return `${KEYS.ownershipsPrefix}:${userId}`;
 }
 
-function ownershipAvatarKey(userId: string): string {
+function ownershipCharacterIdsKey(userId: string): string {
+  return `${KEYS.ownershipCharacterIdsPrefix}:${userId}`;
+}
+
+function ownershipAvatarIdsKey(userId: string): string {
   return `${KEYS.ownershipAvatarIdsPrefix}:${userId}`;
+}
+
+function challengeKey(challengeId: string): string {
+  return `${KEYS.challenges}:${challengeId}`;
 }
 
 function parseJson<T>(value: unknown): T | null {
@@ -318,6 +326,10 @@ function avatarIdFromCharacter(character: Character | null): string | null {
 
 async function readUser(id: string): Promise<User | null> {
   const raw = await redis.hget(KEYS.users, id);
+  return toUser(raw);
+}
+
+function toUser(raw: unknown): User | null {
   const stored = parseJson<StoredUser>(raw);
   if (!stored) return null;
   return { id: stored.id, email: stored.email, handle: stored.handle ?? null };
@@ -349,6 +361,8 @@ function parseChallenge(raw: unknown): ClaimChallenge | null {
     expiresAt: new Date(stored.expiresAt),
     userId: stored.userId ?? null,
     consumed: stored.consumed,
+    unitId: stored.unitId ?? null,
+    secureSalt: stored.secureSalt ?? null,
   };
 }
 
@@ -398,6 +412,9 @@ export const repoRedis: Repo = {
         await redis.hdel(KEYS.userByEmail, normalizedEmail);
         return repoRedis.upsertDevUser({ handle, email });
       }
+      if ((stored.handle ?? '') === handle) {
+        return { id: stored.id, email: stored.email, handle: stored.handle };
+      }
       if (stored.handle && stored.handle.toLowerCase() !== normalizedHandle) {
         await redis.hdel(KEYS.userByHandle, stored.handle.toLowerCase());
       }
@@ -438,9 +455,16 @@ export const repoRedis: Repo = {
     if (!handle) return null;
     const normalized = handle.trim().toLowerCase();
     if (!normalized) return null;
-    const userId = (await redis.hget(KEYS.userByHandle, normalized)) as string | null;
-    if (!userId) return null;
-    return readUser(userId);
+    const raw = await redis.eval(
+      `
+        local userId = redis.call("HGET", KEYS[1], ARGV[1])
+        if not userId then return nil end
+        return redis.call("HGET", KEYS[2], userId)
+      `,
+      [KEYS.userByHandle, KEYS.users],
+      [normalized],
+    );
+    return toUser(raw);
   },
 
   async createChallenge({ codeHash, nonce, timestamp, challengeDigest, expiresAt, userId }) {
@@ -456,8 +480,11 @@ export const repoRedis: Repo = {
       consumed: false,
       createdAt: new Date().toISOString(),
       userId: userId ?? null,
+      unitId: null,
+      secureSalt: null,
     };
-    await redis.hset(KEYS.challenges, { [id]: JSON.stringify(stored) });
+    const ttlSeconds = Math.max(1, Math.ceil((expiresAt.getTime() - Date.now()) / 1000));
+    await redis.set(challengeKey(id), JSON.stringify(stored), { ex: ttlSeconds });
     return {
       id,
       codeHash,
@@ -467,30 +494,114 @@ export const repoRedis: Repo = {
       expiresAt,
       userId: stored.userId ?? null,
       consumed: false,
+      unitId: stored.unitId ?? null,
+      secureSalt: stored.secureSalt ?? null,
     } satisfies ClaimChallenge;
+  },
+
+  async startClaimChallenge({ codeHash, userId, nonce, timestamp, expiresAt }) {
+    await ensureReady();
+    const id = uuid();
+    const ttlSeconds = Math.max(1, Math.ceil((expiresAt.getTime() - Date.now()) / 1000));
+    const createdAt = new Date().toISOString();
+    const result = (await redis.eval(
+      `
+        local unitId = redis.call("HGET", KEYS[1], ARGV[1])
+        if not unitId then return {0, "not_found"} end
+        local unit = redis.call("HGET", KEYS[2], unitId)
+        if not unit then return {0, "not_found"} end
+        local unitObj = cjson.decode(unit)
+        if unitObj.status ~= "available" then return {0, "unavailable"} end
+
+        local challengeObj = {
+          id = ARGV[2],
+          codeHash = ARGV[1],
+          nonce = ARGV[3],
+          timestamp = ARGV[4],
+          challengeDigest = "",
+          expiresAt = ARGV[5],
+          userId = ARGV[6],
+          consumed = false,
+          createdAt = ARGV[7],
+          unitId = unitId,
+          secureSalt = unitObj.secureSalt
+        }
+
+        redis.call("SET", KEYS[3] .. ":" .. ARGV[2], cjson.encode(challengeObj), "EX", ARGV[8])
+        return {1, unitId, unitObj.secureSalt}
+      `,
+      [KEYS.unitByCodeHash, KEYS.units, KEYS.challenges],
+      [
+        codeHash,
+        id,
+        nonce,
+        timestamp,
+        expiresAt.toISOString(),
+        userId ?? '',
+        createdAt,
+        ttlSeconds.toString(),
+      ],
+    )) as Array<string | number>;
+
+    if (Number(result?.[0]) !== 1) {
+      return {
+        ok: false as const,
+        reason: String(result?.[1] ?? 'not_found') === 'unavailable' ? 'unavailable' : 'not_found',
+      };
+    }
+
+    const secureSalt = String(result[2] ?? '');
+    const challenge: ClaimChallenge = {
+      id,
+      codeHash,
+      nonce,
+      timestamp,
+      challengeDigest: '',
+      expiresAt,
+      userId: userId ?? null,
+      consumed: false,
+      unitId: String(result[1] ?? ''),
+      secureSalt,
+    };
+    return { ok: true as const, challenge, secureSalt };
   },
 
   async getChallengeById(id) {
     await ensureReady();
-    const raw = await redis.hget(KEYS.challenges, id);
+    const raw = (await redis.get(challengeKey(id))) ?? (await redis.hget(KEYS.challenges, id));
     return parseChallenge(raw);
   },
 
   async consumeChallenge(id) {
     await ensureReady();
-    const raw = await redis.hget(KEYS.challenges, id);
+    const challengeStorageKey = challengeKey(id);
+    const raw = (await redis.get(challengeStorageKey)) ?? (await redis.hget(KEYS.challenges, id));
     if (!raw) return;
     const stored = parseJson<StoredChallenge>(raw);
     if (!stored) return;
     stored.consumed = true;
-    await redis.hset(KEYS.challenges, { [id]: JSON.stringify(stored) });
+    const ttlSeconds = Math.max(1, Math.ceil((new Date(stored.expiresAt).getTime() - Date.now()) / 1000));
+    await redis.set(challengeStorageKey, JSON.stringify(stored), { ex: ttlSeconds });
+    await redis.hdel(KEYS.challenges, id);
   },
 
   async findUnitByCodeHash(codeHash) {
     await ensureReady();
-    const unitId = (await redis.hget(KEYS.unitByCodeHash, codeHash)) as string | null;
-    if (!unitId) return null;
-    const raw = await redis.hget(KEYS.units, unitId);
+    const raw = await redis.eval(
+      `
+        local unitId = redis.call("HGET", KEYS[1], ARGV[1])
+        if not unitId then return nil end
+        return redis.call("HGET", KEYS[2], unitId)
+      `,
+      [KEYS.unitByCodeHash, KEYS.units],
+      [codeHash],
+    );
+    return parseUnit(raw);
+  },
+
+  async getUnitById(id) {
+    await ensureReady();
+    const raw = await redis.hget(KEYS.units, id);
     return parseUnit(raw);
   },
 
@@ -499,7 +610,8 @@ export const repoRedis: Repo = {
     const claimedAtIso = new Date().toISOString();
     const claimedAtDate = new Date(claimedAtIso);
     const userOwnershipKey = ownershipKey(userId);
-    const userOwnershipAvatarKey = ownershipAvatarKey(userId);
+    const userOwnershipCharacterIdsKey = ownershipCharacterIdsKey(userId);
+    const userOwnershipAvatarIdsKey = ownershipAvatarIdsKey(userId);
 
     if (challengeId) {
       const ownershipId = uuid();
@@ -508,12 +620,21 @@ export const repoRedis: Repo = {
         if not unit then return {0, "unit_not_found"} end
         local unitObj = cjson.decode(unit)
         if unitObj.status ~= "available" then return {0, "unit_unavailable"} end
-        local challenge = redis.call("HGET", KEYS[2], ARGV[2])
+        local challengeKey = KEYS[2] .. ":" .. ARGV[2]
+        local challenge = redis.call("GET", challengeKey)
+        local challengeFromHash = 0
+        if not challenge then
+          challenge = redis.call("HGET", KEYS[2], ARGV[2])
+          challengeFromHash = 1
+        end
         if not challenge then return {0, "challenge_not_found"} end
         local challengeObj = cjson.decode(challenge)
         if challengeObj.consumed then return {0, "challenge_consumed"} end
-        challengeObj.consumed = true
-        redis.call("HSET", KEYS[2], ARGV[2], cjson.encode(challengeObj))
+        if challengeFromHash == 1 then
+          redis.call("HDEL", KEYS[2], ARGV[2])
+        else
+          redis.call("DEL", challengeKey)
+        end
         unitObj.status = "claimed"
         unitObj.claimedBy = ARGV[3]
         unitObj.claimedAt = ARGV[4]
@@ -529,12 +650,13 @@ export const repoRedis: Repo = {
         local ownershipObj = {id=ARGV[5], userId=ARGV[3], characterId=unitObj.characterId, source="claim", cosmetics={}, createdAt=ARGV[4]}
         if avatarId ~= "" then ownershipObj.avatarId = avatarId end
         redis.call("LPUSH", KEYS[3], cjson.encode(ownershipObj))
-        redis.call("DEL", KEYS[5])
+        redis.call("SADD", KEYS[5], unitObj.characterId)
+        if avatarId ~= "" then redis.call("SADD", KEYS[6], avatarId) end
         return {1, unitObj.characterId, ARGV[4]}
       `;
       const result = (await redis.eval(
         lua,
-        [KEYS.units, KEYS.challenges, userOwnershipKey, KEYS.characters, userOwnershipAvatarKey],
+        [KEYS.units, KEYS.challenges, userOwnershipKey, KEYS.characters, userOwnershipCharacterIdsKey, userOwnershipAvatarIdsKey],
         [unitId, challengeId, userId, claimedAtIso, ownershipId],
       )) as unknown;
       if (Array.isArray(result) && Number(result[0]) === 1) {
@@ -573,7 +695,10 @@ export const repoRedis: Repo = {
     }
 
     await redis.lpush(userOwnershipKey, JSON.stringify(ownership));
-    await redis.del(userOwnershipAvatarKey);
+    await redis.sadd(userOwnershipCharacterIdsKey, stored.characterId);
+    if (avatarId) {
+      await redis.sadd(userOwnershipAvatarIdsKey, avatarId);
+    }
 
     return { characterId: stored.characterId, claimedAt: claimedAtDate };
   },
@@ -594,24 +719,110 @@ export const repoRedis: Repo = {
       }));
   },
 
+  async listOwnershipsWithCharactersByUser(userId) {
+    await ensureReady();
+    if (!userId) return [];
+
+    const raw = (await redis.eval(
+      `
+        local items = redis.call("LRANGE", KEYS[1], 0, -1)
+        if #items == 0 then return {} end
+
+        local ownerships = {}
+        local characterIds = {}
+        local seenCharacterIds = {}
+
+        for i, item in ipairs(items) do
+          local ok, ownership = pcall(cjson.decode, item)
+          if ok and ownership and ownership.characterId then
+            ownerships[#ownerships + 1] = ownership
+            if not seenCharacterIds[ownership.characterId] then
+              seenCharacterIds[ownership.characterId] = true
+              characterIds[#characterIds + 1] = ownership.characterId
+            end
+          end
+        end
+
+        local characters = {}
+        if #characterIds > 0 then
+          characters = redis.call("HMGET", KEYS[2], unpack(characterIds))
+        end
+
+        local characterById = {}
+        for i, characterId in ipairs(characterIds) do
+          characterById[characterId] = characters[i]
+        end
+
+        local result = {}
+        for i, ownership in ipairs(ownerships) do
+          local characterRaw = characterById[ownership.characterId]
+          result[#result + 1] = cjson.encode({
+            ownership = ownership,
+            character = characterRaw and cjson.decode(characterRaw) or cjson.null
+          })
+        end
+
+        return result
+      `,
+      [ownershipKey(userId), KEYS.characters],
+      [],
+    )) as string[] | null;
+
+    return (raw || [])
+      .map((entry) => parseJson<{ ownership?: StoredOwnership; character?: StoredCharacter | null }>(entry))
+      .filter((entry): entry is { ownership: StoredOwnership; character?: StoredCharacter | null } => Boolean(entry?.ownership))
+      .map((entry) => ({
+        ownership: {
+          id: entry.ownership.id,
+          userId: entry.ownership.userId,
+          characterId: entry.ownership.characterId,
+          source: entry.ownership.source,
+          cosmetics: entry.ownership.cosmetics,
+          createdAt: new Date(entry.ownership.createdAt),
+        },
+        character: toCharacter(entry.character ?? null),
+      }));
+  },
+
+  async listOwnedCharacterIdsByUser(userId) {
+    await ensureReady();
+    if (!userId) return [];
+
+    const characterIdsKey = ownershipCharacterIdsKey(userId);
+    const storedCharacterIds = await redis.smembers(characterIdsKey);
+    if (Array.isArray(storedCharacterIds) && storedCharacterIds.length > 0) {
+      return storedCharacterIds
+        .filter((characterId): characterId is string => typeof characterId === 'string' && characterId.length > 0);
+    }
+
+    const items = (await redis.lrange(ownershipKey(userId), 0, -1)) as string[] | null;
+    const characterIds = Array.from(
+      new Set(
+        (items || [])
+          .map((entry) => parseJson<StoredOwnership>(entry))
+          .filter((parsed): parsed is StoredOwnership => Boolean(parsed))
+          .map((ownership) => ownership.characterId)
+          .filter(Boolean),
+      ),
+    );
+    if (characterIds.length > 0) {
+      for (const characterId of characterIds) {
+        await redis.sadd(characterIdsKey, characterId);
+      }
+    }
+    return characterIds;
+  },
+
   async listOwnedAvatarIdsByUser(userId) {
     await ensureReady();
     if (!userId) return [];
 
-    const cacheKey = ownershipAvatarKey(userId);
-    const cached = await redis.get(cacheKey);
-    if (Array.isArray(cached)) {
-      return cached
+    const avatarIdsKey = ownershipAvatarIdsKey(userId);
+    const storedAvatarIds = await redis.smembers(avatarIdsKey);
+    if (Array.isArray(storedAvatarIds) && storedAvatarIds.length > 0) {
+      return storedAvatarIds
         .map((entry) => normalizeAvatarId(entry))
         .filter((avatarId): avatarId is string => Boolean(avatarId));
-    }
-    if (typeof cached === 'string') {
-      const parsed = parseJson<unknown[]>(cached);
-      if (Array.isArray(parsed)) {
-        return parsed
-          .map((entry) => normalizeAvatarId(entry))
-          .filter((avatarId): avatarId is string => Boolean(avatarId));
-      }
     }
 
     const items = (await redis.lrange(ownershipKey(userId), 0, -1)) as string[] | null;
@@ -619,7 +830,6 @@ export const repoRedis: Repo = {
       .map((entry) => parseJson<StoredOwnership>(entry))
       .filter((parsed): parsed is StoredOwnership => Boolean(parsed));
     if (ownerships.length === 0) {
-      await redis.set(cacheKey, JSON.stringify([]), { ex: OWNED_AVATAR_CACHE_TTL_SECONDS });
       return [];
     }
 
@@ -648,14 +858,77 @@ export const repoRedis: Repo = {
     }
 
     const result = Array.from(avatarIds);
-    await redis.set(cacheKey, JSON.stringify(result), { ex: OWNED_AVATAR_CACHE_TTL_SECONDS });
+    if (result.length > 0) {
+      for (const avatarId of result) {
+        await redis.sadd(avatarIdsKey, avatarId);
+      }
+    }
     return result;
+  },
+
+  async getClaimVerifyPreview(codeHash) {
+    await ensureReady();
+    const raw = (await redis.eval(
+      `
+        local unitId = redis.call("HGET", KEYS[1], ARGV[1])
+        if not unitId then return nil end
+        local unit = redis.call("HGET", KEYS[2], unitId)
+        if not unit then return nil end
+        local unitObj = cjson.decode(unit)
+        local character = redis.call("HGET", KEYS[3], unitObj.characterId)
+        return {unitObj.status or "", character or ""}
+      `,
+      [KEYS.unitByCodeHash, KEYS.units, KEYS.characters],
+      [codeHash],
+    )) as Array<string | null> | null;
+
+    if (!Array.isArray(raw)) return null;
+    return {
+      status: String(raw[0] ?? 'available') as PhysicalUnit['status'],
+      character: toCharacter(raw[1]),
+    };
   },
 
   async getCharacterById(id) {
     await ensureReady();
     const raw = await redis.hget(KEYS.characters, id);
     return toCharacter(raw);
+  },
+
+  async resolveCharacterIdentifier({ raw, normalized, slugified }) {
+    await ensureReady();
+    await ensureCharacterIndexes();
+    if (!raw) return null;
+
+    const result = await redis.eval(
+      `
+        local identifier = ARGV[1]
+        local normalized = ARGV[2]
+        local slugified = ARGV[3]
+
+        local direct = redis.call("HGET", KEYS[1], identifier)
+        if direct then return direct end
+
+        local characterId = redis.call("HGET", KEYS[2], normalized)
+        if not characterId and slugified ~= normalized then
+          characterId = redis.call("HGET", KEYS[2], slugified)
+        end
+        if not characterId then
+          characterId = redis.call("HGET", KEYS[3], slugified)
+        end
+        if not characterId then
+          characterId = redis.call("HGET", KEYS[4], normalized)
+        end
+        if not characterId then
+          return nil
+        end
+
+        return redis.call("HGET", KEYS[1], characterId)
+      `,
+      [KEYS.characters, KEYS.characterBySlug, KEYS.characterByNameSlug, KEYS.characterByCodeSeries],
+      [raw, normalized, slugified],
+    );
+    return toCharacter(result);
   },
 
   async getCharacterBySlug(slug) {

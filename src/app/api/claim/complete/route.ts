@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 
-import { computeChallengeDigest, hashClaimCode, signChallengeWithCode } from '@/lib/crypto';
+import { computeChallengeDigest, hashClaimCode, signChallengeWithCode, verifyClaimToken } from '@/lib/crypto';
 import { getRepo } from '@/lib/repo';
 import { rateLimitCheck } from '@/lib/rateLimit';
 import { getClientIp } from '@/lib/ip';
@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
     type CompletePayload = {
       code?: unknown;
       challengeId?: unknown;
+      challengeToken?: unknown;
       signature?: unknown;
     };
 
@@ -42,16 +43,68 @@ export async function POST(request: NextRequest) {
     const parsed: CompletePayload = typeof payload === 'object' && payload !== null ? (payload as CompletePayload) : {};
     const code = typeof parsed.code === 'string' ? parsed.code : null;
     const challengeId = typeof parsed.challengeId === 'string' ? parsed.challengeId : null;
+    const challengeToken = typeof parsed.challengeToken === 'string' ? parsed.challengeToken : null;
     const signature = typeof parsed.signature === 'string' ? parsed.signature : null;
-    if (!code || !challengeId || !signature) {
+    if (!code || (!challengeId && !challengeToken) || !signature) {
       return Response.json({ success: false, error: 'Missing fields' }, { status: 400 });
     }
 
     const codeHash = hashClaimCode(code);
+    const repo = await getRepo();
+    const tokenClaims = challengeToken ? verifyClaimToken(challengeToken) : null;
+    if (challengeToken && !tokenClaims) {
+      return Response.json({ success: false, error: 'Invalid challenge' }, { status: 400 });
+    }
+
+    if (tokenClaims) {
+      if (tokenClaims.codeHash !== codeHash) {
+        return Response.json({ success: false, error: 'Invalid challenge' }, { status: 400 });
+      }
+      if (tokenClaims.sub && tokenClaims.sub !== userId) {
+        return Response.json({ success: false, error: 'Challenge mismatch for user' }, { status: 403 });
+      }
+
+      const expectedDigest = computeChallengeDigest({
+        codeHash,
+        nonce: tokenClaims.nonce,
+        timestamp: tokenClaims.timestamp,
+        secureSalt: tokenClaims.secureSalt,
+      });
+      const expectedSig = signChallengeWithCode(code, expectedDigest);
+      if (expectedSig !== signature) {
+        try { await repo.logAbuse({ type: 'invalid-signature', actorRef: userId, metadata: { ip, challengeId: tokenClaims.challengeId } }); } catch {}
+        return Response.json({ success: false, error: 'Invalid signature' }, { status: 400 });
+      }
+
+      try {
+        const claimed = await repo.claimUnitAndCreateOwnership({
+          unitId: tokenClaims.unitId,
+          userId,
+          challengeId: tokenClaims.challengeId,
+        });
+        return Response.json({
+          success: true,
+          message: 'Successfully claimed character',
+          characterId: claimed.characterId,
+          claimedAt: claimed.claimedAt.toISOString(),
+        });
+      } catch (claimError) {
+        const message = claimError instanceof Error ? claimError.message : 'claim_failed';
+        if (
+          message === 'unit_unavailable' ||
+          message === 'Unit no longer available' ||
+          message === 'challenge_not_found' ||
+          message === 'challenge_consumed' ||
+          message === 'Challenge already consumed'
+        ) {
+          return Response.json({ success: false, error: 'Challenge expired' }, { status: 400 });
+        }
+        throw claimError;
+      }
+    }
 
     // Load and validate challenge
-    const repo = await getRepo();
-    const challenge = await repo.getChallengeById(challengeId);
+    const challenge = await repo.getChallengeById(challengeId!);
     if (!challenge || challenge.codeHash !== codeHash) {
       return Response.json({ success: false, error: 'Invalid challenge' }, { status: 400 });
     }
@@ -62,13 +115,15 @@ export async function POST(request: NextRequest) {
       return Response.json({ success: false, error: 'Challenge mismatch for user' }, { status: 403 });
     }
 
-    // Load unit
-    const unit = await repo.findUnitByCodeHash(codeHash);
-    if (!unit) {
+    const fallbackUnit = !challenge.unitId ? await repo.findUnitByCodeHash(codeHash) : null;
+    const unitId = challenge.unitId || fallbackUnit?.id || null;
+    if (!unitId) {
       return Response.json({ success: false, error: 'Invalid code' }, { status: 400 });
     }
-    if (unit.status !== 'available') {
-      return Response.json({ success: false, error: 'Code already claimed' }, { status: 400 });
+
+    const secureSalt = challenge.secureSalt || fallbackUnit?.secureSalt || null;
+    if (!secureSalt) {
+      return Response.json({ success: false, error: 'Invalid challenge' }, { status: 400 });
     }
 
     // Verify challenge digest integrity and signature from client
@@ -76,13 +131,10 @@ export async function POST(request: NextRequest) {
       codeHash,
       nonce: challenge.nonce,
       timestamp: challenge.timestamp,
-      secureSalt: unit.secureSalt,
+      secureSalt,
     });
-    if (expectedDigest !== challenge.challengeDigest) {
-      return Response.json({ success: false, error: 'Challenge mismatch' }, { status: 400 });
-    }
 
-    const expectedSig = signChallengeWithCode(code, challenge.challengeDigest);
+    const expectedSig = signChallengeWithCode(code, expectedDigest);
     if (expectedSig !== signature) {
       // optional: record abuse attempt
       try { await repo.logAbuse({ type: 'invalid-signature', actorRef: userId, metadata: { ip, challengeId } }); } catch {}
@@ -90,7 +142,25 @@ export async function POST(request: NextRequest) {
     }
 
     // Atomically claim and create ownership; also consume the challenge
-    const { characterId, claimedAt } = await repo.claimUnitAndCreateOwnership({ unitId: unit.id, userId, challengeId: challenge.id });
+    let characterId: string;
+    let claimedAt: Date;
+    try {
+      const claimed = await repo.claimUnitAndCreateOwnership({ unitId, userId, challengeId: challenge.id });
+      characterId = claimed.characterId;
+      claimedAt = claimed.claimedAt;
+    } catch (claimError) {
+      const message = claimError instanceof Error ? claimError.message : 'claim_failed';
+      if (
+        message === 'unit_unavailable' ||
+        message === 'Unit no longer available' ||
+        message === 'challenge_not_found' ||
+        message === 'challenge_consumed' ||
+        message === 'Challenge already consumed'
+      ) {
+        return Response.json({ success: false, error: 'Challenge expired' }, { status: 400 });
+      }
+      throw claimError;
+    }
 
     return Response.json({ success: true, message: 'Successfully claimed character', characterId, claimedAt: claimedAt.toISOString() });
   } catch (error) {

@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { getRepo } from '@/lib/repo';
 import { withCharacterLore, type CharacterWithLore } from '@/lib/characterLore';
-import { getSafeServerSession } from '@/lib/serverSession';
+import { getCachedCharacters } from '@/lib/cachedCharacters';
 import UltraHero from '@/components/landing/UltraHero';
 import HorizontalCharacterShowcase from '@/components/landing/HorizontalCharacterShowcase';
 import BentoFeatures from '@/components/landing/BentoFeatures';
@@ -19,7 +18,7 @@ export const metadata: Metadata = {
   },
 };
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 const LEGACY_ACTIVE_NAMES = new Set(['blaze the dragon']);
 
@@ -57,19 +56,11 @@ function buildLandingRoster(characters: CharacterWithLore[]): CharacterWithLore[
 }
 
 export default async function Home() {
-  const repo = await getRepo();
-  const characters = await repo.listCharacters({ limit: 64, offset: 0 });
+  const characters = await getCachedCharacters(64, 0);
   const enriched = characters
     .map((character) => withCharacterLore(character))
     .filter((value): value is CharacterWithLore => Boolean(value));
   const landingRoster = buildLandingRoster(enriched);
-  const session = await getSafeServerSession();
-  const userId = session?.user?.id ?? null;
-  const ownedIds = new Set<string>();
-  if (userId) {
-    const ownerships = await repo.listOwnershipsByUser(userId);
-    for (const ownership of ownerships) ownedIds.add(ownership.characterId);
-  }
 
   const heroCharacters = landingRoster.slice(0, 3).map((character) => ({
     id: character.id,
@@ -94,7 +85,6 @@ export default async function Home() {
           id: character.id,
           name: character.name,
           rarity: character.rarity,
-          owned: ownedIds.has(character.id),
           artRefs: character.artRefs,
           slug: character.slug,
           realm: character.realm,

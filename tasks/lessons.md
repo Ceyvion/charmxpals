@@ -16,3 +16,4 @@
 - For dynamic profile routes, resolve both DB IDs and slugs (plus name-slug fallback) before returning 404, otherwise UI links from different surfaces can intermittently hit `Character Not Found` despite valid roster entries.
 - If the user asks for proper art for each character, do not stop at shared fallback mappings; generate and publish dedicated slug asset folders so each profile has unique files.
 - On mobile headers, avoid uncontrolled `<details>` menus when pages have sticky controls; use controlled nav state that closes on outside taps, route changes, and item taps, and keep secondary sticky/floating bars disabled on small screens to prevent layered menu collisions.
+- When a user says "install this" for an agent skill/package, confirm whether they mean project-scoped installation or global installation for the agent itself before changing the repo.

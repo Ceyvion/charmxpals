@@ -145,9 +145,34 @@ export const memoryRepo: Repo = {
       expiresAt: new Date(expiresAt),
       userId: userId ?? null,
       consumed: false,
+      unitId: null,
+      secureSalt: null,
     };
     data.challenges.push(c);
     return c;
+  },
+  async startClaimChallenge({ codeHash, userId, nonce, timestamp, expiresAt }) {
+    const unit = data.units.find((candidate) => candidate.codeHash === codeHash) || null;
+    if (!unit) {
+      return { ok: false as const, reason: 'not_found' as const };
+    }
+    if (unit.status !== 'available') {
+      return { ok: false as const, reason: 'unavailable' as const };
+    }
+    const challenge: ClaimChallenge = {
+      id: uuid(),
+      codeHash,
+      nonce,
+      timestamp,
+      challengeDigest: '',
+      expiresAt: new Date(expiresAt),
+      userId: userId ?? null,
+      consumed: false,
+      unitId: unit.id,
+      secureSalt: unit.secureSalt,
+    };
+    data.challenges.push(challenge);
+    return { ok: true as const, challenge, secureSalt: unit.secureSalt };
   },
   async getChallengeById(id) {
     return data.challenges.find((c) => c.id === id) || null;
@@ -159,6 +184,9 @@ export const memoryRepo: Repo = {
 
   async findUnitByCodeHash(codeHash) {
     return data.units.find((u) => u.codeHash === codeHash) || null;
+  },
+  async getUnitById(id) {
+    return data.units.find((unit) => unit.id === id) || null;
   },
   async claimUnitAndCreateOwnership({ unitId, userId, challengeId }) {
     const unit = data.units.find((u) => u.id === unitId);
@@ -182,6 +210,24 @@ export const memoryRepo: Repo = {
   async listOwnershipsByUser(userId) {
     return data.ownerships.filter((o) => o.userId === userId);
   },
+  async listOwnershipsWithCharactersByUser(userId) {
+    const byCharacterId = new Map(data.characters.map((character) => [character.id, character]));
+    return data.ownerships
+      .filter((ownership) => ownership.userId === userId)
+      .map((ownership) => ({
+        ownership,
+        character: byCharacterId.get(ownership.characterId) ?? null,
+      }));
+  },
+  async listOwnedCharacterIdsByUser(userId) {
+    const characterIds = new Set<string>();
+    for (const ownership of data.ownerships) {
+      if (ownership.userId === userId) {
+        characterIds.add(ownership.characterId);
+      }
+    }
+    return Array.from(characterIds);
+  },
   async listOwnedAvatarIdsByUser(userId) {
     const ownerships = data.ownerships.filter((ownership) => ownership.userId === userId);
     if (ownerships.length === 0) return [];
@@ -194,9 +240,30 @@ export const memoryRepo: Repo = {
     }
     return Array.from(avatarIds);
   },
+  async getClaimVerifyPreview(codeHash) {
+    const unit = data.units.find((candidate) => candidate.codeHash === codeHash) || null;
+    if (!unit) return null;
+    const character = data.characters.find((candidate) => candidate.id === unit.characterId) || null;
+    return {
+      status: unit.status,
+      character,
+    };
+  },
 
   async getCharacterById(id) {
     return data.characters.find((c) => c.id === id) || null;
+  },
+  async resolveCharacterIdentifier({ raw, normalized, slugified }) {
+    return (
+      data.characters.find((character) => character.id === raw) ||
+      data.characters.find((character) => normalize(character.slug ?? '') === normalized) ||
+      (slugified !== normalized
+        ? data.characters.find((character) => normalize(character.slug ?? '') === slugified)
+        : null) ||
+      data.characters.find((character) => slugify(character.name) === slugified) ||
+      data.characters.find((character) => normalize(character.codeSeries ?? '') === normalized) ||
+      null
+    );
   },
   async getCharacterBySlug(slug) {
     const normalizedSlug = normalize(slug);

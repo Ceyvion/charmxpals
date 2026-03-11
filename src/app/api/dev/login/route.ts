@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRepo } from '@/lib/repo';
+import { getClientIp } from '@/lib/ip';
+import { rateLimitCheck } from '@/lib/rateLimit';
 
 function devEnabled() {
   return process.env.NODE_ENV !== 'production';
@@ -8,6 +10,18 @@ function devEnabled() {
 export async function POST(req: NextRequest) {
   try {
     if (!devEnabled()) return NextResponse.json({ success: false, error: 'Dev login disabled' }, { status: 403 });
+    const ip = getClientIp(req.url, req.headers);
+    const rl = await rateLimitCheck(`${ip}:dev-login`, { windowMs: 60_000, max: 20, prefix: 'dev' });
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { success: false, error: 'Rate limit exceeded' },
+        {
+          status: 429,
+          headers: { 'Retry-After': Math.max(0, Math.ceil((rl.resetAt - Date.now()) / 1000)).toString() },
+        },
+      );
+    }
+
     const { username, password } = await req.json();
     const expectedUser = process.env.DEV_AUTH_USER || 'admin';
     const expectedPass = process.env.DEV_AUTH_PASS || 'admin';

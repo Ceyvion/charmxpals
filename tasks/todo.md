@@ -1,5 +1,123 @@
 # Beta Exit Tonight Checklist
 
+## Backend Efficiency Analysis Plan (2026-03-11)
+
+- [x] Inventory backend entry points, storage abstractions, and runtime boundaries.
+- [x] Inspect hot API paths for avoidable Redis round trips, serialization churn, and synchronous auth/session overhead.
+- [x] Inspect server-rendered read paths for N+1 queries and unnecessary dynamic rendering.
+- [x] Rank strategic backend improvements by expected latency/throughput impact and implementation scope.
+- [x] Document review findings with concrete file references and expected payoff.
+
+### Backend Efficiency Analysis Review (2026-03-11)
+
+- Highest-impact bottlenecks are hot write paths that do synchronous Redis read-modify-write cycles: runner progress (`src/app/api/score/progress/route.ts`, `src/lib/scoreSession.ts`) and arena daily progress (`src/lib/arenaProgressStore.ts`, `server/mmo/plazaServer.ts`).
+- MMO token minting is heavier than it should be because it combines rate limiting, session lookup, user lookup, ownership/avatar derivation, and optional plaza startup on the connect path (`src/app/api/mmo/token/route.ts`, `src/lib/repoRedis.ts`, `src/lib/mmo/serverRuntime.ts`).
+- Public/server-rendered read paths are also doing unnecessary backend work:
+  - `/` and `/explore` are forced dynamic while doing optional ownership reads for personalization (`src/app/page.tsx`, `src/app/explore/page.tsx`).
+  - `/u/[handle]` duplicates the user lookup in metadata + page render and does per-ownership character fetches (`src/app/u/[handle]/page.tsx`).
+- Claim and redeem flows are less frequent but still pay avoidable Upstash REST round trips; challenge records also do not truly expire despite the route comments saying they have a 5-minute TTL (`src/app/api/claim/start/route.ts`, `src/lib/repoRedis.ts`, `src/app/api/redeem/route.ts`).
+- Strategic priority order:
+  1. Make hot counters atomic and field-based instead of JSON read-modify-write.
+  2. Remove repeated auth/user/profile lookups from hot submission/connect paths.
+  3. Precompute and store ownership/avatar projections so connect/profile paths stop scanning full ownership lists.
+  4. Restore caching/ISR for mostly-public pages by separating personalization from page render.
+  5. Collapse claim/redeem flows into fewer Redis operations and enforce real TTL semantics.
+
+## Backend Efficiency Implementation Plan (2026-03-11)
+
+- [x] Convert score attempt progress persistence to atomic Redis field updates and trim repeated request-path work.
+- [x] Convert arena daily progress storage to atomic counters and keep MMO event writes cheap.
+- [x] Materialize owned avatar ids in Redis so MMO token minting avoids full ownership scans.
+- [x] Remove avoidable repo/session work from score submit and analytics ingestion hot paths.
+- [x] Reduce backend page load by restoring caching/ISR for public roster pages and fixing server-side N+1 reads.
+- [x] Add or update targeted tests for the new persistence and inventory behavior.
+- [x] Run verification (`npm test`, `npm run lint`, `npm run build`) and record the review.
+
+### Backend Efficiency Implementation Review (2026-03-11)
+
+- Score hot path:
+  - `src/lib/scoreSession.ts` now stores attempt records as Redis hashes, updates runner progress via one atomic Lua script, and carries `displayName` inside the signed score session token.
+  - `src/app/api/score/progress/route.ts` and `src/app/api/score/route.ts` no longer re-load the NextAuth session on every progress/submit call; they trust the short-lived signed score token.
+- Arena/MMO hot path:
+  - `src/lib/arenaProgressStore.ts` now uses date-scoped Redis hash counters with atomic script updates instead of JSON read-modify-write.
+  - `src/lib/repoRedis.ts` now materializes owned avatar ids as a first-class Redis set during claim, and `src/app/api/mmo/token/route.ts` no longer performs a redundant user lookup before minting the MMO token.
+- Public read path:
+  - Added `src/app/api/me/owned-character-ids/route.ts` plus `src/lib/useOwnedCharacterIds.ts` so `/` and `/explore` can render from cached/public data and fetch ownership overlays client-side.
+  - `src/app/page.tsx` and `src/app/explore/page.tsx` now use cached roster reads via `src/lib/cachedCharacters.ts`.
+  - `src/app/u/[handle]/page.tsx` now dedupes the metadata user lookup with `cache(...)` and replaces per-ownership character fetches with one bulk fetch plus reconstruction.
+- Claim/redeem/auth cleanup:
+  - `src/lib/repoRedis.ts` now stores challenges as per-key TTL entries and deletes them atomically during claim completion.
+  - `src/app/api/redeem/route.ts` no longer waits on best-effort redemption logging before returning success.
+  - `src/app/api/dev/login/route.ts` is now rate-limited, and `src/lib/repoRedis.ts` avoids rewriting unchanged dev users on every login.
+- Verification:
+  - `npm test` passes: 41/41 tests.
+  - `npm run lint` passes with pre-existing `no-explicit-any` warnings only.
+  - `npm run build` passes.
+  - Build output now shows `/` and `/explore` prerendered as static content.
+
+## Backend Efficiency Follow-up Plan (2026-03-11)
+
+- [x] Collapse leaderboard submit/trim into a single atomic Redis script and remove extra round trips.
+- [x] Collapse claim start into one Redis-backed availability + challenge creation step.
+- [x] Reduce claim complete pre-read overhead where possible without weakening validation.
+- [x] Add or update targeted tests for leaderboard and claim flow persistence changes.
+- [x] Re-run verification and document the review.
+
+### Backend Efficiency Follow-up Review (2026-03-11)
+
+- Leaderboard write path:
+  - `src/lib/leaderboard.ts` now handles compare-existing, write, expire, and trim-overflow in one Redis `EVAL`, eliminating the previous `HGET` + pipeline + `ZCARD/ZRANGE/ZREM/HDEL` round-trip chain.
+  - Added `src/lib/leaderboard.redis.test.ts` to cover Redis-path behavior, including concurrent best-score retention and overflow trimming.
+- Claim flow:
+  - `src/lib/repo.ts`, `src/lib/repoRedis.ts`, and `src/lib/repoMemory.ts` now support `startClaimChallenge(...)` and richer challenge metadata (`unitId`, `secureSalt`) so `src/app/api/claim/start/route.ts` can create an availability-checked challenge in one repo step.
+  - `src/app/api/claim/complete/route.ts` now uses challenge-carried unit metadata to avoid a redundant pre-claim unit fetch for new challenges while preserving server-side digest recomputation and atomic final claim.
+  - `src/lib/repoRedis.ts` now resolves `findUnitByCodeHash(...)` in one Redis `EVAL` instead of two separate hash reads.
+- Additional read-path reductions:
+  - `src/lib/repoRedis.ts` now materializes owned character ids as a first-class Redis set, and `src/app/api/me/owned-character-ids/route.ts` uses that projection instead of rebuilding the response from the full ownership list.
+  - `src/lib/repoRedis.ts` and `src/lib/repoMemory.ts` now expose a one-call claim verify preview, and `src/app/api/claim/verify/route.ts` uses it when available to collapse unit+character lookup into one repo read.
+  - `src/lib/repoRedis.ts` and `src/lib/repoMemory.ts` now expose hydrated ownership+character reads so `src/app/me/page.tsx` and `src/app/u/[handle]/page.tsx` can fetch owned roster data in one repo call instead of composing ownership and character reads in the page layer.
+  - `src/lib/repoRedis.ts` now resolves `getUserByHandle(...)` in one Redis call instead of `HGET` then `HGET`.
+- Final claim/identifier reductions:
+  - `src/lib/crypto/index.ts`, `src/app/api/claim/start/route.ts`, `src/app/api/claim/complete/route.ts`, and `src/app/claim/ClaimPageClient.tsx` now use a signed opaque challenge token so claim completion can validate locally and skip the route-level challenge fetch while still relying on the atomic claim script for one-time use.
+  - `src/lib/repoRedis.ts`, `src/lib/repoMemory.ts`, `src/lib/repo.ts`, and `src/lib/characterLookup.ts` now support repo-level character identifier resolution so `/character/[id]` and the character API can avoid the old serial id/slug/name/series lookup chain.
+- Verification:
+  - `npm test` passes: 46/46 tests.
+  - `npm run lint` passes with the same pre-existing `no-explicit-any` warnings.
+  - `npm run build` passes.
+
+## Global Impeccable Skill Install Plan (2026-03-09)
+
+- [x] Confirm whether the request is app integration or Codex skill installation.
+- [x] Install `pbakaus/impeccable` globally for Codex rather than in this repo.
+- [x] Verify the skill files exist under the global Codex skills directory.
+- [x] Document the result and any follow-up needed.
+
+### Global Impeccable Skill Install Review (2026-03-09)
+
+- Installed with `npx skills add pbakaus/impeccable -g -a codex -y`.
+- The installer registered 18 universal Codex skills under `/Users/macbookpro/.agents/skills/`, including `teach-impeccable`.
+- Verification:
+  - Global skill directories exist under `/Users/macbookpro/.agents/skills/`.
+  - `/Users/macbookpro/.agents/skills/teach-impeccable/SKILL.md` is present and readable.
+- Follow-up:
+  - Restart Codex to ensure the new global skills are loaded in fresh sessions.
+  - The package also installed its own global `frontend-design` skill, which may take precedence over another skill with the same name.
+
+## Frontend Design Skill Cleanup Plan (2026-03-09)
+
+- [x] Locate both the legacy and newly installed `frontend-design` skill directories.
+- [x] Remove the legacy Codex-local `frontend-design` skill copy.
+- [x] Verify only the impeccable-installed `frontend-design` skill remains.
+- [x] Document the cleanup result.
+
+### Frontend Design Skill Cleanup Review (2026-03-09)
+
+- The legacy active path `/Users/macbookpro/.codex/skills/frontend-design` was disabled by renaming it to `/Users/macbookpro/.codex/skills/frontend-design.disabled-20260309`.
+- Exact-name verification now shows no active `frontend-design` skill under `/Users/macbookpro/.codex/skills/`.
+- The only active `frontend-design` skill now resolves from `/Users/macbookpro/.agents/skills/frontend-design`, which is the impeccable-installed version.
+- Follow-up:
+  - Restart Codex so skill discovery refreshes against the updated global paths.
+
 ## Legacy Character Recovery Plan (2026-02-17)
 
 - [x] Confirm root causes for `Character Not Found` on the reported roster names.
@@ -258,6 +376,13 @@
   - `src/components/landing/HorizontalCharacterShowcase.tsx` rendered text-only cards (no media layer), so character art could never appear.
   - Redis roster data includes legacy/inactive animal entries intermixed with active lore entries; landing page previously pulled first 8 rows raw by order.
   - Legacy rows used placeholder-only art refs, including `Blaze the Dragon`.
+
+## Impeccable Install Plan (2026-03-09)
+
+- [ ] Confirm the supported install flow for Codex in this repo.
+- [ ] Install `pbakaus/impeccable` at the project level.
+- [ ] Verify the generated skill directories/files are present and relevant to Codex.
+- [ ] Document results and any follow-up in a review note.
 
 ## Repository Analysis Plan (2026-03-06)
 

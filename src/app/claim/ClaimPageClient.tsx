@@ -89,6 +89,7 @@ type VerifyResponse = {
 type StartSuccess = {
   success: true;
   challengeId: string;
+  challengeToken: string | null;
   nonce: string;
   timestamp: string;
   challengeDigest: string;
@@ -249,6 +250,7 @@ export default function ClaimPageClient() {
         body: JSON.stringify({
           code: sanitized,
           challengeId: startJson.challengeId,
+          challengeToken: startJson.challengeToken,
           signature,
         }),
         cache: 'no-store',

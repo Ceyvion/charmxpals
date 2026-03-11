@@ -3,7 +3,6 @@ import { NextRequest } from 'next/server';
 import { getTopScores, submitScore } from '@/lib/leaderboard';
 import { getClientIp } from '@/lib/ip';
 import { rateLimitCheck } from '@/lib/rateLimit';
-import { getRepo } from '@/lib/repo';
 import {
   consumeScoreSessionNonce,
   getRunnerScoreLimits,
@@ -11,7 +10,6 @@ import {
   validateRunnerScoreAttempt,
   verifyScoreSession,
 } from '@/lib/scoreSession';
-import { getSafeServerSession } from '@/lib/serverSession';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -35,11 +33,6 @@ export async function POST(req: NextRequest) {
     return Response.json({ success: false, error: 'rate limit exceeded' }, { status: 429 });
   }
 
-  const session = await getSafeServerSession();
-  if (!session?.user?.id) {
-    return Response.json({ success: false, error: 'unauthorized' }, { status: 401 });
-  }
-
   try {
     const body = await req.json();
     const mode = (body?.mode as string) || 'runner';
@@ -56,7 +49,7 @@ export async function POST(req: NextRequest) {
     }
 
     const claims = verifyScoreSession(sessionToken);
-    if (!claims || claims.sub !== session.user.id || claims.mode !== mode) {
+    if (!claims || claims.mode !== mode) {
       return Response.json({ success: false, error: 'invalid_score_session' }, { status: 400 });
     }
 
@@ -80,7 +73,7 @@ export async function POST(req: NextRequest) {
         return Response.json({ success: false, error: 'combo_exceeds_limit' }, { status: 400 });
       }
       const attempt = await getScoreAttemptRecord(claims.nonce);
-      if (!attempt || attempt.sub !== session.user.id || attempt.trackId !== trackId) {
+      if (!attempt || attempt.sub !== claims.sub || attempt.trackId !== trackId) {
         return Response.json({ success: false, error: 'missing_score_attempt' }, { status: 400 });
       }
       if (!validateRunnerScoreAttempt(attempt, limits, score)) {
@@ -93,34 +86,18 @@ export async function POST(req: NextRequest) {
       return Response.json({ success: false, error: 'score_session_already_used' }, { status: 409 });
     }
 
-    const repo = await getRepo();
-    const user = await repo.getUserById(session.user.id);
-    const displayName = resolveLeaderboardDisplayName(
-      user?.handle,
-      session.user.name,
-      session.user.email,
-    );
-
     const result = await submitScore({
       mode,
       score,
       coins,
       trackId,
-      userId: session.user.id,
-      displayName,
+      userId: claims.sub,
+      displayName: normalizeDisplayName(claims.displayName) || 'Player',
     });
     return Response.json(result);
   } catch {
     return Response.json({ success: false, error: 'bad request' }, { status: 400 });
   }
-}
-
-function resolveLeaderboardDisplayName(handle?: string | null, name?: string | null, email?: string | null) {
-  const preferred = normalizeDisplayName(handle) || normalizeDisplayName(name);
-  if (preferred) return preferred;
-
-  const emailLocal = typeof email === 'string' ? email.split('@')[0] : '';
-  return normalizeDisplayName(emailLocal) || 'Player';
 }
 
 function normalizeDisplayName(value?: string | null) {

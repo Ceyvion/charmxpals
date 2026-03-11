@@ -1,10 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-import { getRepo } from '@/lib/repo';
 import ExploreClient from './ExploreClient';
 import { withCharacterLore, type CharacterWithLore } from '@/lib/characterLore';
-import { getSafeServerSession } from '@/lib/serverSession';
+import { getCachedCharacters } from '@/lib/cachedCharacters';
 
 export const metadata: Metadata = {
   title: 'Explore the Roster',
@@ -14,28 +13,18 @@ export const metadata: Metadata = {
   },
 };
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 export default async function ExplorePage() {
-  const repo = await getRepo();
-  const characters = await repo.listCharacters({ limit: 96, offset: 0 });
+  const characters = await getCachedCharacters(96, 0);
   const enriched = characters
     .map((character) => withCharacterLore(character))
     .filter((value): value is CharacterWithLore => Boolean(value));
-  const session = await getSafeServerSession();
-  const userId = session?.user?.id ?? null;
-  const ownedIds = new Set<string>();
-  if (userId) {
-    const ownerships = await repo.listOwnershipsByUser(userId);
-    for (const o of ownerships) ownedIds.add(o.characterId);
-  }
-
-  const owned = Array.from(ownedIds);
   return (
     <div className="min-h-screen py-12">
       <div className="cp-container">
         {enriched.length > 0 ? (
-          <ExploreClient characters={enriched} ownedIds={owned} />
+          <ExploreClient characters={enriched} ownedIds={[]} />
         ) : (
           <div className="cp-panel mt-8 rounded-2xl p-8 text-center">
             <p className="cp-muted">No characters yet. Seed data or use memory mode.</p>

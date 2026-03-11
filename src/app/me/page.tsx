@@ -53,20 +53,29 @@ export default async function MePage() {
   }
 
   const repo = await getRepo();
-  const ownerships = await repo.listOwnershipsByUser(userId);
   const ownedRecords: Array<{ character: CharacterWithLore; ownedAt: Date | null }> = [];
-  const characterIds = ownerships.map((ownership) => ownership.characterId);
-  const ownedCharacters = await repo.getCharactersByIds(characterIds);
-  const characterById = new Map<string, CharacterWithLore>();
-  for (const character of ownedCharacters) {
-    const enriched = withCharacterLore(character);
-    if (!enriched) continue;
-    characterById.set(character.id, enriched);
-  }
-  for (const ownership of ownerships) {
-    const character = characterById.get(ownership.characterId);
-    if (!character) continue;
-    ownedRecords.push({ character, ownedAt: ownership.createdAt ?? null });
+  if (repo.listOwnershipsWithCharactersByUser) {
+    const inventory = await repo.listOwnershipsWithCharactersByUser(userId);
+    for (const item of inventory) {
+      const character = withCharacterLore(item.character);
+      if (!character) continue;
+      ownedRecords.push({ character, ownedAt: item.ownership.createdAt ?? null });
+    }
+  } else {
+    const ownerships = await repo.listOwnershipsByUser(userId);
+    const characterIds = ownerships.map((ownership) => ownership.characterId);
+    const ownedCharacters = await repo.getCharactersByIds(characterIds);
+    const characterById = new Map<string, CharacterWithLore>();
+    for (const character of ownedCharacters) {
+      const enriched = withCharacterLore(character);
+      if (!enriched) continue;
+      characterById.set(character.id, enriched);
+    }
+    for (const ownership of ownerships) {
+      const character = characterById.get(ownership.characterId);
+      if (!character) continue;
+      ownedRecords.push({ character, ownedAt: ownership.createdAt ?? null });
+    }
   }
 
   ownedRecords.sort((a, b) => {

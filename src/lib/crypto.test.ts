@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { hashClaimCode, computeChallengeDigest, signChallengeWithCode } from './crypto';
+import { hashClaimCode, computeChallengeDigest, signChallengeWithCode, signClaimToken, verifyClaimToken } from './crypto';
 
 describe('crypto helpers', () => {
   const prev = process.env.CODE_HASH_SECRET;
@@ -41,5 +41,24 @@ describe('crypto helpers', () => {
     const sig = signChallengeWithCode('CHARM-XPAL-001', 'cafed00dbabe');
     expect(sig).toHaveLength(64);
     expect(sig).toBe(signChallengeWithCode('CHARM-XPAL-001', 'cafed00dbabe'));
+  });
+
+  it('signs and verifies opaque claim tokens', () => {
+    const exp = Math.floor(Date.now() / 1000) + 300;
+    const token = signClaimToken({
+      challengeId: 'challenge-1',
+      codeHash: 'hash-1',
+      nonce: 'nonce-1',
+      timestamp: '1700000000000',
+      unitId: 'unit-1',
+      secureSalt: 'salt-1',
+      sub: 'user-1',
+      exp,
+    });
+    const parsed = verifyClaimToken(token);
+    expect(parsed).not.toBeNull();
+    expect(parsed?.challengeId).toBe('challenge-1');
+    expect(parsed?.unitId).toBe('unit-1');
+    expect(parsed?.sub).toBe('user-1');
   });
 });
