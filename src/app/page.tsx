@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   },
 };
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 const LEGACY_ACTIVE_NAMES = new Set(['blaze the dragon']);
 
