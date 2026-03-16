@@ -17,3 +17,4 @@
 - If the user asks for proper art for each character, do not stop at shared fallback mappings; generate and publish dedicated slug asset folders so each profile has unique files.
 - On mobile headers, avoid uncontrolled `<details>` menus when pages have sticky controls; use controlled nav state that closes on outside taps, route changes, and item taps, and keep secondary sticky/floating bars disabled on small screens to prevent layered menu collisions.
 - When a user says "install this" for an agent skill/package, confirm whether they mean project-scoped installation or global installation for the agent itself before changing the repo.
+- When a user asks to make a deployment fix live, do not stop at a side branch commit; fast-forward or otherwise land the verified fix on `main` before handing off.
