@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { withCharacterLore, type CharacterWithLore } from '@/lib/characterLore';
-import { getCachedCharacters } from '@/lib/cachedCharacters';
+import { listPublicCharacters, type CharacterWithLore } from '@/lib/characterLore';
 import UltraHero from '@/components/landing/UltraHero';
 import HorizontalCharacterShowcase from '@/components/landing/HorizontalCharacterShowcase';
 import BentoFeatures from '@/components/landing/BentoFeatures';
@@ -17,8 +16,6 @@ export const metadata: Metadata = {
     canonical: '/',
   },
 };
-
-export const dynamic = 'force-dynamic';
 
 const LEGACY_ACTIVE_NAMES = new Set(['blaze the dragon']);
 
@@ -56,11 +53,7 @@ function buildLandingRoster(characters: CharacterWithLore[]): CharacterWithLore[
 }
 
 export default async function Home() {
-  const characters = await getCachedCharacters(64, 0);
-  const enriched = characters
-    .map((character) => withCharacterLore(character))
-    .filter((value): value is CharacterWithLore => Boolean(value));
-  const landingRoster = buildLandingRoster(enriched);
+  const landingRoster = buildLandingRoster(listPublicCharacters());
 
   const heroCharacters = landingRoster.slice(0, 3).map((character) => ({
     id: character.id,

@@ -1,5 +1,29 @@
 # Beta Exit Tonight Checklist
 
+## Vercel Deployment Fix Plan (2026-03-16)
+
+- [x] Confirm which server routes/pages are tripping Vercel `DYNAMIC_SERVER_USAGE` and whether shared auth endpoints need explicit dynamic handling.
+- [x] Isolate the production-only homepage render failure seen under `next start` and remove the offending boundary without regressing the landing page.
+- [x] Re-run production verification (`npm run build`, live `next start` requests for `/` and auth/session flows) and document the review.
+
+### Vercel Deployment Fix Review (2026-03-16)
+
+- Root causes:
+  - `/api/auth/[...nextauth]` relied on implicit runtime classification even though it is request-bound and should always run as dynamic Node server code on Vercel.
+  - `/` and `/explore` were being prerendered through a Redis-backed roster path; their generated static HTML already contained `data-dgst="DYNAMIC_SERVER_USAGE"`, so the digest was baked into the deployment artifact before any request hit production.
+- Fixes:
+  - `src/app/api/auth/[...nextauth]/route.ts` now explicitly exports `runtime = 'nodejs'`, `dynamic = 'force-dynamic'`, and `revalidate = 0`.
+  - `src/app/page.tsx` and `src/app/explore/page.tsx` no longer go through `getCachedCharacters(...)`; they render from a new lore-backed public roster helper in `src/lib/characterLore.ts`, which keeps those pages fully static and removes the Upstash/SSR dependency from public marketing/roster surfaces.
+  - Removed the stale `force-dynamic` exports from `/` and `/explore` so build output matches the intended static behavior again.
+- Verification:
+  - `npm run build` passes.
+  - `npm test` passes: 46/46 tests.
+  - Live production smoke test via `npm start`:
+    - `/` returns `200` with full prerendered content and no `DYNAMIC_SERVER_USAGE` marker.
+    - `/explore` returns `200` with full prerendered content and no `DYNAMIC_SERVER_USAGE` marker.
+    - `/api/auth/session` returns `200` with the expected dynamic no-store headers.
+  - Remaining lint output is unchanged pre-existing `no-explicit-any` warnings surfaced during build.
+
 ## Backend Efficiency Analysis Plan (2026-03-11)
 
 - [x] Inventory backend entry points, storage abstractions, and runtime boundaries.

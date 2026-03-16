@@ -94,3 +94,26 @@ export function withCharacterLore(character: Character | null | undefined): Char
 export function listRosterByOrder(): CharacterLore[] {
   return [...characterLore].sort((a, b) => a.order - b.order);
 }
+
+export function listPublicCharacters(): CharacterWithLore[] {
+  return listRosterByOrder().map((lore) => ({
+    id: lore.slug,
+    setId: 'public-roster',
+    name: lore.name,
+    description: lore.description,
+    rarity: lore.rarity,
+    stats: { ...lore.stats },
+    artRefs: lore.artRefs ?? buildArtRefsFromSlug(lore.slug),
+    codeSeries: lore.series,
+    slug: lore.slug,
+    realm: lore.realm,
+    color: lore.color,
+    title: lore.title,
+    vibe: lore.vibe,
+    danceStyle: lore.danceStyle,
+    coreCharm: lore.coreCharm,
+    personality: lore.personality,
+    tagline: lore.tagline,
+    lore,
+  }));
+}

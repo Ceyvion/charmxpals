@@ -2,8 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import ExploreClient from './ExploreClient';
-import { withCharacterLore, type CharacterWithLore } from '@/lib/characterLore';
-import { getCachedCharacters } from '@/lib/cachedCharacters';
+import { listPublicCharacters } from '@/lib/characterLore';
 
 export const metadata: Metadata = {
   title: 'Explore the Roster',
@@ -13,13 +12,8 @@ export const metadata: Metadata = {
   },
 };
 
-export const dynamic = 'force-dynamic';
-
 export default async function ExplorePage() {
-  const characters = await getCachedCharacters(96, 0);
-  const enriched = characters
-    .map((character) => withCharacterLore(character))
-    .filter((value): value is CharacterWithLore => Boolean(value));
+  const enriched = listPublicCharacters();
   return (
     <div className="min-h-screen py-12">
       <div className="cp-container">
