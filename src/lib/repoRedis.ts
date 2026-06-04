@@ -1,5 +1,4 @@
-import { randomBytes } from 'crypto';
-import { v4 as uuid } from 'uuid';
+import { randomBytes, randomUUID as uuid } from 'crypto';
 import type { Redis } from '@upstash/redis';
 
 import { getRedis } from '@/lib/redis';
@@ -188,21 +187,28 @@ async function seedIfNeeded(client: Redis): Promise<void> {
     { code: 'CHARM-XPAL-003', series: 'Pink Dash' },
   ];
 
-  const units: StoredUnit[] = sampleUnits.reduce<StoredUnit[]>((acc, { code, series }) => {
-    const characterEntry = characters.find((entry) => entry.data.codeSeries === series);
-    if (!characterEntry) return acc;
-    acc.push({
-      id: uuid(),
-      characterId: characterEntry.data.id,
-      codeHash: hashClaimCode(code, secret),
-      secureSalt: randomBytes(32).toString('hex'),
-      status: 'available',
-      claimedBy: null,
-      claimedAt: null,
-      createdAt: nowIso,
-    });
-    return acc;
-  }, []);
+  const shouldSeedSampleUnits =
+    process.env.SEED_SAMPLE_UNITS === '1' &&
+    process.env.NODE_ENV !== 'production' &&
+    process.env.VERCEL !== '1';
+
+  const units: StoredUnit[] = shouldSeedSampleUnits
+    ? sampleUnits.reduce<StoredUnit[]>((acc, { code, series }) => {
+        const characterEntry = characters.find((entry) => entry.data.codeSeries === series);
+        if (!characterEntry) return acc;
+        acc.push({
+          id: uuid(),
+          characterId: characterEntry.data.id,
+          codeHash: hashClaimCode(code, secret),
+          secureSalt: randomBytes(32).toString('hex'),
+          status: 'available',
+          claimedBy: null,
+          claimedAt: null,
+          createdAt: nowIso,
+        });
+        return acc;
+      }, [])
+    : [];
 
   const characterEntries = characters.map(({ data, order }) => [
     data.id,

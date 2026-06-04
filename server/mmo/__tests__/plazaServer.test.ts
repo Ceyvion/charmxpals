@@ -14,17 +14,17 @@ type TestClient = {
 
 async function waitForExpect(fn: () => void | Promise<void>, timeout = 1_000, interval = 20) {
   const start = Date.now();
-  while (true) {
+  let lastError: unknown;
+  while (Date.now() - start <= timeout) {
     try {
       await fn();
       return;
     } catch (err) {
-      if (Date.now() - start >= timeout) {
-        throw err;
-      }
+      lastError = err;
     }
     await new Promise((resolve) => setTimeout(resolve, interval));
   }
+  throw lastError;
 }
 
 async function openClient(
@@ -91,6 +91,21 @@ async function openClient(
   });
 
   return { ws, events };
+}
+
+function makeToken(userId: string, sessionId: string, options: { scope?: string[]; mode?: 'plaza' | 'arena'; nonce?: string } = {}) {
+  return signToken(
+    {
+      sub: userId,
+      sid: sessionId,
+      exp: Math.floor(Date.now() / 1000) + 60,
+      nonce: options.nonce ?? `${sessionId}-nonce`,
+      scope: options.scope ?? ['plaza:join'],
+      owned: ['demo'],
+      mode: options.mode,
+    },
+    { secret: TEST_SECRET }
+  );
 }
 
 describe('plaza server', () => {
@@ -163,6 +178,67 @@ describe('plaza server', () => {
     expect(localServer.getPlayerCount()).toBe(1);
 
     client.ws.close();
+    await waitForExpect(() => expect(localServer.getPlayerCount()).toBe(0));
+    await localServer.dispose();
+  });
+
+  it('counts unauthenticated pending sockets toward the max client limit', async () => {
+    const localServer = await startPlazaServer({ port: 0, secret: TEST_SECRET, maxClients: 1, logger: () => {} });
+    const firstToken = makeToken('user-a', 'pending-a');
+    const first = new WebSocket(`${localServer.url}?token=${encodeURIComponent(firstToken)}`);
+
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('timeout waiting for first open')), 1_000);
+      first.on('open', () => {
+        clearTimeout(timeout);
+        resolve();
+      });
+      first.on('error', reject);
+    });
+
+    const secondToken = makeToken('user-b', 'pending-b');
+    const second = new WebSocket(`${localServer.url}?token=${encodeURIComponent(secondToken)}`);
+    await new Promise<void>((resolve) => {
+      second.on('close', () => resolve());
+    });
+
+    expect(localServer.getPlayerCount()).toBe(0);
+    first.close();
+    await localServer.dispose();
+  });
+
+  it('rejects replayed MMO tokens', async () => {
+    const token = makeToken('user-replay', 'session-replay');
+    const first = new WebSocket(`${server.url}?token=${encodeURIComponent(token)}`);
+
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('timeout waiting for first open')), 1_000);
+      first.on('open', () => {
+        clearTimeout(timeout);
+        resolve();
+      });
+      first.on('error', reject);
+    });
+
+    const replay = new WebSocket(`${server.url}?token=${encodeURIComponent(token)}`);
+    await new Promise<void>((resolve) => {
+      replay.on('close', () => resolve());
+    });
+
+    expect(server.getPlayerCount()).toBe(0);
+    first.close();
+  });
+
+  it('rejects oversized websocket frames', async () => {
+    const localServer = await startPlazaServer({ port: 0, secret: TEST_SECRET, maxPayloadBytes: 2048, logger: () => {} });
+    const client = await openClient(localServer, 'payload-user', 'payload-session');
+
+    client.ws.send(JSON.stringify({ type: 'chat', text: 'x'.repeat(4096) }));
+
+    await new Promise<void>((resolve) => {
+      client.ws.on('close', () => resolve());
+    });
+
     await waitForExpect(() => expect(localServer.getPlayerCount()).toBe(0));
     await localServer.dispose();
   });

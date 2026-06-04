@@ -215,7 +215,7 @@ export default function ClaimPageClient() {
         return;
       }
       if (verifyJson.status === 'blocked') {
-        setMessage({ kind: 'error', text: 'Code locked. Email support@charmxpals.com for help.' });
+        setMessage({ kind: 'error', text: 'Code locked. Email charmxpals.contact@gmail.com for help.' });
         return;
       }
       if (!preview) {

@@ -212,7 +212,7 @@ export default function ClaimCodeInput(props: Props) {
 
         <p className="text-center text-xs text-[var(--cp-text-muted)]">
           Need help?{' '}
-          <Link href="mailto:support@charmxpals.com" className="font-semibold text-[var(--cp-blue)] underline underline-offset-2 hover:text-[var(--cp-text-primary)]">
+          <Link href="mailto:charmxpals.contact@gmail.com" className="font-semibold text-[var(--cp-blue)] underline underline-offset-2 hover:text-[var(--cp-text-primary)]">
             Contact support
           </Link>
         </p>

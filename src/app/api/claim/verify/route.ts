@@ -4,6 +4,7 @@ import { hashClaimCode } from '@/lib/crypto';
 import { rateLimitCheck } from '@/lib/rateLimit';
 import { getClientIp } from '@/lib/ip';
 import { withCharacterLore } from '@/lib/characterLore';
+import { getSafeServerSession } from '@/lib/serverSession';
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,6 +18,11 @@ export async function POST(request: NextRequest) {
           'Retry-After': Math.max(0, Math.ceil((rl.resetAt - Date.now()) / 1000)).toString(),
         },
       });
+    }
+
+    const session = await getSafeServerSession();
+    if (!session?.user?.id) {
+      return Response.json({ error: 'unauthorized' }, { status: 401 });
     }
 
     type VerifyPayload = { code?: unknown };

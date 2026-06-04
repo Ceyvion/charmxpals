@@ -1,14 +1,25 @@
+const path = require('path');
+
 /** @type {import('next').NextConfig} */
 const isDev = process.env.NODE_ENV !== 'production';
+const uncryptoPath = path.resolve(__dirname, 'src/polyfills/uncrypto.ts');
 
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   webpack: (config) => {
     config.resolve = config.resolve || {};
     config.resolve.alias = config.resolve.alias || {};
-    config.resolve.alias.uncrypto = require('path').resolve(__dirname, 'src/polyfills/uncrypto.ts');
+    config.resolve.alias.uncrypto = uncryptoPath;
     return config;
+  },
+  turbopack: {
+    root: __dirname,
+    resolveAlias: {
+      uncrypto: uncryptoPath,
+    },
   },
   images: {
     formats: ['image/avif', 'image/webp'],

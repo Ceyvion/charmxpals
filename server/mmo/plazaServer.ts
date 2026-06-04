@@ -63,6 +63,7 @@ export type PlazaServerOptions = {
   host?: string;
   secret?: string;
   maxClients?: number;
+  maxPayloadBytes?: number;
   tickMs?: number;
   snapshotMs?: number;
   logger?: (message: string) => void;
@@ -77,11 +78,17 @@ export type PlazaServer = {
   events: EventEmitter;
 };
 
+function resolveServerSecret(explicit?: string) {
+  const configured = explicit || process.env.MMO_WS_SECRET || process.env.CODE_HASH_SECRET;
+  if (configured) return configured;
+  throw new Error('MMO_WS_SECRET is required to start the MMO server.');
+}
+
 const defaultOptions = {
   port: Number(process.env.MMO_WS_PORT || 8787),
   host: '0.0.0.0',
-  secret: process.env.MMO_WS_SECRET || process.env.CODE_HASH_SECRET || 'dev-secret',
   maxClients: 30,
+  maxPayloadBytes: 16 * 1024,
   tickMs: 50,
   snapshotMs: 100,
 };
@@ -116,6 +123,9 @@ const ARENA_INSTANCE_ID = 'arena-1';
 const PLAZA_MOTD = 'Signal Plaza is live — drop in and vibe.';
 const ARENA_MOTD = 'Rift Arena online — cast pulse and hold center.';
 const WS_READY_STATE_OPEN = 1;
+const MAX_EMOTE_LENGTH = 32;
+const MAX_COSMETIC_KEYS = 12;
+const MAX_COSMETIC_VALUE_LENGTH = 48;
 
 let wsModulePromise: Promise<typeof import('ws')> | null = null;
 
@@ -145,10 +155,22 @@ function verifyToken(token: string, secret: string): MmoSessionClaims | null {
     if (expected !== signature) return null;
     const parsed = JSON.parse(decodeBase64Url(payload).toString('utf8')) as MmoSessionClaims & { iat?: number };
     const now = Math.floor(Date.now() / 1000);
-    if (typeof parsed.exp === 'number' && parsed.exp < now) return null;
+    if (!parsed.sub || !parsed.sid || !parsed.nonce || typeof parsed.exp !== 'number') return null;
+    if (parsed.exp < now) return null;
     return parsed;
   } catch {
     return null;
+  }
+}
+
+function tokenReplayKey(claims: MmoSessionClaims) {
+  if (!claims.nonce || typeof claims.exp !== 'number') return null;
+  return `${claims.sid || ''}:${claims.nonce}`;
+}
+
+function sweepUsedTokens(store: Map<string, number>, nowSec: number) {
+  for (const [key, exp] of store) {
+    if (exp <= nowSec) store.delete(key);
   }
 }
 
@@ -199,6 +221,28 @@ function sanitizeDisplayName(userId: string) {
   return compact.slice(0, 12);
 }
 
+function sanitizeEmote(value: unknown) {
+  if (typeof value !== 'string') return '';
+  return value.trim().slice(0, MAX_EMOTE_LENGTH);
+}
+
+function sanitizeCosmetics(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const result: Record<string, unknown> = {};
+  for (const [key, raw] of Object.entries(value).slice(0, MAX_COSMETIC_KEYS)) {
+    const cleanKey = key.replace(/[^a-zA-Z0-9:_-]/g, '').slice(0, 32);
+    if (!cleanKey) continue;
+    if (typeof raw === 'string') {
+      result[cleanKey] = raw.slice(0, MAX_COSMETIC_VALUE_LENGTH);
+    } else if (typeof raw === 'number' && Number.isFinite(raw)) {
+      result[cleanKey] = raw;
+    } else if (typeof raw === 'boolean') {
+      result[cleanKey] = raw;
+    }
+  }
+  return result;
+}
+
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
 
 function modeFromClaims(claims: MmoSessionClaims): GameMode {
@@ -245,10 +289,12 @@ function buildArenaConfig(now = Date.now()): ArenaConfig {
 export async function startPlazaServer(options: PlazaServerOptions = {}): Promise<PlazaServer> {
   const { WebSocketServer } = await loadWsModule();
   const opts = { ...defaultOptions, ...options };
+  const tokenSecret = resolveServerSecret(options.secret);
   const httpServer: HttpServer = createServer();
-  const wss = new WebSocketServer({ server: httpServer });
+  const wss = new WebSocketServer({ server: httpServer, maxPayload: opts.maxPayloadBytes });
   const clients = new Map<string, ClientState>();
   const sockets = new Map<WebSocket, ClientState>();
+  const usedTokens = new Map<string, number>();
   const events = new EventEmitter();
   const tickMs = opts.tickMs ?? defaultOptions.tickMs;
   const snapshotMs = opts.snapshotMs ?? defaultOptions.snapshotMs;
@@ -325,6 +371,13 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
     if (client.handshakeTimer) {
       clearTimeout(client.handshakeTimer);
       client.handshakeTimer = null;
+    }
+
+    const previous = clients.get(client.sessionId);
+    if (previous && previous !== client) {
+      safeSend(client.ws, { type: 'auth_error', reason: 'session_already_active' });
+      client.ws.close(1008, 'session_already_active');
+      return;
     }
 
     clients.set(client.sessionId, client);
@@ -473,7 +526,7 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
   wss.on('connection', (ws, req) => {
     const { query } = parse(req.url || '', true);
     const token = typeof query.token === 'string' ? query.token : null;
-    const verified = token ? verifyToken(token, opts.secret as string) : null;
+    const verified = token ? verifyToken(token, tokenSecret) : null;
 
     if (!verified) {
       safeSend(ws, { type: 'auth_error', reason: 'invalid_token' });
@@ -481,7 +534,7 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
       return;
     }
 
-    if (clients.size >= (opts.maxClients ?? defaultOptions.maxClients)) {
+    if (sockets.size >= (opts.maxClients ?? defaultOptions.maxClients)) {
       safeSend(ws, { type: 'kick', reason: 'server_full' });
       ws.close(1013, 'server_full');
       return;
@@ -489,6 +542,16 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
 
     const mode = modeFromClaims(verified);
     const sessionId = verified.sid || randomUUID();
+    const replayKey = tokenReplayKey({ ...verified, sid: sessionId });
+    const nowSec = Math.floor(Date.now() / 1000);
+    sweepUsedTokens(usedTokens, nowSec);
+    if (!replayKey || usedTokens.has(replayKey)) {
+      safeSend(ws, { type: 'auth_error', reason: 'token_replay' });
+      ws.close(1008, 'token_replay');
+      return;
+    }
+    usedTokens.set(replayKey, verified.exp);
+
     const userId = verified.sub || 'user';
     const displayName = sanitizeDisplayName(userId);
     const ownedChars = Array.isArray(verified.owned) ? verified.owned : [];
@@ -562,7 +625,7 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
           if (context.joined) break;
           const tokenMessage = typeof msg.token === 'string' ? msg.token : null;
           if (tokenMessage) {
-            const reverified = verifyToken(tokenMessage, opts.secret as string);
+            const reverified = verifyToken(tokenMessage, tokenSecret);
             if (!reverified || reverified.sid !== context.sessionId) {
               safeSend(ws, { type: 'auth_error', reason: 'invalid_token' });
               ws.close(1008, 'invalid_token_reauth');
@@ -591,8 +654,9 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
           if (selected && (owned.length === 0 || owned.includes(selected))) {
             context.characterId = selected;
           }
-          if (typeof msg.cosmetics === 'object' && msg.cosmetics) {
-            context.cosmetics = msg.cosmetics;
+          const cosmetics = sanitizeCosmetics(msg.cosmetics);
+          if (cosmetics) {
+            context.cosmetics = cosmetics;
           }
           break;
         }
@@ -602,8 +666,9 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
           context.axes.x = clamp(Number(axes.x) || 0, -1, 1);
           context.axes.y = clamp(Number(axes.y) || 0, -1, 1);
           context.lastInputSeq = Number(msg.seq) || context.lastInputSeq;
-          if (typeof msg.emote === 'string' && msg.emote) {
-            handleEmote(context, msg.emote);
+          const emote = sanitizeEmote(msg.emote);
+          if (emote) {
+            handleEmote(context, emote);
           }
           break;
         }
@@ -645,7 +710,7 @@ export async function startPlazaServer(options: PlazaServerOptions = {}): Promis
         clearTimeout(context.handshakeTimer);
         context.handshakeTimer = null;
       }
-      if (context.joined && clients.delete(context.sessionId)) {
+      if (context.joined && clients.get(context.sessionId) === context && clients.delete(context.sessionId)) {
         emitPlayerCount();
         events.emit('leave', { id: context.sessionId, mode: context.mode });
         broadcast({ type: 'event', event: 'leave', data: { id: context.sessionId } }, { mode: context.mode });

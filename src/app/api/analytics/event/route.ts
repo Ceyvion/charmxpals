@@ -45,7 +45,14 @@ export async function POST(request: NextRequest) {
     createdAt: new Date().toISOString(),
   };
 
-  await recordAnalyticsEvent(event);
+  try {
+    await recordAnalyticsEvent(event);
+  } catch (error) {
+    if (process.env.NODE_ENV !== 'test') {
+      console.warn('[analytics] dropped event', error);
+    }
+  }
+
   return new Response(null, { status: 204 });
 }
 

@@ -5,7 +5,12 @@ export async function GET() {
   const session = await getSafeServerSession();
   const userId = session?.user?.id;
   if (!userId) {
-    return Response.json({ success: false, error: 'unauthorized' }, { status: 401 });
+    return Response.json(
+      { success: true, ids: [] },
+      {
+        headers: { 'Cache-Control': 'private, no-store' },
+      },
+    );
   }
 
   const repo = await getRepo();

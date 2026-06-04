@@ -7,15 +7,26 @@ type OwnedCharacterIdsResponse = {
   ids?: unknown;
 };
 
+function normalizeIds(ids: string[]): string[] {
+  return ids.filter((value) => typeof value === 'string' && value.length > 0);
+}
+
+function idsEqual(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every((value, index) => value === b[index]);
+}
+
 export function useOwnedCharacterIds(initialIds: string[] = []) {
-  const [ownedIds, setOwnedIds] = useState<string[]>(initialIds);
+  const initialIdsKey = normalizeIds(initialIds).join('\u0000');
+  const [ownedIds, setOwnedIds] = useState<string[]>(() => (initialIdsKey ? initialIdsKey.split('\u0000') : []));
 
   useEffect(() => {
-    setOwnedIds(initialIds);
-  }, [initialIds]);
+    const nextIds = initialIdsKey ? initialIdsKey.split('\u0000') : [];
+    setOwnedIds((current) => (idsEqual(current, nextIds) ? current : nextIds));
+  }, [initialIdsKey]);
 
   useEffect(() => {
-    if (initialIds.length > 0) return;
+    if (initialIdsKey) return;
 
     let cancelled = false;
 
@@ -41,7 +52,7 @@ export function useOwnedCharacterIds(initialIds: string[] = []) {
     return () => {
       cancelled = true;
     };
-  }, [initialIds]);
+  }, [initialIdsKey]);
 
   return ownedIds;
 }

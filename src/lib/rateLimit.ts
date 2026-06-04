@@ -1,7 +1,7 @@
 import type { Redis } from '@upstash/redis';
 
 import { getRedis } from '@/lib/redis';
-import { hasRedisEnv, shouldAllowEphemeralFallback } from '@/lib/runtime';
+import { hasRedisEnv, isMemoryModeForced, shouldAllowEphemeralFallback } from '@/lib/runtime';
 
 type Key = string;
 
@@ -30,6 +30,9 @@ type RateLimitResult = {
 };
 
 function getSharedRedis(): Redis | null {
+  if (isMemoryModeForced()) {
+    return null;
+  }
   if (!hasRedisEnv()) {
     return null;
   }

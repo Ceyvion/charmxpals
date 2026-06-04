@@ -9,11 +9,23 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
+    include: [
+      'src/**/*.test.ts',
+      'src/**/*.test.tsx',
+      'server/**/*.test.ts',
+      'server/**/*.test.tsx',
+    ],
     exclude: [
+      '.git',
+      '.git/**',
+      '.next',
+      '.next/**',
       'node_modules',
       'node_modules/**',
       'node_modules_old_*',
       'node_modules_old_*/**',
+      'public',
+      'public/**',
       'e2e',
       'e2e/**',
       '**/*.e2e.*',

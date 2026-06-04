@@ -1,35 +1,32 @@
 "use client";
 
-import { useState, useRef, type CSSProperties } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useRef, useState, type CSSProperties } from 'react';
+import { trackEvent } from '@/lib/analyticsClient';
 
 const features = [
   {
-    title: 'Real-time 3D Models',
-    desc: 'Rendered instantly in your browser with WebGL.',
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-14L4 7m8 4v10m0-10L4 7m8 4l8-4" />
-      </svg>
-    ),
+    title: 'Playable identity layer',
+    desc: 'Rarity, realm, stats, and ownership cues travel with each Pal across the app.',
+    metric: 'Profile',
   },
   {
-    title: 'Signature Animations',
-    desc: 'Each Pal has exclusive motion and emotes.',
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-      </svg>
-    ),
+    title: 'Arena-ready loadouts',
+    desc: 'Players can move from roster browsing to runner, arena, or plaza surfaces fast.',
+    metric: 'Modes',
   },
   {
-    title: 'Cosmetic Upgrades',
-    desc: 'Unlock skins, badges, and aura effects.',
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.252c1.2-1.102 2.8-1.754 4.5-1.754 3.037 0 5.5 2.462 5.5 5.5 0 5.25-5.5 9.75-10 12.002C7.5 19.748 2 15.248 2 10.998c0-3.038 2.463-5.5 5.5-5.5 1.7 0 3.3.652 4.5 1.754z" />
-      </svg>
-    ),
+    title: 'Verified claim loop',
+    desc: 'Physical charms bind to digital profiles through one-shot codes and server checks.',
+    metric: 'Claim',
   },
+];
+
+const consoleStats = [
+  { label: 'Rhythm', value: 95, color: 'var(--cp-cyan)' },
+  { label: 'Style', value: 93, color: 'var(--cp-yellow)' },
+  { label: 'Flow', value: 86, color: 'var(--cp-green)' },
 ];
 
 export default function Interactive3DPreview() {
@@ -37,7 +34,7 @@ export default function Interactive3DPreview() {
   const [isHovering, setIsHovering] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const clampRotation = (value: number) => Math.min(14, Math.max(-14, value));
+  const clampRotation = (value: number) => Math.min(12, Math.max(-12, value));
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!cardRef.current) return;
@@ -47,8 +44,8 @@ export default function Interactive3DPreview() {
     const y = (e.clientY - rect.top) / rect.height - 0.5;
 
     setRotation({
-      x: y * 14,
-      y: x * -14,
+      x: y * 12,
+      y: x * -12,
     });
   };
 
@@ -78,49 +75,64 @@ export default function Interactive3DPreview() {
   };
 
   return (
-    <section className="relative py-20 md:py-32 overflow-hidden cp-section-dark">
+    <section className="relative py-20 md:py-32 overflow-hidden cp-section-dark cp-grid-field">
       <div className="cp-container max-w-7xl relative z-10">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-12 lg:gap-16 items-center">
           <div className="space-y-8">
             <div>
               <div className="inline-flex items-center gap-2 mb-6">
-                <span className="cp-kicker">Experience</span>
+                <span className="cp-kicker">Live Profile</span>
               </div>
               <h2 className="font-display font-black text-5xl md:text-6xl lg:text-7xl leading-tight mb-6">
-                <span className="text-[var(--cp-white)]">See Your Pal</span>
+                <span className="text-[var(--cp-white)]">A collectible with</span>
                 <br />
-                <span className="cp-gradient-text">Come Alive</span>
+                <span className="cp-gradient-text">game-account depth.</span>
               </h2>
               <p className="text-xl text-[var(--cp-gray-400)] leading-relaxed max-w-xl">
-                Every CharmXPal includes a real-time 3D model you can rotate, explore, and collect.
+                Each Pal resolves into a persistent player profile: art, stats, claim state, and shortcuts into the modes that make the charm worth scanning again.
               </p>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {features.map((feature) => (
                 <div
                   key={feature.title}
-                  className="flex gap-4 items-start p-4 rounded-[var(--cp-radius-md)] border-2 border-[var(--cp-gray-700)] bg-[var(--cp-gray-900)] hover:border-[var(--cp-cyan)] transition-colors"
+                  className="cp-signal-row"
                 >
-                  <div className="w-12 h-12 rounded-[var(--cp-radius-md)] border-2 border-[var(--cp-gray-700)] bg-[var(--cp-gray-800)] flex items-center justify-center text-[var(--cp-gray-300)] flex-shrink-0">
-                    {feature.icon}
-                  </div>
+                  <div className="cp-signal-metric">{feature.metric}</div>
                   <div>
                     <h4 className="font-semibold text-[var(--cp-white)] mb-1">{feature.title}</h4>
-                    <p className="text-sm text-[var(--cp-gray-400)]">{feature.desc}</p>
+                    <p className="text-sm text-[var(--cp-gray-400)] leading-relaxed">{feature.desc}</p>
                   </div>
                 </div>
               ))}
             </div>
+
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/arena"
+                className="cp-cta-primary font-display text-sm"
+                onClick={() => trackEvent('home_cta_click', { target: 'arena', source: 'live_profile' })}
+              >
+                Enter Arena
+              </Link>
+              <Link
+                href="/explore"
+                className="cp-cta-ghost font-display text-sm"
+                onClick={() => trackEvent('home_cta_click', { target: 'explore', source: 'live_profile' })}
+              >
+                Browse Roster
+              </Link>
+            </div>
           </div>
 
-          <div className="relative max-w-lg mx-auto">
+          <div className="relative max-w-xl mx-auto w-full">
             <div
               ref={cardRef}
-              className="relative"
+              className="relative cp-live-console"
               style={{ perspective: '1000px' }}
               tabIndex={0}
-              aria-label="Interactive 3D preview card. Hover, drag, or use arrow keys to rotate."
+              aria-label="Interactive Pal profile preview. Use pointer or arrow keys to tilt the card."
               onPointerDown={() => setIsHovering(true)}
               onPointerMove={handlePointerMove}
               onPointerEnter={() => setIsHovering(true)}
@@ -132,55 +144,88 @@ export default function Interactive3DPreview() {
               onKeyDown={handleKeyDown}
             >
               <div
-                className="relative w-full aspect-[4/5] rounded-[var(--cp-radius-lg)] overflow-hidden border-2 border-[var(--cp-gray-700)] bg-[var(--cp-gray-900)]"
+                className="cp-live-console-frame"
                 style={{
-                  transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg) ${isHovering ? 'scale(1.02)' : 'scale(1)'}`,
-                  transition: 'transform 0.3s ease-out',
+                  transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg) ${isHovering ? 'scale(1.015)' : 'scale(1)'}`,
                 } as CSSProperties}
               >
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="relative w-32 h-32 md:w-40 md:h-40">
-                    <div className="absolute inset-0 rounded-[var(--cp-radius-lg)] border-2 border-[var(--cp-gray-700)] bg-[var(--cp-gray-800)]" />
-                    <div className="absolute -inset-4 rounded-[var(--cp-radius-lg)] border border-[var(--cp-gray-800)]" />
-                    <div className="absolute -inset-8 rounded-[var(--cp-radius-lg)] border border-[var(--cp-gray-800)]/50" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-3xl md:text-4xl font-display font-black text-[var(--cp-gray-700)] tracking-[0.2em]">3D</span>
+                <div className="absolute inset-0">
+                  <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(0,0,0,0.34)_38%,rgba(0,0,0,0.92))]" />
+                  <div className="cp-live-console-scanline" />
+                </div>
+
+                <div className="relative z-10 flex h-full flex-col justify-between p-5 sm:p-7">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-2">
+                      <span className="cp-chip text-[10px]">Wave 01</span>
+                      <div className="inline-flex items-center gap-2 rounded-[var(--cp-radius-sm)] border border-white/15 bg-black/45 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-white/75">
+                        <span className="h-2 w-2 rounded-[2px] bg-[var(--cp-green)]" />
+                        Verified
+                      </div>
+                    </div>
+                    <div className="rounded-[var(--cp-radius-md)] border border-white/15 bg-black/45 px-4 py-3 text-right backdrop-blur-sm">
+                      <div className="font-display text-3xl font-black text-[var(--cp-white)]">6.7</div>
+                      <div className="text-[0.58rem] font-bold uppercase tracking-[0.28em] text-white/45">Rating</div>
                     </div>
                   </div>
-                </div>
 
-                <div className="absolute top-6 left-6">
-                  <span className="cp-chip text-[10px]">Preview</span>
-                </div>
+                  <div className="relative my-5 min-h-[12rem] flex-1 overflow-hidden rounded-[var(--cp-radius-lg)] border border-white/15 bg-black/45">
+                    <Image
+                      src="/assets/characters/neon-city/portrait.webp"
+                      alt="Vexa Volt character art"
+                      fill
+                      sizes="(min-width: 1024px) 480px, 100vw"
+                      className="object-cover opacity-95"
+                      style={{ objectPosition: 'center 38%' }}
+                      priority
+                    />
+                    <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_50%,rgba(0,0,0,0.28))]" />
+                  </div>
 
-                <div className="absolute bottom-6 left-6 right-6 rounded-[var(--cp-radius-md)] border-2 border-[var(--cp-gray-700)] bg-[var(--cp-black)]/80 backdrop-blur-sm p-5">
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    {[
-                      { label: 'Power', value: '8.2', color: 'var(--cp-red)' },
-                      { label: 'Speed', value: '7.5', color: 'var(--cp-cyan)' },
-                      { label: 'Rarity', value: '9.1', color: 'var(--cp-yellow)' },
-                    ].map((stat) => (
-                      <div key={stat.label}>
-                        <div className="font-display font-black text-2xl text-[var(--cp-white)] mb-1">
-                          {stat.value}
-                        </div>
-                        <div className="text-[0.6rem] text-[var(--cp-gray-500)] uppercase tracking-[0.28em]">
-                          {stat.label}
-                        </div>
+                  <div className="rounded-[var(--cp-radius-lg)] border border-white/15 bg-black/70 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-md">
+                    <div className="flex flex-wrap items-end justify-between gap-4">
+                      <div>
+                        <div className="text-xs font-bold uppercase tracking-[0.26em] text-[var(--cp-cyan)]">Neon City</div>
+                        <h3 className="mt-1 font-display text-4xl font-black leading-none text-[var(--cp-white)]">Vexa Volt</h3>
+                        <p className="mt-2 max-w-sm text-sm leading-relaxed text-white/58">
+                          Street Dance Champion with claim-ready stats and a direct path into competitive modes.
+                        </p>
                       </div>
-                    ))}
+                      <Link
+                        href="/character/neon-city"
+                        className="cp-card-button cp-card-button-primary shrink-0"
+                        onClick={() => trackEvent('home_cta_click', { target: 'character', source: 'live_profile_card' })}
+                      >
+                        Open Profile
+                      </Link>
+                    </div>
+
+                    <div className="mt-5 grid gap-3">
+                      {consoleStats.map((stat) => (
+                        <div key={stat.label} className="grid grid-cols-[5.5rem_1fr_2.5rem] items-center gap-3 text-sm">
+                          <span className="font-semibold text-white/65">{stat.label}</span>
+                          <span className="h-2 overflow-hidden rounded-[var(--cp-radius-sm)] bg-white/12">
+                            <span
+                              className="block h-full rounded-[var(--cp-radius-sm)]"
+                              style={{ width: `${stat.value}%`, background: stat.color }}
+                            />
+                          </span>
+                          <span className="text-right font-display text-lg font-black text-white">{stat.value}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="text-center mt-6">
-              <div className="inline-flex items-center gap-2 text-[var(--cp-gray-500)] text-sm font-semibold">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11" />
-                </svg>
-                <span>Hover, drag, or use arrow keys</span>
-              </div>
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-sm font-semibold text-[var(--cp-gray-500)]">
+              <span className="inline-flex items-center gap-2">
+                <span className="h-2 w-2 rounded-[2px] bg-[var(--cp-cyan)]" />
+                Pointer tilt
+              </span>
+              <span className="text-[var(--cp-gray-700)]">/</span>
+              <span>Keyboard accessible</span>
             </div>
           </div>
         </div>

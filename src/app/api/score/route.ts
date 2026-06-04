@@ -7,7 +7,6 @@ import {
   consumeScoreSessionNonce,
   getRunnerScoreLimits,
   getScoreAttemptRecord,
-  validateRunnerScoreAttempt,
   verifyScoreSession,
 } from '@/lib/scoreSession';
 
@@ -76,9 +75,10 @@ export async function POST(req: NextRequest) {
       if (!attempt || attempt.sub !== claims.sub || attempt.trackId !== trackId) {
         return Response.json({ success: false, error: 'missing_score_attempt' }, { status: 400 });
       }
-      if (!validateRunnerScoreAttempt(attempt, limits, score)) {
-        return Response.json({ success: false, error: 'incomplete_score_attempt' }, { status: 400 });
-      }
+      return Response.json(
+        { success: false, error: 'runner_score_verification_unavailable' },
+        { status: 403 },
+      );
     }
 
     const consumed = await consumeScoreSessionNonce(claims.nonce, Math.max(1, claims.exp - now));

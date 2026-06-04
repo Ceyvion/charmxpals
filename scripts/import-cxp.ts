@@ -1,8 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { parse } from 'csv-parse/sync';
-import { randomBytes } from 'crypto';
-import { v4 as uuid } from 'uuid';
+import { randomBytes, randomUUID as uuid } from 'crypto';
 
 import { getRedis } from '@/lib/redis';
 import { redisKeys } from '@/lib/repoRedis';
@@ -163,7 +162,7 @@ export async function runImport(rows: LongRow[], setName: string): Promise<Impor
 
   const normalizedSetName = setName.trim().toLowerCase();
   const existingSetEntry = normalizedSetName ? ((await redis.hget(redisKeys.characterSets, normalizedSetName)) as string | null) : null;
-  let setId = uuid();
+  let setId: string = uuid();
   if (existingSetEntry) {
     try {
       const parsed = JSON.parse(existingSetEntry) as { id?: string };

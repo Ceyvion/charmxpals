@@ -1,12 +1,23 @@
+const IP_RE = /^(?:(?:\d{1,3}\.){3}\d{1,3}|[a-fA-F0-9:]+)$/;
+
+function isTrustedProxyHeadersEnabled() {
+  return process.env.TRUST_PROXY_HEADERS === '1';
+}
+
+function cleanIp(value: string | null) {
+  const candidate = value?.split(',')[0]?.trim();
+  if (!candidate || !IP_RE.test(candidate)) return null;
+  return candidate;
+}
+
 export function getClientIp(reqUrl: string, headers: Headers) {
-  // Try standard proxy headers first
-  const xff = headers.get('x-forwarded-for');
-  if (xff) {
-    const first = xff.split(',')[0]?.trim();
-    if (first) return first;
+  if (isTrustedProxyHeadersEnabled()) {
+    const forwarded = cleanIp(headers.get('x-forwarded-for'));
+    if (forwarded) return forwarded;
+
+    const real = cleanIp(headers.get('x-real-ip'));
+    if (real) return real;
   }
-  const real = headers.get('x-real-ip');
-  if (real) return real;
 
   try {
     const url = new URL(reqUrl);

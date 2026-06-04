@@ -1,5 +1,97 @@
 # Beta Exit Tonight Checklist
 
+## State-of-the-Art App Polish Plan (2026-06-03)
+
+Objective: make the public CharmPals app feel materially more modern and product-grade while preserving routes, data flow, security work in progress, and existing gameplay/claim behavior.
+
+- [x] Capture current app behavior and identify the safest visible polish targets.
+- [x] Refine the landing/app-shell presentation with scoped CSS/component changes only.
+- [x] Keep all existing route destinations valid and avoid backend/API/security churn.
+- [x] Run lint, tests, build, and browser checks for desktop/mobile regressions.
+- [x] Update orchestrator status if a new polish task is added or completed.
+- [x] Document review evidence, residual risks, and any blocked proof.
+
+### State-of-the-Art App Polish Review (2026-06-03)
+
+- Updated the landing hero to name the product directly, tighten the offer, and leave more first-viewport context below the hero.
+- Replaced the misleading 3D-preview marketing block with a live profile/loadout console using real CharmPals art, stats, route-safe CTAs, keyboard-accessible tilt, and reduced-motion handling.
+- Fixed runtime blockers found during browser QA:
+  - `useOwnedCharacterIds` no longer loops on fresh array dependencies.
+  - anonymous ownership overlays return an empty no-store list instead of a public 401 console error.
+  - analytics events are best-effort and respect forced memory mode in local dev.
+  - rate limiting respects forced memory mode in local dev.
+  - removed duplicate `public/favicon.ico` so `/favicon.ico` resolves without a Next route conflict.
+- Verification:
+  - `npm run lint` passes with 29 existing `no-explicit-any` warnings and 0 errors.
+  - `npm test` passes: 18 files, 54 tests.
+  - `npm run build` passes.
+  - Fresh Chrome checks on desktop `1440x1000` and mobile `390x844` return `/` status 200 with no 4xx/5xx responses, no console messages, no page errors, updated H1 visible, claim CTA visible, old 3D copy absent, and live-profile art loaded.
+
+## Codex Security Vulnerability Fix Plan (2026-06-03)
+
+- [x] Fix client-attested runner progress so leaderboard submission cannot be unlocked by forged progress calls.
+- [x] Add focused score regression coverage for forged progress rejection and legitimate progress acceptance.
+- [x] Fix forwarded-header rate-limit identity so spoofed `X-Forwarded-For` values are not trusted by default.
+- [x] Reduce claim verification oracle exposure.
+- [x] Reduce public health diagnostic detail.
+- [x] Disable predictable sample claim-code seeding outside explicit non-production seed mode.
+- [x] Fix MMO token replay/session collision and add regression coverage.
+- [x] Bound MMO WebSocket frame and message payloads.
+- [x] Remove standalone MMO known-secret fallback.
+- [x] Upgrade vulnerable dependencies until `npm audit --omit=dev` is clean or remaining items are proven unreachable.
+- [x] Run focused tests plus repo-level verification and document results.
+
+### Codex Security Vulnerability Fix Review (2026-06-03)
+
+- Score submissions for runner mode now fail closed with `runner_score_verification_unavailable` rather than accepting client-attested progress as leaderboard proof.
+- Rate-limit identity ignores forwarded headers unless `TRUST_PROXY_HEADERS=1`; claim-code verification now requires an authenticated session before revealing status.
+- Public health output is coarse only; sample claim-unit seeding is opt-in outside tests/local memory mode.
+- MMO startup now requires a real token secret; tokens require `sid`, `nonce`, and `exp`; replay, duplicate-session, pending-socket capacity, oversized-frame, emote, and cosmetics bounds are enforced.
+- Dependency audit is clean after upgrading Next/NextAuth/ws/Playwright/Vitest/Tailwind/PostCSS and adding narrow transitive overrides.
+- Verification:
+  - `npm audit --json` passes with 0 vulnerabilities.
+  - `npm test -- --pool forks --no-file-parallelism --maxWorkers 1 --reporter verbose` passes: 18 files, 54 tests.
+  - `npm run build` passes.
+  - `npx tsc --noEmit --pretty false --incremental false` passes.
+  - `npm run lint` exits 0 with 29 pre-existing `@typescript-eslint/no-explicit-any` warnings.
+
+## Codex Security Repository Audit Plan (2026-06-03)
+
+- [x] Set up scan goal and artifact directories under `/tmp/codex-security-scans/charmxpals`.
+- [x] Phase 1: write the repository threat model and copy it into the scan context.
+- [x] Phase 2: build a coverage ledger for API, auth/session, Redis/repo, realtime MMO, middleware, client QR/claim, scripts/config, and dependency surfaces.
+- [x] Phase 2: record raw candidates with discovery receipts or explicit suppression/not-applicable/deferred closure.
+- [x] Phase 3: validate each candidate against source evidence, tests, config, dependency advisories, and realistic reachability.
+- [x] Phase 4: analyze exploit paths, impact, prerequisites, and severity for every surviving candidate.
+- [x] Generate final markdown and HTML reports with exact file/line evidence.
+- [x] Run verification commands and document the audit review.
+
+### Codex Security Repository Audit Review (2026-06-03)
+
+- Report paths:
+  - Markdown: `/tmp/codex-security-scans/charmxpals/2f4a3b94_20260603T142819Z/report.md`
+  - HTML: `/tmp/codex-security-scans/charmxpals/2f4a3b94_20260603T142819Z/report.html`
+- Coverage:
+  - Generated/collated exhaustive source worklist from `src`, `server`, and `scripts`.
+  - `deep_review_input.csv` contains 162 in-scope rows plus header.
+  - `work_ledger.jsonl` contains 162 completion receipts.
+  - All 9 surviving candidates have discovery, validation, and attack-path receipts in per-finding candidate ledgers.
+- Findings:
+  - High: client-attested runner progress allows arbitrary leaderboard scores.
+  - High: `next@14.2.15` is in audited vulnerable ranges and this repo relies on middleware to hide debug/orchestrator routes.
+  - Medium: forwarded-header trust can bypass rate limits when deployment preserves client-supplied `X-Forwarded-For`.
+  - Medium: MMO bearer token replay creates session collision/impersonation.
+  - Medium: MMO WebSocket accepts unbounded frames and display payloads.
+  - Medium: fresh Redis seeding creates predictable claimable units.
+  - Medium: unauthenticated claim verify endpoint acts as a claim-code oracle.
+  - Medium: standalone MMO server can fall back to known `dev-secret` if exposed without secrets.
+  - Low: public health endpoint exposes runtime/backend diagnostics.
+- Verification:
+  - `npm audit --omit=dev --json` completed and was saved to scan artifacts; it reports 8 dependency vulnerabilities.
+  - Codex Security report validator passed.
+  - HTML renderer produced `report.html`.
+  - `npm run test -- src/lib/scoreSession.test.ts` timed out after 120 seconds, so HTTP/runtime exploit reproduction remains a follow-up.
+
 ## Vercel Deployment Fix Plan (2026-03-16)
 
 - [x] Confirm which server routes/pages are tripping Vercel `DYNAMIC_SERVER_USAGE` and whether shared auth endpoints need explicit dynamic handling.

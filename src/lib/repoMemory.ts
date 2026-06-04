@@ -1,5 +1,4 @@
-import { randomBytes } from 'crypto';
-import { v4 as uuid } from 'uuid';
+import { randomBytes, randomUUID as uuid } from 'crypto';
 import { hashClaimCode } from './crypto';
 import type { Repo, User, Character, PhysicalUnit, ClaimChallenge, Ownership } from './repo';
 import { characterLore } from '@/data/characterLore';
@@ -35,7 +34,12 @@ function toAvatarId(character: Character | null): string | null {
   return parseAvatarIdFromSpriteRef(character.artRefs?.sprite);
 }
 
-// Demo data (mirrors the default Redis seed)
+function shouldSeedSampleUnits() {
+  if (process.env.SEED_SAMPLE_UNITS === '1') return true;
+  return process.env.NODE_ENV === 'test' || process.env.USE_MEMORY_DB === '1';
+}
+
+// Demo roster data. Sample claim units are seeded only in explicit local/test modes.
 const data = (() => {
   const set: CharacterSet = {
     id: uuid(),
@@ -86,20 +90,22 @@ if (!memorySecret) {
     { code: 'CHARM-XPAL-002', series: 'Blue Dash' },
     { code: 'CHARM-XPAL-003', series: 'Pink Dash' },
   ];
-  const units: PhysicalUnit[] = sampleUnits.reduce<PhysicalUnit[]>((acc, { code, series }) => {
-    const character = characters.find((c) => c.codeSeries === series);
-    if (!character) return acc;
-    acc.push({
-      id: uuid(),
-      characterId: character.id,
-      codeHash: hashClaimCode(code, memorySecret!),
-      secureSalt: randomBytes(32).toString('hex'),
-      status: 'available',
-      claimedBy: null,
-      claimedAt: null,
-    });
-    return acc;
-  }, []);
+  const units: PhysicalUnit[] = shouldSeedSampleUnits()
+    ? sampleUnits.reduce<PhysicalUnit[]>((acc, { code, series }) => {
+        const character = characters.find((c) => c.codeSeries === series);
+        if (!character) return acc;
+        acc.push({
+          id: uuid(),
+          characterId: character.id,
+          codeHash: hashClaimCode(code, memorySecret!),
+          secureSalt: randomBytes(32).toString('hex'),
+          status: 'available',
+          claimedBy: null,
+          claimedAt: null,
+        });
+        return acc;
+      }, [])
+    : [];
 
   return {
     users: [] as User[],

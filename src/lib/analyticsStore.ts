@@ -1,6 +1,6 @@
 import { getRedis } from '@/lib/redis';
 import type { StoredAnalyticsEvent } from '@/lib/analytics';
-import { hasRedisEnv, shouldAllowEphemeralFallback } from '@/lib/runtime';
+import { hasRedisEnv, isMemoryModeForced, shouldAllowEphemeralFallback } from '@/lib/runtime';
 
 const ANALYTICS_EVENTS_PREFIX = 'analytics:events';
 const ANALYTICS_COUNTS_PREFIX = 'analytics:counts';
@@ -18,7 +18,7 @@ function countKey(dateKey: string) {
 }
 
 export async function recordAnalyticsEvent(event: StoredAnalyticsEvent): Promise<void> {
-  if (!hasRedisEnv()) {
+  if (isMemoryModeForced() || !hasRedisEnv()) {
     if (!shouldAllowEphemeralFallback()) {
       throw new Error('Redis-backed analytics persistence is required in production.');
     }

@@ -97,8 +97,8 @@ export default function UltraHero({ characters = [] }: { characters?: HeroCharac
   };
 
   return (
-    <section className="relative min-h-[100vh] flex items-center overflow-hidden cp-section-dark">
-      <div className="relative z-10 w-full px-4 py-24">
+    <section className="relative min-h-[88svh] flex items-center overflow-hidden cp-section-dark cp-grid-field cp-hero-stage">
+      <div className="relative z-10 w-full px-4 py-20 md:py-24">
         <div className="cp-container max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-12 items-center">
             <div className="space-y-8" data-testid="home-hero-head">
@@ -120,8 +120,8 @@ export default function UltraHero({ characters = [] }: { characters?: HeroCharac
                 style={{ transitionDelay: '120ms' }}
               >
                 <h1 className="font-display font-black leading-[0.9] tracking-tight text-6xl sm:text-7xl lg:text-8xl">
-                  <span className="block text-[var(--cp-white)]">Scan. Boot.</span>
-                  <span className="block cp-gradient-text">Own the moment.</span>
+                  <span className="block text-[var(--cp-white)]">CharmPals beta.</span>
+                  <span className="block cp-gradient-text">Battle-ready in seconds.</span>
                 </h1>
               </div>
 
@@ -135,7 +135,7 @@ export default function UltraHero({ characters = [] }: { characters?: HeroCharac
                   {worldTagline} Flash your CharmXPal and watch it materialize in under five seconds.
                 </p>
                 <p className="text-base md:text-lg text-[var(--cp-gray-500)] mt-4 max-w-lg">
-                  No apps, no wallets, no friction—just instant play.
+                  No apps, no wallets, no friction. Just instant play.
                 </p>
               </div>
 
@@ -199,10 +199,13 @@ export default function UltraHero({ characters = [] }: { characters?: HeroCharac
               data-testid="home-hero-deck"
             >
               <div className="relative max-w-lg mx-auto">
-                <div className="cp-panel p-6 sm:p-8 bg-[var(--cp-white)]">
-                  <div className="flex items-center justify-between text-[0.6rem] sm:text-xs uppercase tracking-[0.3em] text-[var(--cp-text-muted)]">
+                <div className="cp-panel cp-hero-roster-panel p-6 sm:p-8 bg-[var(--cp-white)]">
+                  <div className="flex items-center justify-between gap-4 text-[0.6rem] sm:text-xs uppercase tracking-[0.24em] text-[var(--cp-text-muted)]">
                     <span>Featured roster</span>
-                    <span>Wave 01</span>
+                    <span className="inline-flex items-center gap-2 whitespace-nowrap">
+                      <span className="h-2 w-2 rounded-[2px] bg-[var(--cp-green)]" />
+                      Wave 01
+                    </span>
                   </div>
                   <div className="mt-6">
                     {heroCards.length === 0 ? (

@@ -1,6 +1,9 @@
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 
 export default function ThreePreviewPage() {
+  if (process.env.NODE_ENV === 'production') return notFound();
+
   return (
     <div className="min-h-screen bg-grid-overlay px-4 py-20">
       <div className="cp-container max-w-4xl">
