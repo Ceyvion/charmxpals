@@ -1,5 +1,71 @@
 # Beta Exit Tonight Checklist
 
+## Production Character Crash Fix Plan (2026-06-20)
+
+Objective: fix the production server exception on `/character/neon-city`, verified by a local production build/server or live deployment evidence plus browser smoke checks, while preserving public profile, Explore, Compare, and backend-fallback behavior.
+
+- [x] Reproduce the `/character/neon-city` server failure locally or collect exact Vercel log evidence for digest `2919879863`.
+- [x] Inspect the character route, lookup helpers, lore fallback, and production runtime assumptions for the narrow root cause.
+- [x] Apply the smallest durable fix without making public profile render dependent on unavailable Redis/env state.
+- [x] Run focused regression tests plus `npm run lint`, `npm test`, `npx tsc --noEmit --pretty false --incremental false`, and `npm run build` where practical.
+- [x] Browser-smoke `/character/neon-city` and nearby public routes for no application error, no framework overlay, and no relevant console errors.
+- [x] Document review evidence, deployment status, and residual risks.
+
+### Production Character Crash Fix Review (2026-06-20)
+
+- Reproduced the crash class locally from the production bundle by starting `next start` with production persistence secrets blanked: `/character/neon-city` returned `500` and logged `CODE_HASH_SECRET missing`.
+- Root cause: the public character route imported and initialized the repo layer before resolving lore-backed public identifiers, so missing production persistence/claim-code configuration could crash a static public profile.
+- Fixes:
+  - Exported the pure lore identifier resolver from `src/lib/characterLookup.ts`.
+  - Changed `/character/[id]` to resolve public lore characters before dynamically importing `getRepo`.
+  - Made `src/lib/repo.ts` lazy-load the memory repo so importing the repo facade does not initialize in-memory claim-code seeding in production.
+  - Changed the character not-found page to suggest `listPublicCharacters()` instead of fetching suggestions from repo storage.
+- Verification:
+  - `npx vitest run src/lib/characterLookup.test.ts --pool forks --no-file-parallelism --maxWorkers 1` passes: 8 tests.
+  - `npx tsc --noEmit --pretty false --incremental false` passes.
+  - `npm run build` passes.
+  - `npm run lint` exits 0 with 26 existing `no-explicit-any` warnings.
+  - `npm test -- --pool forks --no-file-parallelism --maxWorkers 1` passes: 18 files, 56 tests.
+  - Production missing-secret smoke via `next start`: `/character/neon-city` returns `200`, has `Vexa Volt`, and has no `Application error`/`Internal Server Error` text.
+  - Production missing-secret smoke via `next start`: `/character/not-a-real-pal` returns the character not-found UI without an application-error page.
+  - Rendered Chrome/Playwright QA on `http://127.0.0.1:3110/character/neon-city` passes desktop `1440x1000` and mobile `390x844`; title is `Vexa Volt | CharmPals`, body contains Vexa/Neon City, no page errors, no console warnings/errors, and no failed browser responses.
+  - Header navigation interaction from `/character/neon-city` to `/compare` passes with no app-error text.
+- Residual local caveat:
+  - The local production server still logs best-effort analytics drops because the configured Upstash host is unreachable from this environment; the browser response remained healthy and the analytics endpoint did not create console or failed-response noise.
+
+## Broken Profile Flow Cleanup Plan (2026-06-04)
+
+Objective: fix the Explore -> character preview -> Open Full Profile crash and catch deployment-impacting broken routes/modules before release.
+
+- [x] Reproduce the reported Echo Bloom/full-profile failure locally and capture the failing route or server error.
+- [x] Inspect Explore/profile route code, character lookup data, and link generation for broken slug/id assumptions.
+- [x] Apply the smallest durable fix for profile routing or server-side rendering failures.
+- [x] Run lint, tests, build, and targeted route checks for deployment-sensitive regressions.
+- [x] Browser-verify Explore and full-profile navigation on desktop and mobile.
+- [x] Update orchestrator status if a repo task changes materially.
+- [x] Document review evidence, residual risks, and any blocked proof.
+
+### Broken Profile Flow Cleanup Review (2026-06-04)
+
+- Reproduced the reported production-style failure path and found `/character/petal-plaza` was vulnerable to server-render/module failures plus Redis-backed public data dependencies.
+- Fixed public character identifier resolution to return lore-backed public characters before touching repo storage, and to fall back to lore if repo storage is unavailable.
+- Changed `/compare` to use the public lore roster like `/explore`, removing Redis from the public compare render path.
+- Removed the optional profile fiber/Three background from server-rendered profile output and replaced profile particle randomness with deterministic seeded values.
+- Updated `/character/[id]` to await dynamic route params per Next 15 expectations.
+- Removed the `/claim` `next/dynamic(..., { ssr: false })` QR scanner bailout marker by loading the scanner after mount and tightening scanner prop types.
+- Made `/api/analytics/event` fail open for analytics rate-limit storage outages so telemetry cannot create user-visible console/network errors during browsing.
+- Added regression coverage for lore-backed profile resolution when repo storage is unavailable.
+- Updated orchestrator item `BUG-PROFILE-FLOW-2026-06-04` to `done`.
+- Verification:
+  - `npm run lint` exits 0 with 26 existing `no-explicit-any` warnings.
+  - `npm test -- --pool forks --no-file-parallelism --maxWorkers 1` passes: 18 files, 55 tests.
+  - `npx tsc --noEmit --pretty false --incremental false` passes.
+  - `npm run build` passes.
+  - Production route smoke on `http://localhost:3000` passes for `/`, `/explore`, `/character/petal-plaza`, `/character/echo-bloom`, `/compare`, `/claim`, `/play`, `/arena`, `/support`, and `/privacy` with no `Application error`, SSR bailout, `ReactCurrentOwner`, or `DYNAMIC_SERVER_USAGE` markers.
+  - Browser QA passes desktop `1440x1000` and mobile `390x844`: Menu/Explore flow opens Echo Bloom at `/character/petal-plaza`, no page errors, no console errors, no failed network responses.
+- Residual local caveat:
+  - `/api/health` returns `503` in this local production run because the configured Upstash host is not reachable from this environment; public pages no longer crash when that backend dependency is unavailable.
+
 ## State-of-the-Art App Polish Plan (2026-06-03)
 
 Objective: make the public CharmPals app feel materially more modern and product-grade while preserving routes, data flow, security work in progress, and existing gameplay/claim behavior.

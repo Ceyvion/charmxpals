@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Repo, Character } from '@/lib/repo';
-import { resolveCharacterByIdentifier } from '@/lib/characterLookup';
+import { resolveCharacterByIdentifier, resolveLoreCharacterByIdentifier } from '@/lib/characterLookup';
 
 function createRepo(characters: Character[]): Repo {
   const normalize = (value: string) => value.trim().toLowerCase();
@@ -74,38 +74,38 @@ describe('resolveCharacterByIdentifier', () => {
     {
       id: 'char-001',
       setId: 'set-1',
-      name: 'Storm Leviathan',
-      description: 'Tidal thunder reign.',
+      name: 'Custom Pal',
+      description: 'Private beta roster entry.',
       rarity: 5,
       stats: { power: 95 },
       artRefs: { thumbnail: '/card-placeholder.svg' },
-      slug: 'storm-leviathan',
-      codeSeries: 'Legacy Apex',
+      slug: 'custom-pal',
+      codeSeries: 'Custom Series',
     },
   ];
 
   it('returns a character by direct id lookup', async () => {
     const repo = createRepo(sampleCharacters);
     const character = await resolveCharacterByIdentifier(repo, 'char-001');
-    expect(character?.name).toBe('Storm Leviathan');
+    expect(character?.name).toBe('Custom Pal');
   });
 
   it('uses repo-level identifier resolution when available', async () => {
     const repo = createRepo(sampleCharacters);
     repo.resolveCharacterIdentifier = async ({ raw }) => {
-      expect(raw).toBe('storm-leviathan');
+      expect(raw).toBe('custom-pal');
       return sampleCharacters[0] ?? null;
     };
     repo.getCharacterById = async () => {
       throw new Error('getCharacterById should not be called');
     };
-    const character = await resolveCharacterByIdentifier(repo, 'storm-leviathan');
+    const character = await resolveCharacterByIdentifier(repo, 'custom-pal');
     expect(character?.id).toBe('char-001');
   });
 
   it('falls back to slug match from listed characters when id lookup misses', async () => {
     const repo = createRepo(sampleCharacters);
-    const character = await resolveCharacterByIdentifier(repo, 'storm-leviathan');
+    const character = await resolveCharacterByIdentifier(repo, 'custom-pal');
     expect(character?.id).toBe('char-001');
   });
 
@@ -114,6 +114,26 @@ describe('resolveCharacterByIdentifier', () => {
     const character = await resolveCharacterByIdentifier(repo, 'shadow-mantis');
     expect(character?.name).toBe('Shadow Mantis');
     expect(character?.artRefs?.thumbnail).toBe('/assets/characters/shadow-mantis/thumb.webp');
+  });
+
+  it('resolves a public lore character without repository access', () => {
+    const character = resolveLoreCharacterByIdentifier('neon-city');
+    expect(character?.name).toBe('Vexa Volt');
+    expect(character?.slug).toBe('neon-city');
+    expect(character?.artRefs?.portrait).toBe('/assets/characters/neon-city/portrait.webp');
+  });
+
+  it('resolves public lore identifiers before unavailable repo storage', async () => {
+    const repo = createRepo([]);
+    repo.resolveCharacterIdentifier = async () => {
+      throw new Error('storage unavailable');
+    };
+    repo.getCharacterById = async () => {
+      throw new Error('storage unavailable');
+    };
+    const character = await resolveCharacterByIdentifier(repo, 'petal-plaza');
+    expect(character?.name).toBe('Echo Bloom');
+    expect(character?.slug).toBe('petal-plaza');
   });
 
   it('resolves every requested legacy identifier with non-placeholder art', async () => {

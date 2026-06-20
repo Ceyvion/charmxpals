@@ -1,17 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import dynamic from 'next/dynamic';
+import { useCallback, useEffect, useRef, useState, type ComponentType } from 'react';
 import { signIn, useSession } from 'next-auth/react';
 
 import { trackEvent } from '@/lib/analyticsClient';
 import { hmacSHA256Hex } from '@/lib/webcrypto';
 import UltraClaimInterface from '@/components/claim/UltraClaimInterface';
 import type { CharacterBasic } from '@/components/CharacterCard';
+import type { QrScannerProps } from '@/components/QrScanner';
 
 type Message = { kind: 'success' | 'error'; text: string };
-
-const QrScannerDynamic = () => import('@/components/QrScanner');
 
 const CODE_REGEX = /CXP-(?:[A-Z0-9]+-){4,}[A-Z0-9]+/i;
 
@@ -127,6 +125,7 @@ export default function ClaimPageClient() {
   const [unitStatus, setUnitStatus] = useState<VerifyStatus | null>(null);
   const [claimedCharacterId, setClaimedCharacterId] = useState<string | null>(null);
   const [claimedAt, setClaimedAt] = useState<string | null>(null);
+  const [QrScanner, setQrScanner] = useState<ComponentType<QrScannerProps> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { data: session, status } = useSession();
@@ -135,10 +134,22 @@ export default function ClaimPageClient() {
     signIn(undefined, { callbackUrl: '/claim' }).catch(() => {});
   }, []);
 
-  const QrScanner = useMemo(() => dynamic(QrScannerDynamic, { ssr: false }), []);
-
   const codeNormalized = code.trim();
   const hasUnlocked = Boolean(character && claimedCharacterId === character.id);
+
+  useEffect(() => {
+    let cancelled = false;
+    import('@/components/QrScanner')
+      .then((mod) => {
+        if (!cancelled) setQrScanner(() => mod.default);
+      })
+      .catch(() => {
+        if (!cancelled) setQrScanner(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     try {

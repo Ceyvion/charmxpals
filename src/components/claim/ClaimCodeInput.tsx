@@ -1,6 +1,10 @@
 "use client";
 
 import Link from 'next/link';
+import type { ComponentType } from 'react';
+
+import type { CharacterPreview } from '@/app/claim/ClaimPageClient';
+import type { QrScannerProps } from '@/components/QrScanner';
 
 type Message = { kind: 'success' | 'error'; text: string };
 type VerifyStatus = 'available' | 'claimed' | 'blocked' | 'not_found';
@@ -16,14 +20,14 @@ interface Props {
   handleSubmit: (e: React.FormEvent) => Promise<void>;
   extractClaimCode: (raw: string) => string;
   setMessage: React.Dispatch<React.SetStateAction<Message | null>>;
-  setCharacter: React.Dispatch<React.SetStateAction<any>>;
+  setCharacter: React.Dispatch<React.SetStateAction<CharacterPreview | null>>;
   setUnitStatus: React.Dispatch<React.SetStateAction<VerifyStatus | null>>;
   setClaimedCharacterId: React.Dispatch<React.SetStateAction<string | null>>;
   setClaimedAt: React.Dispatch<React.SetStateAction<string | null>>;
   inputRef: React.RefObject<HTMLInputElement>;
   promptSignIn: () => void;
   codeNormalized: string;
-  QrScanner: any;
+  QrScanner: ComponentType<QrScannerProps> | null;
 }
 
 export default function ClaimCodeInput(props: Props) {
@@ -218,24 +222,26 @@ export default function ClaimCodeInput(props: Props) {
         </p>
       </form>
 
-      <QrScanner
-        open={scanOpen}
-        onClose={() => setScanOpen(false)}
-        onResult={(value: string) => {
-          const parsed = extractClaimCode(String(value || ''));
-          if (parsed) {
-            setCode(parsed);
-            setMessage(null);
-            setCharacter(null);
-            setUnitStatus(null);
-            setClaimedCharacterId(null);
-            setClaimedAt(null);
-          } else {
-            setMessage({ kind: 'error', text: 'Invalid scan. Align and retry.' });
-          }
-          setScanOpen(false);
-        }}
-      />
+      {QrScanner && (
+        <QrScanner
+          open={scanOpen}
+          onClose={() => setScanOpen(false)}
+          onResult={(value: string) => {
+            const parsed = extractClaimCode(String(value || ''));
+            if (parsed) {
+              setCode(parsed);
+              setMessage(null);
+              setCharacter(null);
+              setUnitStatus(null);
+              setClaimedCharacterId(null);
+              setClaimedAt(null);
+            } else {
+              setMessage({ kind: 'error', text: 'Invalid scan. Align and retry.' });
+            }
+            setScanOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }

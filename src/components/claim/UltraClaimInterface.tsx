@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { Session } from 'next-auth';
+import type { ComponentType } from 'react';
 import type { CharacterPreview } from '@/app/claim/ClaimPageClient';
+import type { QrScannerProps } from '@/components/QrScanner';
 import ClaimCodeInput from './ClaimCodeInput';
 import ClaimSuccessAnimation from './ClaimSuccessAnimation';
 import Character3DPreview from './Character3DPreview';
@@ -34,7 +36,7 @@ interface Props {
   inputRef: React.RefObject<HTMLInputElement>;
   promptSignIn: () => void;
   codeNormalized: string;
-  QrScanner: any;
+  QrScanner: ComponentType<QrScannerProps> | null;
 }
 
 export default function UltraClaimInterface(props: Props) {

@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState, useRef, useCallback, type CSSProperties } from 'react';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
 import Image from 'next/image';
 
 import RevealOnView from '@/components/RevealOnView';
@@ -11,14 +10,6 @@ import StatBar from '@/components/champion/StatBar';
 import LoreCodex from '@/components/champion/LoreCodex';
 import CharacterGallery from '@/components/champion/CharacterGallery';
 import TraitBadge from '@/components/champion/TraitBadge';
-
-const FiberOpticBackground = dynamic(
-  () =>
-    import('@/components/champion/FiberOpticBackground')
-      .then((mod) => mod.default)
-      .catch(() => () => null),
-  { ssr: false, loading: () => null },
-);
 
 const DISABLE_3D_EFFECTS = /^(1|true|yes|on)$/i.test(
   process.env.NEXT_PUBLIC_DISABLE_3D ?? '',
@@ -155,18 +146,32 @@ function normalizeStats(stats?: Record<string, number> | null): Record<string, n
   return normalized;
 }
 
+function seededRandom(seed: number): number {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+}
+
+function hashSeed(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
+  }
+  return hash || 1;
+}
+
 /* ── Floating particles ── */
-function Particles({ count, color }: { count: number; color: string }) {
+function Particles({ count, color, seedKey }: { count: number; color: string; seedKey: string }) {
   const particles = useMemo(() => {
+    const baseSeed = hashSeed(seedKey);
     return Array.from({ length: count }, (_, i) => ({
       id: i,
-      left: `${Math.random() * 100}%`,
-      size: 1 + Math.random() * 2,
-      duration: 8 + Math.random() * 12,
-      delay: Math.random() * 10,
-      opacity: 0.2 + Math.random() * 0.4,
+      left: `${seededRandom(baseSeed + i * 11) * 100}%`,
+      size: 1 + seededRandom(baseSeed + i * 17) * 2,
+      duration: 8 + seededRandom(baseSeed + i * 23) * 12,
+      delay: seededRandom(baseSeed + i * 29) * 10,
+      opacity: 0.2 + seededRandom(baseSeed + i * 31) * 0.4,
     }));
-  }, [count]);
+  }, [count, seedKey]);
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
@@ -282,13 +287,8 @@ export default function CharacterPageClient({ character }: { character: Characte
           />
         </div>
 
-        {/* Fiber optic light strands */}
-        {!DISABLE_3D_EFFECTS && (
-          <FiberOpticBackground accentColor={accentColor} fiberCount={10} />
-        )}
-
         {/* Particles */}
-        <Particles count={15} color={accentColor} />
+        <Particles count={15} color={accentColor} seedKey={`${character.id}:${accentColor}`} />
 
         {/* Hero content */}
         <div className="relative mx-auto grid max-w-7xl gap-8 px-6 pb-8 pt-16 md:px-10 lg:grid-cols-[1fr_0.85fr] lg:gap-12 lg:pb-12 lg:pt-24">

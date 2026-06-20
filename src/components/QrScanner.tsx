@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-type Props = {
+export type QrScannerProps = {
   open: boolean;
   onClose: () => void;
   onResult: (text: string) => void;
 };
 
-export default function QrScanner({ open, onClose, onResult }: Props) {
+export default function QrScanner({ open, onClose, onResult }: QrScannerProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -149,4 +149,3 @@ export default function QrScanner({ open, onClose, onResult }: Props) {
     </div>
   );
 }
-

@@ -1,19 +1,32 @@
 import type { Metadata } from 'next';
-import { getRepo } from '@/lib/repo';
 import { notFound } from 'next/navigation';
 import { withCharacterLore } from '@/lib/characterLore';
-import { resolveCharacterByIdentifier } from '@/lib/characterLookup';
+import { resolveCharacterByIdentifier, resolveLoreCharacterByIdentifier } from '@/lib/characterLookup';
 import CharacterPageClient from './CharacterPageClient';
 import { absoluteUrl } from '@/lib/site';
 
 async function loadCharacter(id: string) {
-  const repo = await getRepo();
-  const rawCharacter = await resolveCharacterByIdentifier(repo, id);
-  return withCharacterLore(rawCharacter);
+  const publicCharacter = resolveLoreCharacterByIdentifier(id);
+  if (publicCharacter) return withCharacterLore(publicCharacter);
+
+  try {
+    const { getRepo } = await import('@/lib/repo');
+    const repo = await getRepo();
+    const rawCharacter = await resolveCharacterByIdentifier(repo, id);
+    return withCharacterLore(rawCharacter);
+  } catch (error) {
+    console.error(`[character] Failed to load repository-backed character "${id}".`, error);
+    return null;
+  }
 }
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const character = await loadCharacter(params.id);
+type CharacterRouteProps = {
+  params: Promise<{ id: string }>;
+};
+
+export async function generateMetadata({ params }: CharacterRouteProps): Promise<Metadata> {
+  const { id } = await params;
+  const character = await loadCharacter(id);
   if (!character) {
     return {
       title: 'Character Not Found',
@@ -54,8 +67,9 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   };
 }
 
-export default async function CharacterPage({ params }: { params: { id: string } }) {
-  const character = await loadCharacter(params.id);
+export default async function CharacterPage({ params }: CharacterRouteProps) {
+  const { id } = await params;
+  const character = await loadCharacter(id);
 
   if (!character) return notFound();
 

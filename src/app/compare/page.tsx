@@ -1,15 +1,10 @@
 import Link from "next/link";
 
 import CompareClient, { type CompareCharacter } from "./CompareClient";
-import { getRepo } from "@/lib/repo";
-import { withCharacterLore, type CharacterWithLore } from "@/lib/characterLore";
+import { listPublicCharacters, type CharacterWithLore } from "@/lib/characterLore";
 
 export default async function ComparePage() {
-  const repo = await getRepo();
-  const characters = await repo.listCharacters({ limit: 96, offset: 0 });
-  const enriched = characters
-    .map((character) => withCharacterLore(character))
-    .filter((value): value is CharacterWithLore => Boolean(value));
+  const enriched: CharacterWithLore[] = listPublicCharacters();
 
   if (enriched.length === 0) {
     return (

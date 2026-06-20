@@ -206,6 +206,13 @@
       "area": "frontend"
     },
     {
+      "id": "BUG-PROFILE-FLOW-2026-06-04",
+      "title": "Explore to profile production crash cleanup",
+      "detail": "Fix Explore -> Echo Bloom -> full profile production crashes, remove profile/claim SSR bailout markers, keep public compare/profile routes off Redis-only rendering, and verify desktop/mobile navigation.",
+      "status": "done",
+      "area": "fullstack"
+    },
+    {
       "id": "UX-LEGACY-CHARACTER-RECOVERY-2026-02-17",
       "title": "Legacy character profile + art recovery",
       "detail": "Restore missing legacy roster lore/art mappings, generate dedicated per-character art folders, and harden profile routing to resolve id, slug, and lore-backed identifiers.",

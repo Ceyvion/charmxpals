@@ -11,11 +11,18 @@ import { rateLimitCheck } from '@/lib/rateLimit';
 
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request.url, request.headers);
-  const rateLimit = await rateLimitCheck(`analytics:${ip}`, {
-    windowMs: 60_000,
-    max: 120,
-    prefix: 'analytics',
-  });
+  let rateLimit = { allowed: true };
+  try {
+    rateLimit = await rateLimitCheck(`analytics:${ip}`, {
+      windowMs: 60_000,
+      max: 120,
+      prefix: 'analytics',
+    });
+  } catch (error) {
+    if (process.env.NODE_ENV !== 'test') {
+      console.warn('[analytics] rate limit unavailable; accepting event', error);
+    }
+  }
 
   if (!rateLimit.allowed) {
     return Response.json({ success: false, error: 'rate_limited' }, { status: 429 });

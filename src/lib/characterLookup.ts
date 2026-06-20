@@ -29,9 +29,12 @@ const loreBySeries = characterLore.reduce<Map<string, (typeof characterLore)[num
   return acc;
 }, new Map());
 
-function fromLore(identifier: string): Character | null {
-  const normalized = normalize(identifier);
-  const slugified = slugify(identifier);
+export function resolveLoreCharacterByIdentifier(identifier: string): Character | null {
+  const trimmed = safeDecode(identifier).trim();
+  if (!trimmed) return null;
+
+  const normalized = normalize(trimmed);
+  const slugified = slugify(trimmed);
 
   const lore =
     loreBySlug[normalized] ??
@@ -70,29 +73,36 @@ export async function resolveCharacterByIdentifier(repo: Repo, identifier: strin
 
   const normalizedInput = normalize(trimmed);
   const slugifiedInput = slugify(trimmed);
+  const loreCharacter = resolveLoreCharacterByIdentifier(trimmed);
 
-  if (repo.resolveCharacterIdentifier) {
-    const resolved = await repo.resolveCharacterIdentifier({
-      raw: trimmed,
-      normalized: normalizedInput,
-      slugified: slugifiedInput,
-    });
-    if (resolved) return resolved;
+  if (loreCharacter) return loreCharacter;
+
+  try {
+    if (repo.resolveCharacterIdentifier) {
+      const resolved = await repo.resolveCharacterIdentifier({
+        raw: trimmed,
+        normalized: normalizedInput,
+        slugified: slugifiedInput,
+      });
+      if (resolved) return resolved;
+    }
+
+    const byId = await repo.getCharacterById(trimmed);
+    if (byId) return byId;
+
+    const bySlug =
+      (await repo.getCharacterBySlug(normalizedInput)) ??
+      (slugifiedInput !== normalizedInput ? await repo.getCharacterBySlug(slugifiedInput) : null);
+    if (bySlug) return bySlug;
+
+    const byNameSlug = await repo.getCharacterByNameSlug(slugifiedInput);
+    if (byNameSlug) return byNameSlug;
+
+    const byCodeSeries = await repo.getCharacterByCodeSeries(normalizedInput);
+    if (byCodeSeries) return byCodeSeries;
+  } catch {
+    return resolveLoreCharacterByIdentifier(trimmed);
   }
 
-  const byId = await repo.getCharacterById(trimmed);
-  if (byId) return byId;
-
-  const bySlug =
-    (await repo.getCharacterBySlug(normalizedInput)) ??
-    (slugifiedInput !== normalizedInput ? await repo.getCharacterBySlug(slugifiedInput) : null);
-  if (bySlug) return bySlug;
-
-  const byNameSlug = await repo.getCharacterByNameSlug(slugifiedInput);
-  if (byNameSlug) return byNameSlug;
-
-  const byCodeSeries = await repo.getCharacterByCodeSeries(normalizedInput);
-  if (byCodeSeries) return byCodeSeries;
-
-  return fromLore(trimmed);
+  return resolveLoreCharacterByIdentifier(trimmed);
 }

@@ -1,4 +1,3 @@
-import { memoryRepo } from './repoMemory';
 import {
   canUseMemoryMode,
   hasPersistenceEnv,
@@ -112,24 +111,32 @@ export type Repo = {
 };
 
 let repoPromise: Promise<Repo> | null = null;
+let memoryRepoPromise: Promise<Repo> | null = null;
+
+function getMemoryRepo(): Promise<Repo> {
+  if (!memoryRepoPromise) {
+    memoryRepoPromise = import('./repoMemory').then((m) => m.memoryRepo as Repo);
+  }
+  return memoryRepoPromise;
+}
 
 export async function getRepo(): Promise<Repo> {
-  if (canUseMemoryMode()) return memoryRepo;
+  if (canUseMemoryMode()) return getMemoryRepo();
   if (!hasPersistenceEnv()) {
     if (isProductionRuntime()) {
       throw new Error('Redis persistence is required in production.');
     }
-    return memoryRepo;
+    return getMemoryRepo();
   }
   if (!repoPromise) {
     repoPromise = import('./repoRedis')
       .then((m) => m.repoRedis as Repo)
-      .catch((err) => {
+      .catch(async (err) => {
         if (isProductionRuntime()) {
           throw err;
         }
         console.warn('Redis repo unavailable; falling back to memory. Set USE_MEMORY_DB=1 to silence.', err);
-        return memoryRepo as Repo;
+        return getMemoryRepo();
       });
   }
   return repoPromise;

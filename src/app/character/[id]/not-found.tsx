@@ -1,9 +1,8 @@
 import Link from 'next/link';
-import { getRepo } from '@/lib/repo';
+import { listPublicCharacters } from '@/lib/characterLore';
 
-export default async function NotFound() {
-  const repo = await getRepo();
-  const picks = await repo.listCharacters({ limit: 6, offset: 0 });
+export default function NotFound() {
+  const picks = listPublicCharacters().slice(0, 6);
 
   return (
     <div className="min-h-screen bg-grid-overlay px-4 py-16">
@@ -22,7 +21,7 @@ export default async function NotFound() {
                   <div className="text-sm text-white/70">Suggested</div>
                   <div className="text-lg font-bold text-white font-display">{c.name}</div>
                 </div>
-                <Link href={`/character/${c.id}`} className="px-4 py-2 bg-white text-gray-900 rounded-lg text-sm font-semibold hover:bg-gray-100">View</Link>
+                <Link href={`/character/${c.slug ?? c.id}`} className="px-4 py-2 bg-white text-gray-900 rounded-lg text-sm font-semibold hover:bg-gray-100">View</Link>
               </div>
             </div>
           ))}
