@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
+import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 
 import type { PlayerState, S2C } from '@/lib/mmo/messages';
@@ -50,6 +52,13 @@ type HttpPlazaResponse = {
   }>;
   error?: string;
 };
+
+declare global {
+  interface Window {
+    render_game_to_text?: () => string;
+    advanceTime?: (ms: number) => void;
+  }
+}
 
 const EMOTES = [
   { code: 'wave', label: 'Wave', glyph: '\u{1F44B}', key: '1' },
@@ -676,6 +685,34 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
   }, [players]);
   const scenePlayers = useMemo(() => Array.from(players.values()), [players]);
 
+  useEffect(() => {
+    const renderState = () => JSON.stringify({
+      mode: 'signal-plaza',
+      coordinates: 'Three.js world space: x increases right, y payload maps to scene z/depth.',
+      status,
+      info,
+      playerCount,
+      youId,
+      players: Array.from(playersRef.current.values()).map((player) => ({
+        id: player.id,
+        you: player.id === youIdRef.current,
+        displayName: player.displayName,
+        characterId: player.characterId,
+        pos: player.pos,
+        emote: player.activeEmote?.code ?? null,
+      })),
+      chatCount: chatLog.length,
+    });
+    window.render_game_to_text = renderState;
+    window.advanceTime = (_ms: number) => undefined;
+    return () => {
+      if (window.render_game_to_text === renderState) {
+        delete window.render_game_to_text;
+      }
+      delete window.advanceTime;
+    };
+  }, [chatLog.length, info, playerCount, status, youId]);
+
   const isReady = status === 'ready';
 
   /* ── Status indicator ── */
@@ -690,40 +727,109 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
     status === 'authenticating' ? 'Authenticating...' :
     status === 'error' ? 'Disconnected' : 'Idle';
 
-  return (
-    <div className="flex flex-col gap-3">
-      {/* Status bar */}
-      <div
-        className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-lg px-4 py-2.5 text-xs font-medium"
-        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
-      >
-        <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full" style={{ background: statusDot }} />
-          <span style={{ color: 'rgba(255,255,255,0.7)' }}>{statusLabel}</span>
-          {info && status === 'error' && (
-            <span style={{ color: 'rgba(255,59,48,0.8)' }}>&mdash; {info}</span>
-          )}
-        </div>
-        <div className="ml-auto flex items-center gap-4" style={{ color: 'rgba(255,255,255,0.35)' }}>
-          <span>{playerCount} online</span>
-          {latency !== null && <span>{latency}ms</span>}
-        </div>
+  const renderStatusPanel = () => (
+    <div
+      className="flex items-center gap-4 rounded-lg px-5 py-4 text-sm font-bold uppercase tracking-[0.08em]"
+      style={{
+        background: 'linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.035))',
+        border: '1px solid rgba(127,230,255,0.18)',
+        boxShadow: '0 18px 50px rgba(0,0,0,0.22)',
+      }}
+    >
+      <div className="flex min-w-0 items-center gap-3">
+        <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: statusDot, boxShadow: `0 0 16px ${statusDot}` }} />
+        <span className="truncate" style={{ color: '#f8fbff' }}>{statusLabel}</span>
       </div>
+      <div className="ml-auto flex shrink-0 items-center gap-4" style={{ color: 'rgba(255,255,255,0.64)' }}>
+        <span>{playerCount} online</span>
+        {latency !== null && <span style={{ color: '#30d158' }}>{latency}ms</span>}
+      </div>
+      {info && status === 'error' && (
+        <span className="hidden basis-full text-xs normal-case tracking-normal sm:block" style={{ color: 'rgba(255,59,48,0.8)' }}>
+          {info}
+        </span>
+      )}
+    </div>
+  );
 
-      {/* Main layout */}
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_280px]">
-        {/* Game stage */}
+  return (
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)]">
+      <section
+        className="overflow-hidden rounded-lg"
+        style={{
+          background: 'linear-gradient(180deg, rgba(10,18,30,0.88), rgba(4,7,16,0.92))',
+          border: '1px solid rgba(127,230,255,0.12)',
+          boxShadow: '0 28px 90px rgba(0,0,0,0.38), inset 0 1px 0 rgba(255,255,255,0.04)',
+        }}
+      >
+        <div
+          className="flex flex-col gap-5 px-5 py-5 sm:px-7 lg:flex-row lg:items-center lg:justify-between"
+          style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}
+        >
+          <div className="min-w-0">
+            <div className="flex items-center gap-3">
+              <span
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md text-lg"
+                style={{
+                  color: '#23f3ff',
+                  border: '1px solid rgba(35,243,255,0.28)',
+                  background: 'rgba(35,243,255,0.06)',
+                  boxShadow: '0 0 24px rgba(35,243,255,0.12)',
+                }}
+                aria-hidden="true"
+              >
+                &#x1F4E1;
+              </span>
+              <span
+                className="rounded-md px-3 py-1 text-xs font-black uppercase tracking-[0.16em]"
+                style={{
+                  background: 'rgba(35,243,255,0.075)',
+                  color: '#23f3ff',
+                  border: '1px solid rgba(35,243,255,0.26)',
+                }}
+              >
+                Preview
+              </span>
+            </div>
+            <h1 className="mt-4 font-display text-4xl font-black leading-none tracking-normal md:text-5xl" style={{ color: '#f8fbff' }}>
+              Signal Plaza
+            </h1>
+            <p className="mt-3 max-w-3xl text-sm leading-relaxed md:text-base" style={{ color: 'rgba(248,251,255,0.66)' }}>
+              The nightly link-up inside the Skylink Atrium. DJ Prismix keeps the shard stable
+              so crews can sync strats, swap charm loadouts, and show off new footwork.
+            </p>
+          </div>
+
+          <Link
+            href="/play"
+            prefetch={false}
+            className="inline-flex shrink-0 items-center gap-2 self-start rounded-lg px-4 py-3 text-xs font-black uppercase tracking-[0.12em] transition lg:self-center"
+            style={{
+              border: '1px solid rgba(255,255,255,0.13)',
+              color: 'rgba(248,251,255,0.72)',
+              background: 'rgba(255,255,255,0.035)',
+            }}
+          >
+            <span aria-hidden="true">&larr;</span>
+            Back to Play
+          </Link>
+        </div>
+
+        <div className="px-4 pb-4 lg:hidden">
+          {renderStatusPanel()}
+        </div>
+
         <div
           ref={gameStageRef}
           tabIndex={0}
           role="application"
           aria-label="Signal Plaza multiplayer game stage"
-          className="relative isolate overflow-hidden rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-[#7FE6FF]/60"
+          className="relative isolate overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-[#7FE6FF]/60"
           style={{
-            height: `clamp(380px, 58svh, ${height}px)`,
-            minHeight: 360,
-            border: '1px solid rgba(127,230,255,0.12)',
-            background: 'radial-gradient(circle at 50% 34%, rgba(255,214,10,0.08), transparent 26%), linear-gradient(180deg, #0b0d18 0%, #070813 100%)',
+            height: `clamp(430px, 52svh, ${Math.max(430, height - 160)}px)`,
+            minHeight: 420,
+            background: '#050b16',
+            boxShadow: 'inset 0 0 0 1px rgba(35,243,255,0.1), inset 0 -70px 120px rgba(0,0,0,0.42)',
             touchAction: 'none',
             overscrollBehavior: 'contain',
           }}
@@ -733,37 +839,45 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
             gameStageRef.current?.focus({ preventScroll: true });
           }}
         >
+          <Image
+            src="/assets/plaza/signal-plaza-stage.png"
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+            fill
+            priority
+            sizes="(min-width: 1024px) calc(100vw - 620px), 100vw"
+            className="pointer-events-none absolute inset-0 select-none object-cover"
+          />
           <div className="absolute inset-0">
             <PlazaThreeScene players={scenePlayers} youId={youId} axesRef={axesRef} />
           </div>
           <div
             className="pointer-events-none absolute inset-0"
             style={{
-              background: 'linear-gradient(180deg, rgba(255,255,255,0.04), transparent 18%, transparent 78%, rgba(0,0,0,0.32)), radial-gradient(circle at 50% 50%, transparent 42%, rgba(5,6,14,0.45))',
+              background: 'linear-gradient(180deg, rgba(255,255,255,0.05), transparent 15%, transparent 78%, rgba(0,0,0,0.42)), radial-gradient(circle at 50% 50%, transparent 49%, rgba(3,8,16,0.5))',
             }}
           />
-
-          {/* Emote bar */}
-          <div className="absolute bottom-3 left-3 flex gap-1.5">
-            {EMOTES.map((emote) => (
-              <button
-                key={emote.code}
-                type="button"
-                onClick={() => sendInput({ emote: emote.code })}
-                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all"
-                style={{
-                  background: 'rgba(0,0,0,0.55)',
-                  backdropFilter: 'blur(8px)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  color: 'rgba(255,255,255,0.8)',
-                }}
-                disabled={!isReady}
-                title={`${emote.label} (${emote.key})`}
-              >
-                <span className="text-sm">{emote.glyph}</span>
-                <span className="hidden sm:inline">{emote.label}</span>
-              </button>
-            ))}
+          <div
+            className="pointer-events-none absolute bottom-5 left-5 hidden rounded-lg border px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] md:block"
+            style={{
+              color: 'rgba(248,251,255,0.72)',
+              background: 'rgba(3,6,14,0.66)',
+              borderColor: 'rgba(127,230,255,0.16)',
+              backdropFilter: 'blur(10px)',
+            }}
+          >
+            <div className="grid grid-cols-[34px_34px_34px_1fr] gap-1.5">
+              <span />
+              <kbd className="rounded border px-2 py-1 text-center" style={{ borderColor: 'rgba(35,243,255,0.42)', color: '#23f3ff' }}>W</kbd>
+              <span />
+              <span className="row-span-2 ml-4 flex items-center text-left leading-5" style={{ color: 'rgba(248,251,255,0.58)' }}>
+                Move<br />Click emotes<br />Chat to connect
+              </span>
+              <kbd className="rounded border px-2 py-1 text-center" style={{ borderColor: 'rgba(35,243,255,0.42)', color: '#23f3ff' }}>A</kbd>
+              <kbd className="rounded border px-2 py-1 text-center" style={{ borderColor: 'rgba(35,243,255,0.42)', color: '#23f3ff' }}>S</kbd>
+              <kbd className="rounded border px-2 py-1 text-center" style={{ borderColor: 'rgba(35,243,255,0.42)', color: '#23f3ff' }}>D</kbd>
+            </div>
           </div>
 
           {/* Avatar selector */}
@@ -833,169 +947,210 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
           )}
         </div>
 
-        {/* Sidebar */}
-        <div className="flex flex-col gap-3">
-          {/* Chat panel */}
+        <div
+          className="flex flex-wrap items-center justify-center gap-3 px-4 py-5 sm:justify-start sm:px-6"
+          style={{
+            borderTop: '1px solid rgba(255,255,255,0.07)',
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.025), rgba(0,0,0,0.1))',
+          }}
+        >
+          {EMOTES.map((emote) => (
+            <button
+              key={emote.code}
+              type="button"
+              onClick={() => sendInput({ emote: emote.code })}
+              className="flex min-w-[54px] items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-extrabold transition-all sm:min-w-[170px] sm:px-5"
+              style={{
+                background: 'linear-gradient(180deg, rgba(10,18,32,0.94), rgba(5,8,17,0.94))',
+                backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(127,230,255,0.18)',
+                color: 'rgba(255,255,255,0.88)',
+                boxShadow: '0 12px 30px rgba(0,0,0,0.28)',
+              }}
+              disabled={!isReady}
+              title={`${emote.label} (${emote.key})`}
+            >
+              <span className="text-lg">{emote.glyph}</span>
+              <span className="hidden sm:inline">{emote.label}</span>
+              <span className="hidden rounded border px-2 py-0.5 text-[0.62rem] sm:inline" style={{ borderColor: 'rgba(255,255,255,0.16)', color: 'rgba(255,255,255,0.5)' }}>
+                {emote.key}
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <aside
+        className="flex flex-col gap-4"
+        style={{ minHeight: `clamp(560px, 74svh, ${height + 20}px)` }}
+      >
+        <div className="hidden lg:block">
+          {renderStatusPanel()}
+        </div>
+
+        {/* Chat panel */}
+        <div
+          className="flex flex-1 flex-col rounded-lg"
+          style={{
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.026))',
+            border: '1px solid rgba(127,230,255,0.14)',
+            minHeight: '420px',
+            boxShadow: '0 18px 50px rgba(0,0,0,0.22)',
+          }}
+        >
           <div
-            className="flex flex-1 flex-col rounded-xl"
+            className="flex items-center gap-8 px-5 py-4 text-sm font-black uppercase tracking-[0.1em]"
+            style={{ color: 'rgba(255,255,255,0.54)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+          >
+            <span style={{ color: '#23f3ff', textShadow: '0 0 16px rgba(35,243,255,0.45)' }}>Chat</span>
+            <span>Players</span>
+            <span className="ml-auto rounded-md border px-2 py-0.5 text-xs" style={{ borderColor: 'rgba(255,255,255,0.14)' }}>{playerCount}</span>
+          </div>
+          <div
+            ref={chatScrollRef}
+            className="flex-1 overflow-y-auto px-5 py-4 text-sm"
             style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              minHeight: '260px',
-              maxHeight: `${height - 60}px`,
+              scrollbarWidth: 'thin',
+              scrollbarColor: 'rgba(255,255,255,0.1) transparent',
+              overscrollBehavior: 'contain',
             }}
           >
-            <div
-              className="px-4 py-2.5 text-[0.65rem] font-bold uppercase tracking-[0.2em]"
-              style={{ color: 'rgba(255,255,255,0.3)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
-            >
-              Chat
-            </div>
-            <div
-              ref={chatScrollRef}
-              className="flex-1 overflow-y-auto px-4 py-2 text-sm"
-              style={{
-                scrollbarWidth: 'thin',
-                scrollbarColor: 'rgba(255,255,255,0.1) transparent',
-                overscrollBehavior: 'contain',
-              }}
-            >
-              {chatLog.length === 0 && (
-                <div className="py-8 text-center text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>
-                  No messages yet &mdash; say hi!
-                </div>
-              )}
-              {chatLog.map((entry) => (
-                <div key={entry.id} className="py-0.5">
-                  {entry.system ? (
-                    <span className="text-xs italic" style={{ color: 'rgba(255,255,255,0.25)' }}>
+            {chatLog.length === 0 && (
+              <div className="flex min-h-[260px] items-center justify-center text-center text-sm" style={{ color: 'rgba(255,255,255,0.32)' }}>
+                No messages yet &mdash; say hi!
+              </div>
+            )}
+            {chatLog.map((entry) => (
+              <div key={entry.id} className="py-0.5">
+                {entry.system ? (
+                  <span className="text-xs italic" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                    {entry.text}
+                  </span>
+                ) : (
+                  <>
+                    <span
+                      className="mr-1.5 text-xs font-bold"
+                      style={{ color: entry.authorId === youId ? '#FF8EC9' : 'rgba(255,255,255,0.6)' }}
+                    >
+                      {entry.authorId === youId ? 'You' : entry.from}
+                    </span>
+                    <span
+                      className="text-xs"
+                      style={{ color: entry.flagged ? '#FF3B30' : 'rgba(255,255,255,0.5)' }}
+                    >
                       {entry.text}
                     </span>
-                  ) : (
-                    <>
-                      <span
-                        className="mr-1.5 text-xs font-bold"
-                        style={{ color: entry.authorId === youId ? '#FF8EC9' : 'rgba(255,255,255,0.6)' }}
-                      >
-                        {entry.authorId === youId ? 'You' : entry.from}
-                      </span>
-                      <span
-                        className="text-xs"
-                        style={{ color: entry.flagged ? '#FF3B30' : 'rgba(255,255,255,0.5)' }}
-                      >
-                        {entry.text}
-                      </span>
-                    </>
-                  )}
-                </div>
-              ))}
-              <div ref={chatEndRef} />
-            </div>
-            <form
-              className="flex items-center gap-2 px-3 py-2.5"
-              style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
-              onSubmit={(e) => {
-                e.preventDefault();
-                sendChat(chatInput);
-                setChatInput('');
-              }}
-            >
-              <input
-                ref={chatInputRef}
-                className="flex-1 rounded-lg px-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-1"
-                style={{
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  color: 'rgba(255,255,255,0.8)',
-                  caretColor: '#FF8EC9',
-                }}
-                placeholder="Send a message..."
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onFocus={() => setChatFocused(true)}
-                onBlur={() => setChatFocused(false)}
-                maxLength={200}
-                disabled={!isReady}
-              />
-              <button
-                type="submit"
-                className="rounded-lg px-3 py-1.5 text-[0.65rem] font-bold uppercase tracking-wider transition-all"
-                style={{
-                  background: isReady && chatInput.trim() ? '#FF8EC9' : 'rgba(255,255,255,0.06)',
-                  color: isReady && chatInput.trim() ? '#0a0a0a' : 'rgba(255,255,255,0.2)',
-                  border: 'none',
-                }}
-                disabled={!isReady || !chatInput.trim()}
-              >
-                Send
-              </button>
-            </form>
+                  </>
+                )}
+              </div>
+            ))}
+            <div ref={chatEndRef} />
           </div>
-
-          {/* Players panel */}
-          <div
-            className="rounded-xl"
-            style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.08)',
+          <form
+            className="flex items-center gap-3 px-4 py-4"
+            style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              sendChat(chatInput);
+              setChatInput('');
             }}
           >
-            <div
-              className="flex items-center justify-between px-4 py-2.5"
-              style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+            <input
+              ref={chatInputRef}
+              className="min-w-0 flex-1 rounded-lg px-4 py-2.5 text-sm font-medium focus:outline-none focus:ring-1"
+              style={{
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                color: 'rgba(255,255,255,0.8)',
+                caretColor: '#FF8EC9',
+              }}
+              placeholder="Send a message..."
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onFocus={() => setChatFocused(true)}
+              onBlur={() => setChatFocused(false)}
+              maxLength={200}
+              disabled={!isReady}
+            />
+            <button
+              type="submit"
+              className="rounded-lg px-4 py-2.5 text-xs font-black uppercase tracking-wider transition-all"
+              style={{
+                background: isReady && chatInput.trim() ? '#FF8EC9' : 'rgba(255,255,255,0.06)',
+                color: isReady && chatInput.trim() ? '#0a0a0a' : 'rgba(255,255,255,0.2)',
+                border: 'none',
+              }}
+              disabled={!isReady || !chatInput.trim()}
             >
-              <span
-                className="text-[0.65rem] font-bold uppercase tracking-[0.2em]"
-                style={{ color: 'rgba(255,255,255,0.3)' }}
-              >
-                Players
-              </span>
-              <span
-                className="text-[0.65rem] font-semibold"
-                style={{ color: 'rgba(255,255,255,0.2)' }}
-              >
-                {playerCount}
-              </span>
-            </div>
-            <ul className="max-h-36 overflow-y-auto px-4 py-2" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
-              {playerList.length === 0 && (
-                <li className="py-3 text-center text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>
-                  Waiting for players...
-                </li>
-              )}
-              {playerList.map((player) => {
-                const isYouPlayer = player.id === youId;
-                const color = charColor(player.characterId);
-                return (
-                  <li
-                    key={player.id}
-                    className="flex items-center gap-2 py-1"
-                  >
-                    <span
-                      className="h-2 w-2 shrink-0 rounded-full"
-                      style={{ background: color }}
-                    />
-                    <span
-                      className="truncate text-xs font-semibold"
-                      style={{ color: isYouPlayer ? '#FF8EC9' : 'rgba(255,255,255,0.5)' }}
-                    >
-                      {isYouPlayer ? 'You' : (player.displayName || player.id.slice(0, 6))}
-                    </span>
-                    {player.characterId && (
-                      <span
-                        className="ml-auto truncate text-[0.6rem]"
-                        style={{ color: 'rgba(255,255,255,0.2)' }}
-                      >
-                        {charName(player.characterId) || player.characterId}
-                      </span>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+              Send
+            </button>
+          </form>
         </div>
-      </div>
+
+        {/* Players panel */}
+        <div
+          className="rounded-lg"
+          style={{
+            background: 'linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.026))',
+            border: '1px solid rgba(127,230,255,0.14)',
+            boxShadow: '0 18px 50px rgba(0,0,0,0.22)',
+          }}
+        >
+          <div
+            className="flex items-center justify-between px-4 py-3"
+            style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+          >
+            <span
+              className="text-[0.65rem] font-bold uppercase tracking-[0.2em]"
+              style={{ color: 'rgba(255,255,255,0.3)' }}
+            >
+              Players
+            </span>
+            <span
+              className="text-[0.65rem] font-semibold"
+              style={{ color: 'rgba(255,255,255,0.2)' }}
+            >
+              {playerCount}
+            </span>
+          </div>
+          <ul className="max-h-44 overflow-y-auto px-4 py-3" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
+            {playerList.length === 0 && (
+              <li className="py-3 text-center text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                Waiting for players...
+              </li>
+            )}
+            {playerList.map((player) => {
+              const isYouPlayer = player.id === youId;
+              const color = charColor(player.characterId);
+              return (
+                <li
+                  key={player.id}
+                  className="flex items-center gap-3 py-1.5"
+                >
+                  <span
+                    className="h-2.5 w-2.5 shrink-0 rounded-full"
+                    style={{ background: color, boxShadow: `0 0 12px ${color}` }}
+                  />
+                  <span
+                    className="truncate text-xs font-black"
+                    style={{ color: isYouPlayer ? '#FF8EC9' : 'rgba(255,255,255,0.58)' }}
+                  >
+                    {isYouPlayer ? 'You' : (player.displayName || player.id.slice(0, 6))}
+                  </span>
+                  {player.characterId && (
+                    <span
+                      className="ml-auto truncate text-[0.6rem]"
+                      style={{ color: 'rgba(255,255,255,0.24)' }}
+                    >
+                      {charName(player.characterId) || player.characterId}
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </aside>
     </div>
   );
 }

@@ -19,3 +19,4 @@
 - When a user says "install this" for an agent skill/package, confirm whether they mean project-scoped installation or global installation for the agent itself before changing the repo.
 - When a user asks to make a deployment fix live, do not stop at a side branch commit; fast-forward or otherwise land the verified fix on `main` before handing off.
 - Before sending email, preserve and re-check the exact recipient address and domain from the user's latest instruction; if corrected, use the corrected address verbatim.
+- When a user requests an imagegen-led UI rebuild, treat the generated mockup as the comparison target; a technically working implementation is not enough if the major composition, scene density, and visual hierarchy do not match.

@@ -139,3 +139,21 @@ Original prompt: you need to use all skills and research aavailbibe and make thi
 
 - If this repo keeps the local Phaser battle meta loop, the next trust gap is still `BattlePhaserGame` localStorage-backed credits/perks.
 - Runner attempt tracking is materially stronger, but it still depends on client-reported checkpoints; a true anti-cheat pass would require more authoritative simulation or richer server telemetry.
+
+## 2026-06-21 - Signal Plaza asset-backed Three.js pass
+
+- User correction: the raw Three.js plaza was not close enough to the generated mockup and needed actual image assets integrated.
+- Generated a stage-only isometric arena image with no UI/player avatars/watermarks and copied it into the app at `public/assets/plaza/signal-plaza-stage.png`.
+- Reworked `/plaza` so the generated bitmap carries the arena art while the Three.js canvas is transparent and only renders live player markers, labels, emotes, and multiplayer state.
+- Added `window.render_game_to_text()` for the plaza and kept `window.advanceTime(ms)` available for the web-game harness.
+- Local HTTP-fallback verification on `localhost:3005` passed desktop/mobile: Connected state, generated stage image loaded, one WebGL canvas, movement changed state, no failed mint, no failed requests, no horizontal overflow, and no page scroll during arrow movement.
+- Latest artifacts:
+  - `output/plaza-three-asset-local-desktop.png`
+  - `output/plaza-three-asset-local-mobile.png`
+  - `output/plaza-three-asset-local-results.json`
+  - `output/plaza-web-game-asset-pass/`
+
+### TODO / Next-agent suggestions
+
+- Live Vercel verification still needs to run after the asset-backed pass is pushed.
+- If further visual precision is needed, tune player coordinate projection against the bitmap art rather than adding more hand-built stage geometry.

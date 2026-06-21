@@ -8,7 +8,7 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
     <div className="min-h-screen flex flex-col bg-[var(--cp-bg)]">
       <AnalyticsTracker />
       <header className="cp-header sticky top-0 z-40">
-        <div className="cp-container">
+        <div className="mx-auto w-full max-w-[1820px] px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-3">
               <Link href="/" prefetch={false} className="group flex items-center gap-2">
@@ -28,7 +28,7 @@ export default function LayoutChrome({ children }: { children: React.ReactNode }
       <main className="flex-grow bg-[var(--cp-bg)]">{children}</main>
 
       <footer className="cp-footer py-12">
-        <div className="cp-container">
+        <div className="mx-auto w-full max-w-[1820px] px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <h3 className="text-lg font-bold mb-4 font-display text-white">CHARM PALS</h3>

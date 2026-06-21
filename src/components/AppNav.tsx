@@ -16,6 +16,7 @@ export default function AppNav() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const mobileNavRef = useRef<HTMLDivElement>(null);
+  const activePath = pathname === '/plaza' ? '/play' : pathname;
 
   useEffect(() => {
     setMobileOpen(false);
@@ -52,7 +53,12 @@ export default function AppNav() {
     <>
       <nav className="hidden md:flex items-center gap-0.5 cp-nav cp-nav-orbit" aria-label="Primary">
         {items.map((it) => (
-          <Link key={it.href} href={it.href} prefetch={false}>
+          <Link
+            key={it.href}
+            href={it.href}
+            prefetch={false}
+            aria-current={activePath === it.href || activePath?.startsWith(`${it.href}/`) ? 'page' : undefined}
+          >
             {it.label}
           </Link>
         ))}
@@ -86,6 +92,7 @@ export default function AppNav() {
                   key={`mobile-${it.href}`}
                   href={it.href}
                   prefetch={false}
+                  aria-current={activePath === it.href || activePath?.startsWith(`${it.href}/`) ? 'page' : undefined}
                   className="block rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] transition-colors text-white/55 hover:bg-white/[0.04] hover:text-white"
                   onClick={() => setMobileOpen(false)}
                 >
