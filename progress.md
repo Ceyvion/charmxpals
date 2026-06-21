@@ -173,3 +173,9 @@ Original prompt: you need to use all skills and research aavailbibe and make thi
 - Local desktop verification passed: keyboard `W`, visible `W`, and Wave click all changed `window.render_game_to_text()` as expected with no failed requests, no horizontal overflow, and `scrollY: 0`.
 - Local mobile verification passed: visible `W` moved the player, Wave clicked through, controls fit without horizontal overflow, and holding `W` did not change scroll position.
 - Validation passed: TypeScript, lint, Vitest, production build, and the web-game harness against `/plaza`.
+- Live deployment verification for `c14e0ba8` passed after CI and both Vercel projects completed successfully: desktop keyboard/visible-W/emote checks passed with `scrollY: 0`; mobile visible-W/emote checks passed with movement scroll locked at `0` and no horizontal overflow.
+- Live artifacts:
+  - `output/plaza-controls-final-live-desktop.json`
+  - `output/plaza-controls-final-live-desktop.png`
+  - `output/plaza-controls-final-live-mobile.json`
+  - `output/plaza-controls-final-live-mobile.png`

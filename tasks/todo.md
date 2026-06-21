@@ -24,7 +24,7 @@ Objective: make plaza controls behave like a playable game surface: physical key
 - [x] Make emote clicks/taps produce immediate visible local feedback while preserving server sync.
 - [x] Verify local desktop and mobile controls with `window.render_game_to_text()`, screenshots, no page scroll, and no failed requests.
 - [x] Run TypeScript, lint, tests, and build.
-- [ ] Push and verify live `/plaza` after deployment.
+- [x] Push and verify live `/plaza` after deployment.
 
 ### Signal Plaza Control Fix Review (2026-06-21)
 
@@ -37,6 +37,9 @@ Objective: make plaza controls behave like a playable game surface: physical key
 - Local mobile proof on `390x844`: visible `W` control moved player Y by `-2.6912`, Wave click produced `lastTriggeredEmote: "wave"` and player `emote: "wave"`, horizontal overflow was `0`, and the focused movement-scroll check stayed at `scrollY: 0` before/during/after holding `W`. Artifacts: `output/plaza-controls-fixed-local-mobile.json`, `output/plaza-controls-fixed-local-mobile.png`.
 - Web-game harness completed against `/plaza`; artifacts: `output/plaza-controls-web-game/`.
 - Verification passed: `npx tsc --noEmit --pretty false --incremental false`, `npm run lint -- --max-warnings=999` (warnings only), `npm test -- --pool forks --no-file-parallelism --maxWorkers 1` (60/60), and `npm run build`.
+- Deployed commit `c14e0ba8b0d95fa34fd9ebd4de29d4c284315112`; CI and both Vercel projects (`charmxpals`, `charmxpals-wmf1`) completed successfully.
+- Live desktop proof on `https://charmxpals.vercel.app/plaza`: keyboard `W` moved player Y by `-1.1200`, visible `W` button moved player Y by `-1.6416`, Wave click produced `lastTriggeredEmote: "wave"` and player `emote: "wave"`, scroll stayed `0`, horizontal overflow was `0`, updated emote hint was present, and there were no failed requests. Artifacts: `output/plaza-controls-final-live-desktop.json`, `output/plaza-controls-final-live-desktop.png`.
+- Live mobile proof on `390x844`: visible `W` control moved player Y by `-0.6624`, Wave click produced `lastTriggeredEmote: "wave"` and player `emote: "wave"`, movement-scroll stayed at `0` before/during/after holding `W`, horizontal overflow was `0`, updated emote hint was present, and there were no failed requests. Artifacts: `output/plaza-controls-final-live-mobile.json`, `output/plaza-controls-final-live-mobile.png`.
 
 ### Signal Plaza Three.js Rebuild Final Evidence (2026-06-21)
 
