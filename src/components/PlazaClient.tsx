@@ -729,7 +729,7 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
 
   const renderStatusPanel = () => (
     <div
-      className="flex items-center gap-4 rounded-lg px-5 py-4 text-sm font-bold uppercase tracking-[0.08em]"
+      className="flex items-center gap-3 rounded-lg px-4 py-4 text-xs font-bold uppercase tracking-[0.08em] sm:gap-4 sm:px-5 sm:text-sm"
       style={{
         background: 'linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.035))',
         border: '1px solid rgba(127,230,255,0.18)',
@@ -738,11 +738,11 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
     >
       <div className="flex min-w-0 items-center gap-3">
         <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: statusDot, boxShadow: `0 0 16px ${statusDot}` }} />
-        <span className="truncate" style={{ color: '#f8fbff' }}>{statusLabel}</span>
+        <span className="whitespace-nowrap" style={{ color: '#f8fbff' }}>{statusLabel}</span>
       </div>
-      <div className="ml-auto flex shrink-0 items-center gap-4" style={{ color: 'rgba(255,255,255,0.64)' }}>
+      <div className="ml-auto flex shrink-0 items-center gap-3 sm:gap-4" style={{ color: 'rgba(255,255,255,0.64)' }}>
         <span>{playerCount} online</span>
-        {latency !== null && <span style={{ color: '#30d158' }}>{latency}ms</span>}
+        {latency !== null && <span className="hidden sm:inline" style={{ color: '#30d158' }}>{latency}ms</span>}
       </div>
       {info && status === 'error' && (
         <span className="hidden basis-full text-xs normal-case tracking-normal sm:block" style={{ color: 'rgba(255,59,48,0.8)' }}>
