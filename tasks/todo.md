@@ -1,5 +1,29 @@
 # Beta Exit Tonight Checklist
 
+## Signal Plaza Three.js Rebuild Plan (2026-06-21)
+
+Objective: rebuild `/plaza` as a polished Three.js/R3F multiplayer game surface that does not force page dragging/scrolling, verified by imagegen concept, local and live-style browser checks, and repo tests/build/lint, while preserving the existing token/sync multiplayer behavior.
+
+- [x] Generate an imagegen concept mockup for the target Three.js plaza layout.
+- [x] Research current Three.js/R3F examples/docs and Vercel-compatible implementation constraints.
+- [x] Inspect the current `PlazaClient` canvas/render/input flow and identify the scroll/drag source.
+- [x] Replace the 2D canvas renderer with a stable Three.js isometric scene.
+- [x] Preserve multiplayer sync, chat, emotes, player list, and avatar selection behavior.
+- [x] Add explicit keyboard/pointer scroll guards so WASD/arrow movement never drags the page.
+- [x] Verify local browser behavior on desktop and mobile-sized viewports, including no document scroll during movement.
+- [x] Run focused/full verification: tests, TypeScript, lint, build.
+- [ ] Deploy and verify the live `/plaza` route, or document the exact blocker.
+- [ ] Record final review evidence and screenshot paths.
+
+### Signal Plaza Three.js Rebuild Interim Evidence (2026-06-21)
+
+- Imagegen concept mockup: `/Users/macbookpro/.codex/generated_images/019ee8f0-9393-7842-8e7a-014a0f274616/ig_0d8b4298941a631b016a37a25baf38819197f0fce4e1e8a3c3.png`.
+- Root cause for forced page dragging: chat auto-scroll used `scrollIntoView` on every multiplayer update and movement keys did not prevent default page scroll.
+- Implementation switched plaza rendering from the old 2D canvas loop to a client-only raw Three.js scene; R3F was tested first but rejected because it crashes in this Next/React runtime with `ReactCurrentOwner`.
+- Local dev browser proof on `localhost:3005`: desktop and mobile both rendered one `three.js r165` canvas, showed Connected, had no mint error, no console/page errors, no horizontal overflow, and scroll stayed at `0` after WASD/arrow movement. Screenshots: `output/plaza-three-local-desktop.png`, `output/plaza-three-local-mobile.png`.
+- Verification passed: `npx tsc --noEmit --pretty false --incremental false`, `npm run lint -- --max-warnings=999` (warnings only), `npm test` (60/60), and `npm run build`.
+- Production-bundle local UI rendered the Three canvas and passed no-scroll/no-overflow, but local `npm start` could not connect multiplayer because this Mac cannot resolve the configured Upstash host and production rate limiting rejects memory fallback. Live Vercel remains the required production verification surface.
+
 ## Signal Plaza Multiplayer Runtime Fix Plan (2026-06-21)
 
 Objective: make Signal Plaza stop failing with "Failed to mint plaza session" and get the multiplayer path working as far as the current hosted infrastructure permits, verified by live/local API evidence, automated tests, and browser checks, while preserving existing claim/profile/play routes and the Vercel deployment constraints.

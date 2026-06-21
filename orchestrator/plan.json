@@ -248,6 +248,13 @@
       "area": "fullstack"
     },
     {
+      "id": "PLAZA-THREE-SCENE-2026-06-21",
+      "title": "Signal Plaza Three.js scene rebuild",
+      "detail": "Replace the old 2D plaza canvas with a Three.js multiplayer scene and stop chat/movement input from forcing page scroll.",
+      "status": "in_progress",
+      "area": "gameplay"
+    },
+    {
       "id": "CSS-PARSE-HOTFIX-2026-02-17",
       "title": "Firefox CSS parse warnings cleanup",
       "detail": "Fix invalid Tailwind arbitrary grid column syntax and remove accidental arbitrary class extraction from bracketed dev log tags.",

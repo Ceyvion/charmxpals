@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { signIn } from 'next-auth/react';
 
 import type { PlayerState, S2C } from '@/lib/mmo/messages';
@@ -8,17 +9,13 @@ import type { MmoSessionClaims } from '@/lib/mmo/token';
 import { resolveClientWsBase } from '@/lib/mmo/wsUrl';
 import { filterProfanity } from '@/lib/profanity';
 import { loreBySlug } from '@/data/characterLore';
+import type { PlazaThreeScenePlayer, PlazaThreeSceneProps } from './PlazaThreeScene';
 
 type PlazaClientProps = { height?: number };
 
 type Vec2 = { x: number; y: number };
 
-type PlayerView = PlayerState & {
-  renderPos: Vec2;
-  targetPos: Vec2;
-  lastUpdate: number;
-  activeEmote?: { code: string; until: number };
-};
+type PlayerView = PlazaThreeScenePlayer;
 
 type ChatMessage = {
   id: string;
@@ -61,8 +58,19 @@ const EMOTES = [
   { code: 'fire', label: 'Fire', glyph: '\u{1F525}', key: '4' },
 ];
 
-const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
-const lerp = (from: number, to: number, t: number) => from + (to - from) * t;
+const MOVEMENT_KEYS = new Set(['w', 'a', 's', 'd', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
+
+const PlazaThreeScene = dynamic<PlazaThreeSceneProps>(() => import('./PlazaThreeScene'), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="flex h-full items-center justify-center text-xs font-bold uppercase tracking-[0.18em]"
+      style={{ color: 'rgba(255,255,255,0.34)' }}
+    >
+      Preparing Signal Plaza
+    </div>
+  ),
+});
 
 /** Resolve a character color from lore data, with fallback */
 function charColor(characterId: string | undefined | null): string {
@@ -73,138 +81,6 @@ function charColor(characterId: string | undefined | null): string {
 function charName(characterId: string | undefined | null): string | null {
   if (!characterId) return null;
   return loreBySlug[characterId]?.name ?? null;
-}
-
-/** Convert hex to rgba */
-function hexRgba(hex: string, a: number): string {
-  const c = hex.replace('#', '');
-  if (c.length !== 6) return `rgba(127,230,255,${a})`;
-  const r = parseInt(c.slice(0, 2), 16);
-  const g = parseInt(c.slice(2, 4), 16);
-  const b = parseInt(c.slice(4, 6), 16);
-  return `rgba(${r},${g},${b},${a})`;
-}
-
-/* ── Isometric-style floor tile drawing ── */
-
-function drawFloor(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
-  // Dark background
-  ctx.fillStyle = '#0a0b14';
-  ctx.fillRect(0, 0, w, h);
-
-  // Dot grid
-  const spacing = 28;
-  const pulse = Math.sin(time * 0.001) * 0.3 + 0.7;
-  for (let x = spacing / 2; x < w; x += spacing) {
-    for (let y = spacing / 2; y < h; y += spacing) {
-      const dist = Math.sqrt((x - w / 2) ** 2 + (y - h / 2) ** 2);
-      const fade = Math.max(0, 1 - dist / (Math.max(w, h) * 0.55));
-      const alpha = fade * 0.15 * pulse;
-      ctx.fillStyle = `rgba(124,58,237,${alpha})`;
-      ctx.beginPath();
-      ctx.arc(x, y, 1.2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
-  // Center glow
-  const grd = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w * 0.38);
-  grd.addColorStop(0, 'rgba(255,214,10,0.06)');
-  grd.addColorStop(0.5, 'rgba(124,58,237,0.03)');
-  grd.addColorStop(1, 'transparent');
-  ctx.fillStyle = grd;
-  ctx.fillRect(0, 0, w, h);
-
-  // Border glow lines
-  ctx.strokeStyle = 'rgba(124,58,237,0.08)';
-  ctx.lineWidth = 1;
-  const pad = 40;
-  ctx.strokeRect(pad, pad, w - pad * 2, h - pad * 2);
-}
-
-/* ── Draw a player avatar ── */
-
-function drawPlayer(
-  ctx: CanvasRenderingContext2D,
-  px: number,
-  py: number,
-  color: string,
-  name: string,
-  isYou: boolean,
-  rot: number,
-  emoteGlyph: string | null,
-  time: number,
-) {
-  const bodyRadius = isYou ? 11 : 10;
-
-  // Shadow
-  ctx.fillStyle = 'rgba(0,0,0,0.25)';
-  ctx.beginPath();
-  ctx.ellipse(px, py + bodyRadius + 2, bodyRadius * 0.9, 4, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Glow ring for you
-  if (isYou) {
-    const glowPulse = Math.sin(time * 0.003) * 0.15 + 0.35;
-    ctx.strokeStyle = hexRgba(color, glowPulse);
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(px, py, bodyRadius + 5, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
-  // Body circle with gradient
-  const grad = ctx.createRadialGradient(px - 2, py - 3, 0, px, py, bodyRadius);
-  grad.addColorStop(0, hexRgba(color, 1));
-  grad.addColorStop(1, hexRgba(color, 0.7));
-  ctx.fillStyle = grad;
-  ctx.beginPath();
-  ctx.arc(px, py, bodyRadius, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Border
-  ctx.strokeStyle = isYou ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.25)';
-  ctx.lineWidth = isYou ? 2 : 1;
-  ctx.beginPath();
-  ctx.arc(px, py, bodyRadius, 0, Math.PI * 2);
-  ctx.stroke();
-
-  // Direction indicator
-  const dirLen = bodyRadius + 6;
-  ctx.strokeStyle = hexRgba(color, 0.6);
-  ctx.lineWidth = 2;
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.moveTo(px + Math.cos(rot) * bodyRadius, py + Math.sin(rot) * bodyRadius);
-  ctx.lineTo(px + Math.cos(rot) * dirLen, py + Math.sin(rot) * dirLen);
-  ctx.stroke();
-  ctx.lineCap = 'butt';
-
-  // Name tag
-  ctx.font = `600 ${isYou ? 11 : 10}px system-ui, sans-serif`;
-  ctx.textAlign = 'center';
-  const nameText = name;
-  const metrics = ctx.measureText(nameText);
-  const tagW = metrics.width + 10;
-  const tagH = 16;
-  const tagY = py - bodyRadius - 14;
-
-  // Tag background
-  ctx.fillStyle = isYou ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.4)';
-  const tagRadius = 4;
-  ctx.beginPath();
-  ctx.roundRect(px - tagW / 2, tagY - tagH / 2, tagW, tagH, tagRadius);
-  ctx.fill();
-
-  ctx.fillStyle = isYou ? '#ffffff' : 'rgba(255,255,255,0.8)';
-  ctx.fillText(nameText, px, tagY + 4);
-
-  // Emote bubble
-  if (emoteGlyph) {
-    const bubbleY = py - bodyRadius - 32;
-    ctx.font = '16px system-ui';
-    ctx.fillText(emoteGlyph, px, bubbleY);
-  }
 }
 
 export default function PlazaClient({ height = 520 }: PlazaClientProps) {
@@ -227,15 +103,14 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
   const httpModeRef = useRef(false);
   const pendingEmoteRef = useRef<string | null>(null);
   const pendingChatRef = useRef<string | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const rafRef = useRef<number | null>(null);
-  const lastFrameRef = useRef<number | null>(null);
+  const gameStageRef = useRef<HTMLDivElement | null>(null);
   const axesRef = useRef({ x: 0, y: 0 });
   const seqRef = useRef(1);
   const wsRef = useRef<WebSocket | null>(null);
   const disconnectReasonRef = useRef<string | null>(null);
   const pingSentAt = useRef<number | null>(null);
   const pingTimerRef = useRef<number | null>(null);
+  const chatScrollRef = useRef<HTMLDivElement | null>(null);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
   const chatInputRef = useRef<HTMLInputElement | null>(null);
   const [playerCount, setPlayerCount] = useState(0);
@@ -270,9 +145,10 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
     setChatLog((prev) => [...prev.slice(-49), entry]);
   }, []);
 
-  // Auto-scroll chat
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const node = chatScrollRef.current;
+    if (!node) return;
+    node.scrollTop = node.scrollHeight;
   }, [chatLog]);
 
   // Fetch token and compute WS URL
@@ -542,7 +418,7 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
     wsRef.current = ws;
     readyRef.current = false;
     setStatus('authenticating');
-    setInfo('Handshaking\u2026');
+    setInfo('Handshaking...');
 
     ws.onopen = () => {
       disconnectReasonRef.current = null;
@@ -756,7 +632,22 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const isKeyDown = e.type === 'keydown';
-      if (chatFocused && isKeyDown) return;
+      const normalizedKey = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+      const isMovementKey = MOVEMENT_KEYS.has(normalizedKey);
+      if (chatFocused) {
+        if (!isKeyDown && isMovementKey) {
+          const a = axesRef.current;
+          if (normalizedKey === 'w' || normalizedKey === 'ArrowUp') a.y = a.y === -1 ? 0 : a.y;
+          if (normalizedKey === 's' || normalizedKey === 'ArrowDown') a.y = a.y === 1 ? 0 : a.y;
+          if (normalizedKey === 'a' || normalizedKey === 'ArrowLeft') a.x = a.x === -1 ? 0 : a.x;
+          if (normalizedKey === 'd' || normalizedKey === 'ArrowRight') a.x = a.x === 1 ? 0 : a.x;
+        }
+        return;
+      }
+      if (isMovementKey) {
+        e.preventDefault();
+        gameStageRef.current?.focus({ preventScroll: true });
+      }
       const setAxis = (key: string, pressed: boolean) => {
         const a = axesRef.current;
         if (key === 'w' || key === 'ArrowUp') a.y = pressed ? -1 : (a.y === -1 ? 0 : a.y);
@@ -764,7 +655,7 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
         if (key === 'a' || key === 'ArrowLeft') a.x = pressed ? -1 : (a.x === -1 ? 0 : a.x);
         if (key === 'd' || key === 'ArrowRight') a.x = pressed ? 1 : (a.x === 1 ? 0 : a.x);
       };
-      setAxis(e.key, isKeyDown);
+      setAxis(normalizedKey, isKeyDown);
     };
     window.addEventListener('keydown', onKey);
     window.addEventListener('keyup', onKey);
@@ -778,98 +669,12 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
     };
   }, [sendInput, chatFocused]);
 
-  // Render canvas
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const draw = (timestamp: number) => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const w = canvas.clientWidth;
-      const h = canvas.clientHeight;
-      if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
-        canvas.width = Math.round(w * dpr);
-        canvas.height = Math.round(h * dpr);
-      }
-      ctx.save();
-      ctx.scale(dpr, dpr);
-
-      const now = performance.now();
-      const lastFrame = lastFrameRef.current ?? timestamp;
-      const dt = Math.min(0.12, (timestamp - lastFrame) / 1000);
-      lastFrameRef.current = timestamp;
-
-      // Draw floor
-      drawFloor(ctx, w, h, now);
-
-      const scale = 24;
-      const ox = w / 2;
-      const oy = h / 2;
-
-      // Collect and sort players by Y for depth ordering
-      const sorted: Array<[string, PlayerView]> = [];
-      playersRef.current.forEach((player, id) => {
-        if (!player.renderPos) player.renderPos = { ...player.pos };
-        if (!player.targetPos) player.targetPos = { ...player.pos };
-
-        if (id === youIdRef.current) {
-          const speed = 3.2;
-          player.renderPos.x = clamp(player.renderPos.x + axesRef.current.x * speed * dt, -10, 10);
-          player.renderPos.y = clamp(player.renderPos.y + axesRef.current.y * speed * dt, -6, 6);
-          player.renderPos.x = lerp(player.renderPos.x, player.pos.x, dt * 6);
-          player.renderPos.y = lerp(player.renderPos.y, player.pos.y, dt * 6);
-        } else {
-          player.renderPos.x = lerp(player.renderPos.x, player.targetPos.x, dt * 8);
-          player.renderPos.y = lerp(player.renderPos.y, player.targetPos.y, dt * 8);
-        }
-
-        if (player.activeEmote && player.activeEmote.until < now) {
-          delete player.activeEmote;
-        }
-
-        sorted.push([id, player]);
-      });
-
-      sorted.sort((a, b) => a[1].renderPos.y - b[1].renderPos.y);
-
-      for (const [id, player] of sorted) {
-        const px = ox + player.renderPos.x * scale;
-        const py = oy + player.renderPos.y * scale;
-        const color = charColor(player.characterId);
-        const isYou = id === youIdRef.current;
-        const name = isYou ? 'You' : (player.displayName || charName(player.characterId) || id.slice(0, 6));
-
-        let emoteGlyph: string | null = null;
-        if (player.activeEmote) {
-          emoteGlyph = EMOTES.find((e) => e.code === player.activeEmote?.code)?.glyph || player.activeEmote.code;
-        }
-
-        drawPlayer(ctx, px, py, color, name, isYou, player.rot, emoteGlyph, now);
-      }
-
-      ctx.restore();
-      rafRef.current = requestAnimationFrame(draw);
-    };
-
-    rafRef.current = requestAnimationFrame(draw);
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, []);
-
   const playerList = useMemo(() => {
     return Array.from(players.values()).sort((a, b) =>
       (a.displayName || '').localeCompare(b.displayName || ''),
     );
   }, [players]);
+  const scenePlayers = useMemo(() => Array.from(players.values()), [players]);
 
   const isReady = status === 'ready';
 
@@ -881,8 +686,8 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
 
   const statusLabel =
     status === 'ready' ? 'Connected' :
-    status === 'connecting' ? 'Connecting\u2026' :
-    status === 'authenticating' ? 'Authenticating\u2026' :
+    status === 'connecting' ? 'Connecting...' :
+    status === 'authenticating' ? 'Authenticating...' :
     status === 'error' ? 'Disconnected' : 'Idle';
 
   return (
@@ -907,12 +712,35 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
 
       {/* Main layout */}
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_280px]">
-        {/* Canvas area */}
-        <div className="relative overflow-hidden rounded-xl" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
-          <canvas
-            ref={canvasRef}
-            className="block w-full"
-            style={{ height, background: '#0a0b14' }}
+        {/* Game stage */}
+        <div
+          ref={gameStageRef}
+          tabIndex={0}
+          role="application"
+          aria-label="Signal Plaza multiplayer game stage"
+          className="relative isolate overflow-hidden rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-[#7FE6FF]/60"
+          style={{
+            height: `clamp(380px, 58svh, ${height}px)`,
+            minHeight: 360,
+            border: '1px solid rgba(127,230,255,0.12)',
+            background: 'radial-gradient(circle at 50% 34%, rgba(255,214,10,0.08), transparent 26%), linear-gradient(180deg, #0b0d18 0%, #070813 100%)',
+            touchAction: 'none',
+            overscrollBehavior: 'contain',
+          }}
+          onPointerDown={(event) => {
+            const target = event.target as HTMLElement;
+            if (target.closest('button, select, input, textarea')) return;
+            gameStageRef.current?.focus({ preventScroll: true });
+          }}
+        >
+          <div className="absolute inset-0">
+            <PlazaThreeScene players={scenePlayers} youId={youId} axesRef={axesRef} />
+          </div>
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background: 'linear-gradient(180deg, rgba(255,255,255,0.04), transparent 18%, transparent 78%, rgba(0,0,0,0.32)), radial-gradient(circle at 50% 50%, transparent 42%, rgba(5,6,14,0.45))',
+            }}
           />
 
           {/* Emote bar */}
@@ -1023,7 +851,15 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
             >
               Chat
             </div>
-            <div className="flex-1 overflow-y-auto px-4 py-2 text-sm" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
+            <div
+              ref={chatScrollRef}
+              className="flex-1 overflow-y-auto px-4 py-2 text-sm"
+              style={{
+                scrollbarWidth: 'thin',
+                scrollbarColor: 'rgba(255,255,255,0.1) transparent',
+                overscrollBehavior: 'contain',
+              }}
+            >
               {chatLog.length === 0 && (
                 <div className="py-8 text-center text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>
                   No messages yet &mdash; say hi!
@@ -1073,7 +909,7 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
                   color: 'rgba(255,255,255,0.8)',
                   caretColor: '#FF8EC9',
                 }}
-                placeholder="Send a message\u2026"
+                placeholder="Send a message..."
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 onFocus={() => setChatFocused(true)}
@@ -1124,7 +960,7 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
             <ul className="max-h-36 overflow-y-auto px-4 py-2" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
               {playerList.length === 0 && (
                 <li className="py-3 text-center text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>
-                  Waiting for players\u2026
+                  Waiting for players...
                 </li>
               )}
               {playerList.map((player) => {

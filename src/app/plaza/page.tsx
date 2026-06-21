@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 export default function PlazaPage() {
   return (
-    <div className="relative min-h-screen" style={{ background: '#060610', color: '#f2f7ff' }}>
+    <div className="relative min-h-screen" style={{ background: '#060610', color: '#f2f7ff', overflowX: 'hidden' }}>
       {/* Ambient grid overlay */}
       <div
         className="pointer-events-none absolute inset-0"
@@ -20,7 +20,7 @@ export default function PlazaPage() {
       <div
         className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2"
         style={{
-          width: '720px',
+          width: 'min(720px, 100vw)',
           height: '320px',
           background: 'radial-gradient(ellipse at center, rgba(255,214,10,0.08) 0%, transparent 70%)',
         }}
