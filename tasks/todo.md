@@ -9,7 +9,7 @@ Objective: fix the Vercel production deployment that still fails for `charmxpals
 - [x] Remove the build-time Redis env dependency from `/api/redeem`.
 - [x] Add regression coverage that importing the redeem route does not initialize Redis.
 - [x] Run focused test, Vercel-like missing-env build, lint, full tests, and TypeScript.
-- [ ] Push the fix and verify the next Vercel deployment status.
+- [x] Push the fix and verify the next Vercel deployment status.
 
 ### Vercel Multi-Project Deployment Fix Review (2026-06-21)
 
@@ -28,6 +28,13 @@ Objective: fix the Vercel production deployment that still fails for `charmxpals
   - `npm run lint` exits 0 with 26 existing `no-explicit-any` warnings.
   - `npm test -- --pool forks --no-file-parallelism --maxWorkers 1` passes: 18 files, 57 tests.
   - `npx tsc --noEmit --pretty false --incremental false` passes.
+- Verification after push:
+  - Commit `b4529ccdd5c02da33f39579a1b2096a5097f6451` pushed to `origin/main`.
+  - GitHub Actions `verify` passed for the pushed commit.
+  - Vercel status for `charmxpals` is `success`: deployment completed.
+  - Vercel status for `charmxpals-wmf1` is `success`: deployment completed.
+  - `https://charmxpals.vercel.app/character/neon-city` returns `200`, matches `/character/[id]`, and includes `Vexa Volt` with no application-error markers.
+  - `https://charmxpals-wmf1.vercel.app/character/neon-city` returns `200`, matches `/character/[id]`, and includes `Vexa Volt` with no application-error markers.
 
 ## Production Character Crash Fix Plan (2026-06-20)
 
