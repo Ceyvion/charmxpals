@@ -1,5 +1,34 @@
 # Beta Exit Tonight Checklist
 
+## Vercel Multi-Project Deployment Fix Plan (2026-06-21)
+
+Objective: fix the Vercel production deployment that still fails for `charmxpals-wmf1`, verified by Vercel/GitHub deployment evidence plus a local production build with missing Upstash env, while preserving the working `charmxpals` production alias and public profile behavior.
+
+- [x] Inspect Vercel/GitHub deployment statuses for commit `a3ddfbf4`.
+- [x] Identify the failing Vercel project and exact build error.
+- [x] Remove the build-time Redis env dependency from `/api/redeem`.
+- [x] Add regression coverage that importing the redeem route does not initialize Redis.
+- [x] Run focused test, Vercel-like missing-env build, lint, full tests, and TypeScript.
+- [ ] Push the fix and verify the next Vercel deployment status.
+
+### Vercel Multi-Project Deployment Fix Review (2026-06-21)
+
+- Vercel/GitHub deployment evidence for `a3ddfbf4` showed two production projects:
+  - `Vercel - charmxpals`: success.
+  - `Vercel - charmxpals-wmf1`: failure with Vercel guidance to inspect deployment `dpl_DKHuwB66bLqJFX9kcxuC8Bzon2mZ`.
+- GitHub Action build evidence showed the same root failure during `npm run build`: `Failed to collect page data for /api/redeem` caused by missing `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`.
+- Root cause: `src/app/api/redeem/route.ts` called `getRedis()` at module load, so Vercel/GitHub builds without Upstash env failed before the route could be treated as dynamic runtime code.
+- Fix:
+  - Moved Redis client initialization inside the `POST` handler.
+  - Passed the Redis client into `getAndDelete(...)`.
+  - Added a regression test proving route import does not call `getRedis()`.
+- Verification before push:
+  - `npx vitest run src/app/api/redeem/route.test.ts --pool forks --no-file-parallelism --maxWorkers 1` passes: 2 tests.
+  - `UPSTASH_REDIS_REST_URL= UPSTASH_REDIS_REST_TOKEN= CODE_HASH_SECRET= npm run build` passes.
+  - `npm run lint` exits 0 with 26 existing `no-explicit-any` warnings.
+  - `npm test -- --pool forks --no-file-parallelism --maxWorkers 1` passes: 18 files, 57 tests.
+  - `npx tsc --noEmit --pretty false --incremental false` passes.
+
 ## Production Character Crash Fix Plan (2026-06-20)
 
 Objective: fix the production server exception on `/character/neon-city`, verified by a local production build/server or live deployment evidence plus browser smoke checks, while preserving public profile, Explore, Compare, and backend-fallback behavior.

@@ -1,6 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { hashClaimCode } from '@/lib/crypto';
 
+const redisMocks = vi.hoisted(() => ({
+  getRedis: vi.fn(),
+}));
+
 class FakeRedis {
   strings = new Map<string, string>();
   lists = new Map<string, string[]>();
@@ -34,7 +38,7 @@ class FakeRedis {
 
 let fakeRedis: FakeRedis;
 vi.mock('@/lib/redis', () => ({
-  getRedis: () => fakeRedis,
+  getRedis: redisMocks.getRedis,
 }));
 vi.mock('@/lib/rateLimit', () => ({
   rateLimitCheck: vi.fn(async () => ({ allowed: true, resetAt: Date.now() + 10_000 })),
@@ -56,6 +60,17 @@ describe('redeem atomicity', () => {
     vi.resetModules();
     process.env.CODE_HASH_SECRET = 'test-secret';
     fakeRedis = new FakeRedis();
+    redisMocks.getRedis.mockReset();
+    redisMocks.getRedis.mockImplementation(() => fakeRedis);
+  });
+
+  it('does not initialize Redis when the route module is imported', async () => {
+    redisMocks.getRedis.mockImplementation(() => {
+      throw new Error('getRedis should not be called on import');
+    });
+    const { POST } = await import('./route');
+    expect(typeof POST).toBe('function');
+    expect(redisMocks.getRedis).not.toHaveBeenCalled();
   });
 
   it('redeems a code only once under concurrency', async () => {

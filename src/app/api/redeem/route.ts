@@ -5,12 +5,12 @@ import { getClientIp } from '@/lib/ip';
 import { getRedis } from '@/lib/redis';
 import { rateLimitCheck } from '@/lib/rateLimit';
 
-const redis = getRedis();
-
 const CODE_PREFIX = process.env.REDEEM_CODE_PREFIX || 'redeem:code';
 const CLAIM_LOG_KEY = process.env.REDEEM_CLAIMED_KEY || 'redeem:claimed';
 
-async function getAndDelete(key: string): Promise<string | null> {
+type RedisClient = ReturnType<typeof getRedis>;
+
+async function getAndDelete(redis: RedisClient, key: string): Promise<string | null> {
   const maybeClient = redis as unknown as { getdel?: (k: string) => Promise<unknown> };
   if (typeof maybeClient.getdel === 'function') {
     const value = (await maybeClient.getdel(key)) as string | null;
@@ -66,9 +66,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Missing code' }, { status: 400 });
     }
 
+    const redis = getRedis();
     const codeHash = hashClaimCode(code);
     const key = `${CODE_PREFIX}:${codeHash}`;
-    const stored = await getAndDelete(key);
+    const stored = await getAndDelete(redis, key);
     if (!stored) {
       return NextResponse.json({ success: false, error: 'Code invalid or already redeemed' }, { status: 400 });
     }
