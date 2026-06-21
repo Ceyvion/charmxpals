@@ -12,10 +12,10 @@ Objective: rebuild `/plaza` as a polished Three.js/R3F multiplayer game surface 
 - [x] Add explicit keyboard/pointer scroll guards so WASD/arrow movement never drags the page.
 - [x] Verify local browser behavior on desktop and mobile-sized viewports, including no document scroll during movement.
 - [x] Run focused/full verification: tests, TypeScript, lint, build.
-- [ ] Deploy and verify the live `/plaza` route, or document the exact blocker.
-- [ ] Record final review evidence and screenshot paths.
+- [x] Deploy and verify the live `/plaza` route, or document the exact blocker.
+- [x] Record final review evidence and screenshot paths.
 
-### Signal Plaza Three.js Rebuild Interim Evidence (2026-06-21)
+### Signal Plaza Three.js Rebuild Final Evidence (2026-06-21)
 
 - Imagegen concept mockup: `/Users/macbookpro/.codex/generated_images/019ee8f0-9393-7842-8e7a-014a0f274616/ig_0d8b4298941a631b016a37a25baf38819197f0fce4e1e8a3c3.png`.
 - Root cause for forced page dragging: chat auto-scroll used `scrollIntoView` on every multiplayer update and movement keys did not prevent default page scroll.
@@ -23,6 +23,8 @@ Objective: rebuild `/plaza` as a polished Three.js/R3F multiplayer game surface 
 - Local dev browser proof on `localhost:3005`: desktop and mobile both rendered one `three.js r165` canvas, showed Connected, had no mint error, no console/page errors, no horizontal overflow, and scroll stayed at `0` after WASD/arrow movement. Screenshots: `output/plaza-three-local-desktop.png`, `output/plaza-three-local-mobile.png`.
 - Verification passed: `npx tsc --noEmit --pretty false --incremental false`, `npm run lint -- --max-warnings=999` (warnings only), `npm test` (60/60), and `npm run build`.
 - Production-bundle local UI rendered the Three canvas and passed no-scroll/no-overflow, but local `npm start` could not connect multiplayer because this Mac cannot resolve the configured Upstash host and production rate limiting rejects memory fallback. Live Vercel remains the required production verification surface.
+- Deployed code commit: `e3f14a89f08f9928e124468f39787fbc0d038640`; both Vercel checks (`charmxpals` and `charmxpals-wmf1`) completed successfully.
+- Public live browser proof on `https://charmxpals.vercel.app/plaza`: desktop and mobile both rendered one `three.js r165` canvas, showed Connected, had no mint error, no app error, no console/page errors, and no failed requests. Desktop scroll stayed at `0` after WASD/arrow movement; mobile horizontal overflow was `0`. Screenshots: `output/plaza-three-live-desktop.png`, `output/plaza-three-live-mobile.png`.
 
 ## Signal Plaza Multiplayer Runtime Fix Plan (2026-06-21)
 

@@ -251,7 +251,7 @@
       "id": "PLAZA-THREE-SCENE-2026-06-21",
       "title": "Signal Plaza Three.js scene rebuild",
       "detail": "Replace the old 2D plaza canvas with a Three.js multiplayer scene and stop chat/movement input from forcing page scroll.",
-      "status": "in_progress",
+      "status": "done",
       "area": "gameplay"
     },
     {
