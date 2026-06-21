@@ -153,7 +153,14 @@ Original prompt: you need to use all skills and research aavailbibe and make thi
   - `output/plaza-three-asset-local-results.json`
   - `output/plaza-web-game-asset-pass/`
 
+## 2026-06-21 - Signal Plaza asset pass live verification
+
+- Pushed `e2ae38e0` and `b5ae3374`; both Vercel projects completed successfully for the final code commit.
+- Final live browser verification on `https://charmxpals.vercel.app/plaza` passed desktop/mobile: deployed stage image loaded, one WebGL canvas, Connected state, no failed mint text, no failed requests, movement changed `render_game_to_text()` coordinates, no horizontal overflow, and no page scroll during arrow movement.
+- Final live screenshots:
+  - `output/plaza-three-asset-final-live-desktop.png`
+  - `output/plaza-three-asset-final-live-mobile.png`
+
 ### TODO / Next-agent suggestions
 
-- Live Vercel verification still needs to run after the asset-backed pass is pushed.
 - If further visual precision is needed, tune player coordinate projection against the bitmap art rather than adding more hand-built stage geometry.
