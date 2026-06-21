@@ -1,5 +1,47 @@
 # Beta Exit Tonight Checklist
 
+## Signal Plaza Multiplayer Runtime Fix Plan (2026-06-21)
+
+Objective: make Signal Plaza stop failing with "Failed to mint plaza session" and get the multiplayer path working as far as the current hosted infrastructure permits, verified by live/local API evidence, automated tests, and browser checks, while preserving existing claim/profile/play routes and the Vercel deployment constraints.
+
+- [x] Capture live `/api/mmo/token` behavior from the failing production plaza surface.
+- [x] Research the current Vercel WebSocket/runtime constraint from official provider docs.
+- [x] Reproduce the token failure locally under production-like missing backend/realtime env.
+- [x] Find the narrow root cause in token minting, auth, rate limit, repo, or WS configuration flow.
+- [x] Implement the smallest durable fix so unauthenticated/config-missing users get explicit JSON responses instead of a 500 mint failure.
+- [x] Add focused regression tests for the failing token route behavior.
+- [x] Verify local plaza behavior in a browser with the standalone WS server running.
+- [x] Re-check live/public deployment behavior or document the exact remaining provider/config gate.
+- [x] Document review evidence and any production transport follow-up.
+
+### Signal Plaza Multiplayer Runtime Fix Review (2026-06-21)
+
+- Live reproduction before the fix: `https://charmxpals.vercel.app/api/mmo/token` returned HTTP `500` with an empty body, matching the Firefox-visible "Failed to mint plaza session" surface.
+- Research finding: Vercel Functions cannot act as a WebSocket server, so the hosted app needs either an external WS provider or a Vercel-compatible fallback transport.
+- Root cause:
+  - `/api/mmo/token` did rate limiting and repo initialization before it knew whether the visitor was an anonymous plaza guest or an arena/auth request.
+  - Hosted Vercel with no configured WS URL could only fail before creating a usable plaza session.
+  - Local `npm run dev:plaza` also had a standalone `ts-node` runtime failure because `src/lib/arenaProgressStore.ts` used a Next alias import that the MMO server process could not resolve.
+- Fixes:
+  - Plaza mode now supports signed guest sessions with fallback avatar `neon-city`; arena mode still requires auth and ownership.
+  - Hosted/no-WS plaza now uses `transport: "http"` and `/api/mmo/sync` for movement/chat snapshots.
+  - HTTP plaza transport uses Redis when available, and falls back to process memory for the social preview if Redis/rate-limit access is unavailable.
+  - Token verification is shared in `src/lib/mmo/token.ts`, with `MMO_WS_SECRET` preferred and `CODE_HASH_SECRET` accepted as the already-required fallback secret.
+  - `PlazaClient` now supports both WS and HTTP transports while keeping the same canvas, emote, chat, and player list UI.
+  - Standalone MMO dev server import path is now compatible with `ts-node`.
+- Verification:
+  - `npx vitest run src/app/api/mmo/token/route.test.ts src/lib/mmo/httpPlazaStore.test.ts --pool forks --no-file-parallelism --maxWorkers 1` passes: 3 tests.
+  - `npm test -- --pool forks --no-file-parallelism --maxWorkers 1` passes: 20 files, 60 tests.
+  - `npx tsc --noEmit --pretty false --incremental false` passes.
+  - `npm run lint -- --max-warnings=999` exits 0 with existing `no-explicit-any` warnings.
+  - `npm run build` passes and includes `/api/mmo/sync`.
+  - Local WS browser proof via `npm run dev:plaza`: `/plaza` showed Connected, `1 online`, chat sent, no failed mint text, no console errors, no failed requests. Screenshot: `output/plaza-ws-local.png`.
+  - Hosted/no-WS dev browser proof on port 3001: two pages showed Connected, `2 online`, cross-page chat visible, no WS requests, no failed mint text. Screenshots: `output/plaza-http-local-page1.png`, `output/plaza-http-local-page2.png`.
+  - Production-bundle hosted/no-WS browser proof on port 3002: two pages showed Connected, `2 online`, cross-page chat visible, no failed mint text, no console errors, no failed requests. Screenshots: `output/plaza-prod-http-page1.png`, `output/plaza-prod-http-page2.png`.
+- Production note:
+  - The current public site is still running the old deployment until these changes are deployed; the old live token endpoint was confirmed failing before this fix.
+  - For stronger multi-instance production behavior, configure a working Redis or external realtime service. The code now degrades to memory for the plaza preview instead of showing the mint error when Redis/realtime is unavailable.
+
 ## Vercel Multi-Project Deployment Fix Plan (2026-06-21)
 
 Objective: fix the Vercel production deployment that still fails for `charmxpals-wmf1`, verified by Vercel/GitHub deployment evidence plus a local production build with missing Upstash env, while preserving the working `charmxpals` production alias and public profile behavior.

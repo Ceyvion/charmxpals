@@ -1,6 +1,6 @@
-import { type ArenaProgressEvent, toArenaProgressDateKey } from '@/lib/arenaProgress';
-import { getRedis } from '@/lib/redis';
-import { hasRedisEnv, shouldAllowEphemeralFallback } from '@/lib/runtime';
+import { type ArenaProgressEvent, toArenaProgressDateKey } from './arenaProgress';
+import { getRedis } from './redis';
+import { hasRedisEnv, shouldAllowEphemeralFallback } from './runtime';
 
 export type ArenaProgressRecord = {
   dateKey: string;

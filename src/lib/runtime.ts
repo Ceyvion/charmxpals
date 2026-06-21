@@ -45,7 +45,7 @@ export function getRuntimeDiagnostics() {
   const persistenceConfigured = hasPersistenceEnv();
   const nextAuthSecretConfigured = Boolean(process.env.NEXTAUTH_SECRET?.trim());
   const betaAccessConfigured = Boolean(process.env.BETA_ACCESS_SECRET?.trim());
-  const mmoSecretConfigured = Boolean(process.env.MMO_WS_SECRET?.trim());
+  const mmoSecretConfigured = Boolean(process.env.MMO_WS_SECRET?.trim() || process.env.CODE_HASH_SECRET?.trim());
   const scoreSigningConfigured = Boolean(
     process.env.SCORE_SIGNING_SECRET?.trim() ||
     process.env.NEXTAUTH_SECRET?.trim() ||
@@ -65,7 +65,7 @@ export function getRuntimeDiagnostics() {
     issues.push('BETA_ACCESS_SECRET is required in production.');
   }
   if (production && !mmoSecretConfigured) {
-    issues.push('MMO_WS_SECRET is required in production.');
+    issues.push('MMO_WS_SECRET or CODE_HASH_SECRET is required in production.');
   }
   if (production && !scoreSigningConfigured) {
     issues.push('Score signing secret is not configured.');

@@ -30,6 +30,30 @@ type ChatMessage = {
   flagged?: boolean;
 };
 
+type HttpPlazaSession = {
+  token: string;
+  syncPath: string;
+  snapshotInterval: number;
+};
+
+type HttpPlazaResponse = {
+  ok?: boolean;
+  sessionId?: string;
+  motd?: string;
+  snapshotInterval?: number;
+  players?: PlayerState[];
+  playerCount?: number;
+  chat?: Array<{
+    id: string;
+    text: string;
+    ts: number;
+    from?: string;
+    authorId?: string;
+    flagged?: boolean;
+  }>;
+  error?: string;
+};
+
 const EMOTES = [
   { code: 'wave', label: 'Wave', glyph: '\u{1F44B}', key: '1' },
   { code: 'cheer', label: 'Cheer', glyph: '\u2728', key: '2' },
@@ -195,10 +219,14 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
   const [selectedChar, setSelectedChar] = useState<string | null>(null);
   const selectedCharRef = useRef<string | null>(null);
   const [wsUrl, setWsUrl] = useState<string | null>(null);
+  const [httpSession, setHttpSession] = useState<HttpPlazaSession | null>(null);
   const [youId, setYouId] = useState<string | null>(null);
   const youIdRef = useRef<string | null>(null);
   const readyRef = useRef(false);
   const tokenRef = useRef<string | null>(null);
+  const httpModeRef = useRef(false);
+  const pendingEmoteRef = useRef<string | null>(null);
+  const pendingChatRef = useRef<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const lastFrameRef = useRef<number | null>(null);
@@ -272,8 +300,11 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
         }
         const body = await res.json() as {
           token: string;
+          transport?: 'ws' | 'http';
           claims?: Partial<MmoSessionClaims>;
           wsBase?: string;
+          syncPath?: string;
+          snapshotInterval?: number;
         };
         const token = body.token;
         tokenRef.current = token;
@@ -285,6 +316,17 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
         const initialChar = owned[0] || 'neon-city';
         selectedCharRef.current = initialChar;
         setSelectedChar(initialChar);
+        if (body.transport === 'http') {
+          if (!stop) {
+            setWsUrl(null);
+            setHttpSession({
+              token,
+              syncPath: body.syncPath || '/api/mmo/sync',
+              snapshotInterval: typeof body.snapshotInterval === 'number' ? body.snapshotInterval : 220,
+            });
+          }
+          return;
+        }
         const host = typeof window !== 'undefined' ? window.location.hostname : null;
         const base = resolveClientWsBase({ serverBase: body.wsBase, locationHostname: host });
         if (!base) {
@@ -292,6 +334,7 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
         }
         const url = `${base}?token=${encodeURIComponent(token)}`;
         if (!stop) {
+          setHttpSession(null);
           setWsUrl(url);
         }
       } catch (err: any) {
@@ -317,6 +360,12 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
 
   const sendInput = useCallback(
     (payload?: { emote?: string }) => {
+      if (httpModeRef.current) {
+        if (payload?.emote) {
+          pendingEmoteRef.current = payload.emote;
+        }
+        return;
+      }
       const ws = wsRef.current;
       if (!ws || ws.readyState !== WebSocket.OPEN || !readyRef.current) return;
       const seq = seqRef.current++;
@@ -334,11 +383,15 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
   );
 
   const sendChat = useCallback((text: string) => {
-    const ws = wsRef.current;
-    if (!ws || ws.readyState !== WebSocket.OPEN || !readyRef.current) return;
     const trimmed = text.trim();
     if (!trimmed) return;
     const { clean } = filterProfanity(trimmed);
+    if (httpModeRef.current) {
+      pendingChatRef.current = clean;
+      return;
+    }
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN || !readyRef.current) return;
     const now = Date.now();
     ws.send(JSON.stringify({ type: 'chat', id: `local-${now}`, ts: now, text: clean }));
   }, []);
@@ -359,6 +412,128 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
     ws.send(JSON.stringify({ type: 'select_avatar', characterId: value }));
   }, [updatePlayers]);
+
+  // HTTP polling transport for hosted environments that cannot run a WebSocket server.
+  useEffect(() => {
+    if (!httpSession) {
+      httpModeRef.current = false;
+      return;
+    }
+
+    let stop = false;
+    let timer: number | null = null;
+    let joined = false;
+    httpModeRef.current = true;
+    readyRef.current = false;
+    setStatus('authenticating');
+    setInfo('Syncing plaza...');
+
+    const applyPlayers = (incoming: PlayerState[]) => {
+      const now = performance.now();
+      const next = new Map<string, PlayerView>();
+      for (const state of incoming) {
+        const previous = playersRef.current.get(state.id);
+        if (previous) {
+          const view: PlayerView = {
+            ...previous,
+            ...state,
+            pos: { ...state.pos },
+            targetPos: { ...state.pos },
+            renderPos: previous.renderPos || { ...state.pos },
+            lastUpdate: now,
+          };
+          if (state.emote) {
+            view.activeEmote = { code: state.emote, until: now + 1_800 };
+          }
+          next.set(state.id, view);
+        } else {
+          const hydrated = hydratePlayer(state);
+          if (state.emote) {
+            hydrated.activeEmote = { code: state.emote, until: now + 1_800 };
+          }
+          next.set(state.id, hydrated);
+        }
+      }
+      replacePlayers(next);
+    };
+
+    const poll = async () => {
+      if (stop) return;
+      const emote = pendingEmoteRef.current;
+      const chat = pendingChatRef.current;
+      pendingEmoteRef.current = null;
+      pendingChatRef.current = null;
+
+      try {
+        const started = Date.now();
+        const response = await fetch(httpSession.syncPath, {
+          method: 'POST',
+          cache: 'no-store',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            token: httpSession.token,
+            seq: seqRef.current++,
+            axes: axesRef.current,
+            characterId: selectedCharRef.current,
+            ...(emote ? { emote } : {}),
+            ...(chat ? { chat } : {}),
+          }),
+        });
+        const body = await response.json().catch(() => null) as HttpPlazaResponse | null;
+        if (!response.ok || !body?.ok) {
+          throw new Error(body?.error || `sync_http_${response.status}`);
+        }
+        const sessionId = body.sessionId || youIdRef.current;
+        if (sessionId) {
+          setYouId(sessionId);
+          youIdRef.current = sessionId;
+        }
+        if (!joined) {
+          joined = true;
+          readyRef.current = true;
+          setStatus('ready');
+          setInfo(body.motd || 'Connected');
+          appendMessage({ id: `system-${Date.now()}`, text: 'You entered the plaza.', ts: Date.now(), system: true });
+        }
+        if (Array.isArray(body.players)) {
+          applyPlayers(body.players);
+        }
+        if (Array.isArray(body.chat)) {
+          setChatLog(body.chat.map((entry) => ({
+            id: entry.id,
+            text: entry.text,
+            ts: entry.ts,
+            from: entry.from,
+            authorId: entry.authorId,
+            flagged: Boolean(entry.flagged),
+          })));
+        }
+        if (typeof body.playerCount === 'number') {
+          setPlayerCount(body.playerCount);
+        }
+        setLatency(Date.now() - started);
+      } catch (error: any) {
+        if (stop) return;
+        readyRef.current = false;
+        setStatus('error');
+        setInfo(error?.message || 'Plaza sync failed.');
+      }
+    };
+
+    void poll();
+    timer = window.setInterval(() => {
+      void poll();
+    }, httpSession.snapshotInterval);
+
+    return () => {
+      stop = true;
+      httpModeRef.current = false;
+      readyRef.current = false;
+      if (timer !== null) {
+        window.clearInterval(timer);
+      }
+    };
+  }, [httpSession, hydratePlayer, replacePlayers, appendMessage]);
 
   // Connect WS
   useEffect(() => {

@@ -241,6 +241,13 @@
       "area": "backend"
     },
     {
+      "id": "MMO-PLAZA-HOSTED-FALLBACK-2026-06-21",
+      "title": "Signal Plaza hosted multiplayer fallback",
+      "detail": "Fix token mint failures for anonymous plaza users, add hosted HTTP sync fallback when Vercel has no WS server configured, and verify WS plus no-WS browser multiplayer paths.",
+      "status": "done",
+      "area": "fullstack"
+    },
+    {
       "id": "CSS-PARSE-HOTFIX-2026-02-17",
       "title": "Firefox CSS parse warnings cleanup",
       "detail": "Fix invalid Tailwind arbitrary grid column syntax and remove accidental arbitrary class extraction from bracketed dev log tags.",
