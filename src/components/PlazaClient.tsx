@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -67,7 +67,25 @@ const EMOTES = [
   { code: 'fire', label: 'Fire', glyph: '\u{1F525}', key: '4' },
 ];
 
-const MOVEMENT_KEYS = new Set(['w', 'a', 's', 'd', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
+type MovementKey = 'w' | 'a' | 's' | 'd';
+
+const MOVEMENT_KEY_MAP: Partial<Record<string, MovementKey>> = {
+  w: 'w',
+  ArrowUp: 'w',
+  a: 'a',
+  ArrowLeft: 'a',
+  s: 's',
+  ArrowDown: 's',
+  d: 'd',
+  ArrowRight: 'd',
+};
+const EMOTE_BY_KEY = new Map(EMOTES.map((emote) => [emote.key, emote.code]));
+const MOVEMENT_BUTTONS: Array<{ key: MovementKey; label: string; ariaLabel: string; className: string }> = [
+  { key: 'w', label: 'W', ariaLabel: 'Move up', className: 'col-start-2 row-start-1' },
+  { key: 'a', label: 'A', ariaLabel: 'Move left', className: 'col-start-1 row-start-2' },
+  { key: 's', label: 'S', ariaLabel: 'Move down', className: 'col-start-2 row-start-2' },
+  { key: 'd', label: 'D', ariaLabel: 'Move right', className: 'col-start-3 row-start-2' },
+];
 
 const PlazaThreeScene = dynamic<PlazaThreeSceneProps>(() => import('./PlazaThreeScene'), {
   ssr: false,
@@ -124,6 +142,10 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
   const chatInputRef = useRef<HTMLInputElement | null>(null);
   const [playerCount, setPlayerCount] = useState(0);
   const [chatFocused, setChatFocused] = useState(false);
+  const keyboardMoveKeysRef = useRef<Set<MovementKey>>(new Set());
+  const pointerMoveKeysRef = useRef<Set<MovementKey>>(new Set());
+  const [pressedMoveKeys, setPressedMoveKeys] = useState<Set<MovementKey>>(new Set());
+  const [lastTriggeredEmote, setLastTriggeredEmote] = useState<{ code: string; at: number } | null>(null);
 
   const hydratePlayer = useCallback((state: PlayerState): PlayerView => {
     return {
@@ -266,6 +288,85 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
     },
     [],
   );
+
+  const recomputeAxes = useCallback(() => {
+    const active = new Set<MovementKey>([
+      ...keyboardMoveKeysRef.current,
+      ...pointerMoveKeysRef.current,
+    ]);
+    let x = (active.has('d') ? 1 : 0) - (active.has('a') ? 1 : 0);
+    let y = (active.has('s') ? 1 : 0) - (active.has('w') ? 1 : 0);
+    const magnitude = Math.hypot(x, y);
+    if (magnitude > 1) {
+      x /= magnitude;
+      y /= magnitude;
+    }
+    axesRef.current = { x, y };
+    setPressedMoveKeys(active);
+    sendInput();
+  }, [sendInput]);
+
+  const clearMovement = useCallback(() => {
+    keyboardMoveKeysRef.current.clear();
+    pointerMoveKeysRef.current.clear();
+    axesRef.current = { x: 0, y: 0 };
+    setPressedMoveKeys(new Set());
+    sendInput();
+  }, [sendInput]);
+
+  const setKeyboardMoveKey = useCallback((key: MovementKey, pressed: boolean) => {
+    const keys = keyboardMoveKeysRef.current;
+    const hadKey = keys.has(key);
+    if (pressed) {
+      if (hadKey) return;
+      keys.add(key);
+    } else {
+      if (!hadKey) return;
+      keys.delete(key);
+    }
+    recomputeAxes();
+  }, [recomputeAxes]);
+
+  const setPointerMoveKey = useCallback((key: MovementKey, pressed: boolean) => {
+    const keys = pointerMoveKeysRef.current;
+    const hadKey = keys.has(key);
+    if (pressed) {
+      if (hadKey) return;
+      keys.add(key);
+    } else {
+      if (!hadKey) return;
+      keys.delete(key);
+    }
+    recomputeAxes();
+  }, [recomputeAxes]);
+
+  const markLocalEmote = useCallback((code: string) => {
+    const now = performance.now();
+    updatePlayers((prev) => {
+      const sessionId = youIdRef.current;
+      if (!sessionId) return prev;
+      const current = prev.get(sessionId);
+      if (!current) return prev;
+      const next = new Map(prev);
+      next.set(sessionId, {
+        ...current,
+        activeEmote: { code, until: now + 2_400 },
+      });
+      return next;
+    });
+  }, [updatePlayers]);
+
+  const triggerEmote = useCallback((code: string) => {
+    if (!readyRef.current) return;
+    setLastTriggeredEmote({ code, at: Date.now() });
+    markLocalEmote(code);
+    sendInput({ emote: code });
+    window.setTimeout(() => {
+      setLastTriggeredEmote((current) => (
+        current?.code === code && Date.now() - current.at >= 550 ? null : current
+      ));
+    }, 650);
+  }, [markLocalEmote, sendInput]);
 
   const sendChat = useCallback((text: string) => {
     const trimmed = text.trim();
@@ -633,50 +734,52 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
   // Clear movement as soon as chat takes focus so no axis can stay latched.
   useEffect(() => {
     if (!chatFocused) return;
-    axesRef.current = { x: 0, y: 0 };
-    sendInput();
-  }, [chatFocused, sendInput]);
+    clearMovement();
+  }, [chatFocused, clearMovement]);
 
-  // Input loop — ignore keydown while chat is focused, but still process keyup.
+  // Input loop — ignore new keydown while chat is focused, but still release latched movement.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const isKeyDown = e.type === 'keydown';
       const normalizedKey = e.key.length === 1 ? e.key.toLowerCase() : e.key;
-      const isMovementKey = MOVEMENT_KEYS.has(normalizedKey);
-      if (chatFocused) {
-        if (!isKeyDown && isMovementKey) {
-          const a = axesRef.current;
-          if (normalizedKey === 'w' || normalizedKey === 'ArrowUp') a.y = a.y === -1 ? 0 : a.y;
-          if (normalizedKey === 's' || normalizedKey === 'ArrowDown') a.y = a.y === 1 ? 0 : a.y;
-          if (normalizedKey === 'a' || normalizedKey === 'ArrowLeft') a.x = a.x === -1 ? 0 : a.x;
-          if (normalizedKey === 'd' || normalizedKey === 'ArrowRight') a.x = a.x === 1 ? 0 : a.x;
+      const movementKey = MOVEMENT_KEY_MAP[normalizedKey];
+      const emoteCode = EMOTE_BY_KEY.get(normalizedKey);
+
+      if (movementKey) {
+        e.preventDefault();
+        if (chatFocused) {
+          if (!isKeyDown) setKeyboardMoveKey(movementKey, false);
+          return;
         }
+        gameStageRef.current?.focus({ preventScroll: true });
+        setKeyboardMoveKey(movementKey, isKeyDown);
         return;
       }
-      if (isMovementKey) {
+
+      if (isKeyDown && emoteCode && !e.repeat && !chatFocused) {
         e.preventDefault();
         gameStageRef.current?.focus({ preventScroll: true });
+        triggerEmote(emoteCode);
       }
-      const setAxis = (key: string, pressed: boolean) => {
-        const a = axesRef.current;
-        if (key === 'w' || key === 'ArrowUp') a.y = pressed ? -1 : (a.y === -1 ? 0 : a.y);
-        if (key === 's' || key === 'ArrowDown') a.y = pressed ? 1 : (a.y === 1 ? 0 : a.y);
-        if (key === 'a' || key === 'ArrowLeft') a.x = pressed ? -1 : (a.x === -1 ? 0 : a.x);
-        if (key === 'd' || key === 'ArrowRight') a.x = pressed ? 1 : (a.x === 1 ? 0 : a.x);
-      };
-      setAxis(normalizedKey, isKeyDown);
     };
+
+    const onBlur = () => {
+      clearMovement();
+    };
+
     window.addEventListener('keydown', onKey);
     window.addEventListener('keyup', onKey);
+    window.addEventListener('blur', onBlur);
     const interval = window.setInterval(() => {
       sendInput();
     }, 50);
     return () => {
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('keyup', onKey);
+      window.removeEventListener('blur', onBlur);
       window.clearInterval(interval);
     };
-  }, [sendInput, chatFocused]);
+  }, [chatFocused, clearMovement, sendInput, setKeyboardMoveKey, triggerEmote]);
 
   const playerList = useMemo(() => {
     return Array.from(players.values()).sort((a, b) =>
@@ -693,6 +796,9 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
       info,
       playerCount,
       youId,
+      axes: axesRef.current,
+      pressedMovement: Array.from(pressedMoveKeys).sort(),
+      lastTriggeredEmote: lastTriggeredEmote?.code ?? null,
       players: Array.from(playersRef.current.values()).map((player) => ({
         id: player.id,
         you: player.id === youIdRef.current,
@@ -711,7 +817,7 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
       }
       delete window.advanceTime;
     };
-  }, [chatLog.length, info, playerCount, status, youId]);
+  }, [chatLog.length, info, lastTriggeredEmote, playerCount, pressedMoveKeys, status, youId]);
 
   const isReady = status === 'ready';
 
@@ -726,6 +832,56 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
     status === 'connecting' ? 'Connecting...' :
     status === 'authenticating' ? 'Authenticating...' :
     status === 'error' ? 'Disconnected' : 'Idle';
+
+  const handleMovementPointerDown = (event: ReactPointerEvent<HTMLButtonElement>, key: MovementKey) => {
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    gameStageRef.current?.focus({ preventScroll: true });
+    setPointerMoveKey(key, true);
+  };
+
+  const handleMovementPointerEnd = (event: ReactPointerEvent<HTMLButtonElement>, key: MovementKey) => {
+    event.preventDefault();
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    setPointerMoveKey(key, false);
+  };
+
+  const renderMovementButton = (button: (typeof MOVEMENT_BUTTONS)[number]) => {
+    const isPressed = pressedMoveKeys.has(button.key);
+    return (
+      <button
+        key={button.key}
+        type="button"
+        aria-label={button.ariaLabel}
+        aria-pressed={isPressed}
+        data-move-key={button.label}
+        className={`${button.className} inline-flex h-9 w-9 select-none items-center justify-center rounded-md border text-xs font-black transition-all disabled:cursor-not-allowed disabled:opacity-40`}
+        style={{
+          touchAction: 'none',
+          borderColor: isPressed ? 'rgba(255,142,201,0.78)' : 'rgba(35,243,255,0.42)',
+          color: isPressed ? '#0a0a12' : '#23f3ff',
+          background: isPressed
+            ? 'linear-gradient(180deg, #ffb7dc, #ff7fbf)'
+            : 'linear-gradient(180deg, rgba(35,243,255,0.12), rgba(35,243,255,0.045))',
+          boxShadow: isPressed
+            ? '0 0 20px rgba(255,142,201,0.46)'
+            : 'inset 0 0 0 1px rgba(255,255,255,0.04)',
+        }}
+        disabled={!isReady}
+        onContextMenu={(event) => event.preventDefault()}
+        onPointerDown={(event) => handleMovementPointerDown(event, button.key)}
+        onPointerUp={(event) => handleMovementPointerEnd(event, button.key)}
+        onPointerCancel={(event) => handleMovementPointerEnd(event, button.key)}
+        onLostPointerCapture={() => {
+          setPointerMoveKey(button.key, false);
+        }}
+      >
+        {button.label}
+      </button>
+    );
+  };
 
   const renderStatusPanel = () => (
     <div
@@ -859,24 +1015,20 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
             }}
           />
           <div
-            className="pointer-events-none absolute bottom-5 left-5 hidden rounded-lg border px-4 py-3 text-xs font-bold uppercase tracking-[0.08em] md:block"
+            className="absolute bottom-4 left-4 rounded-lg border px-3 py-3 text-[0.65rem] font-bold uppercase tracking-[0.08em] sm:bottom-5 sm:left-5 sm:px-4 sm:text-xs"
             style={{
               color: 'rgba(248,251,255,0.72)',
-              background: 'rgba(3,6,14,0.66)',
-              borderColor: 'rgba(127,230,255,0.16)',
+              background: 'rgba(3,6,14,0.7)',
+              borderColor: 'rgba(127,230,255,0.18)',
               backdropFilter: 'blur(10px)',
+              boxShadow: '0 16px 46px rgba(0,0,0,0.28)',
             }}
           >
-            <div className="grid grid-cols-[34px_34px_34px_1fr] gap-1.5">
-              <span />
-              <kbd className="rounded border px-2 py-1 text-center" style={{ borderColor: 'rgba(35,243,255,0.42)', color: '#23f3ff' }}>W</kbd>
-              <span />
-              <span className="row-span-2 ml-4 flex items-center text-left leading-5" style={{ color: 'rgba(248,251,255,0.58)' }}>
-                Move<br />Click emotes<br />Chat to connect
+            <div className="grid grid-cols-[36px_36px_36px_1fr] grid-rows-[36px_36px] gap-1.5">
+              {MOVEMENT_BUTTONS.map(renderMovementButton)}
+              <span className="col-start-4 row-span-2 ml-4 flex items-center text-left leading-5" style={{ color: 'rgba(248,251,255,0.58)' }}>
+                Hold to move<br />Click emotes<br />Chat to type
               </span>
-              <kbd className="rounded border px-2 py-1 text-center" style={{ borderColor: 'rgba(35,243,255,0.42)', color: '#23f3ff' }}>A</kbd>
-              <kbd className="rounded border px-2 py-1 text-center" style={{ borderColor: 'rgba(35,243,255,0.42)', color: '#23f3ff' }}>S</kbd>
-              <kbd className="rounded border px-2 py-1 text-center" style={{ borderColor: 'rgba(35,243,255,0.42)', color: '#23f3ff' }}>D</kbd>
             </div>
           </div>
 
@@ -954,29 +1106,43 @@ export default function PlazaClient({ height = 520 }: PlazaClientProps) {
             background: 'linear-gradient(180deg, rgba(255,255,255,0.025), rgba(0,0,0,0.1))',
           }}
         >
-          {EMOTES.map((emote) => (
-            <button
-              key={emote.code}
-              type="button"
-              onClick={() => sendInput({ emote: emote.code })}
-              className="flex min-w-[54px] items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-extrabold transition-all sm:min-w-[170px] sm:px-5"
-              style={{
-                background: 'linear-gradient(180deg, rgba(10,18,32,0.94), rgba(5,8,17,0.94))',
-                backdropFilter: 'blur(8px)',
-                border: '1px solid rgba(127,230,255,0.18)',
-                color: 'rgba(255,255,255,0.88)',
-                boxShadow: '0 12px 30px rgba(0,0,0,0.28)',
-              }}
-              disabled={!isReady}
-              title={`${emote.label} (${emote.key})`}
-            >
-              <span className="text-lg">{emote.glyph}</span>
-              <span className="hidden sm:inline">{emote.label}</span>
-              <span className="hidden rounded border px-2 py-0.5 text-[0.62rem] sm:inline" style={{ borderColor: 'rgba(255,255,255,0.16)', color: 'rgba(255,255,255,0.5)' }}>
-                {emote.key}
-              </span>
-            </button>
-          ))}
+          {EMOTES.map((emote) => {
+            const isActiveEmote = lastTriggeredEmote?.code === emote.code;
+            return (
+              <button
+                key={emote.code}
+                type="button"
+                aria-pressed={isActiveEmote}
+                onClick={() => triggerEmote(emote.code)}
+                className="flex min-w-[54px] items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-extrabold transition-all disabled:cursor-not-allowed disabled:opacity-45 sm:min-w-[170px] sm:px-5"
+                style={{
+                  background: isActiveEmote
+                    ? 'linear-gradient(180deg, rgba(255,142,201,0.98), rgba(255,105,185,0.94))'
+                    : 'linear-gradient(180deg, rgba(10,18,32,0.94), rgba(5,8,17,0.94))',
+                  backdropFilter: 'blur(8px)',
+                  border: isActiveEmote ? '1px solid rgba(255,213,235,0.78)' : '1px solid rgba(127,230,255,0.18)',
+                  color: isActiveEmote ? '#06070d' : 'rgba(255,255,255,0.88)',
+                  boxShadow: isActiveEmote
+                    ? '0 0 28px rgba(255,142,201,0.42), 0 12px 30px rgba(0,0,0,0.28)'
+                    : '0 12px 30px rgba(0,0,0,0.28)',
+                }}
+                disabled={!isReady}
+                title={`${emote.label} (${emote.key})`}
+              >
+                <span className="text-lg">{emote.glyph}</span>
+                <span className="hidden sm:inline">{emote.label}</span>
+                <span
+                  className="hidden rounded border px-2 py-0.5 text-[0.62rem] sm:inline"
+                  style={{
+                    borderColor: isActiveEmote ? 'rgba(6,7,13,0.22)' : 'rgba(255,255,255,0.16)',
+                    color: isActiveEmote ? 'rgba(6,7,13,0.58)' : 'rgba(255,255,255,0.5)',
+                  }}
+                >
+                  {emote.key}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </section>
 

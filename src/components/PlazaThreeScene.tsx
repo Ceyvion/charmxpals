@@ -574,8 +574,8 @@ export default function PlazaThreeScene({ players, youId, axesRef }: PlazaThreeS
 
       const emoteMaterial = new THREE.SpriteMaterial({ transparent: true, depthTest: false, depthWrite: false, opacity: 0 });
       const emote = new THREE.Sprite(emoteMaterial);
-      emote.position.set(0, 1.28, 0);
-      emote.scale.set(0.72, 0.72, 1);
+      emote.position.set(0, 1.82, 0);
+      emote.scale.set(1.52, 1.52, 1);
       emote.renderOrder = 21;
       group.add(emote);
 
@@ -690,7 +690,7 @@ export default function PlazaThreeScene({ players, youId, axesRef }: PlazaThreeS
             object.emoteKey = nextEmote;
           }
           emoteMaterial.opacity = 1;
-          object.emote.position.y = 1.28 + Math.sin(t * 5) * 0.08;
+          object.emote.position.y = 1.82 + Math.sin(t * 5) * 0.12;
         } else {
           emoteMaterial.opacity = 0;
           object.emoteKey = null;

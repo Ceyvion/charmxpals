@@ -15,6 +15,29 @@ Objective: rebuild `/plaza` as a polished Three.js/R3F multiplayer game surface 
 - [x] Deploy and verify the live `/plaza` route, or document the exact blocker.
 - [x] Record final review evidence and screenshot paths.
 
+## Signal Plaza Control Fix Plan (2026-06-21)
+
+Objective: make plaza controls behave like a playable game surface: physical keyboard WASD/arrow keys, visible on-screen WASD controls, and click/tap emotes must update live player state without scrolling the page, verified by browser state hooks, screenshots, checks, and live deployment.
+
+- [x] Reproduce current keyboard movement, on-screen WASD, and emote click behavior in a browser.
+- [x] Replace decorative WASD hints with real press/hold controls for pointer and touch.
+- [x] Make emote clicks/taps produce immediate visible local feedback while preserving server sync.
+- [x] Verify local desktop and mobile controls with `window.render_game_to_text()`, screenshots, no page scroll, and no failed requests.
+- [x] Run TypeScript, lint, tests, and build.
+- [ ] Push and verify live `/plaza` after deployment.
+
+### Signal Plaza Control Fix Review (2026-06-21)
+
+- Reproduced the bug class locally: keyboard `W` moved the player, but the visible WASD cluster was inert `<kbd>` markup inside a `pointer-events-none` overlay.
+- Replaced decorative WASD hints with real pointer/touch buttons that use pointer capture, shared pressed-key state, normalized diagonal movement, and release on pointer up/cancel/lost capture/window blur.
+- Updated keyboard handling so WASD/arrow keys use the same pressed-key state as on-screen controls, prevent default page scrolling, release latched movement when chat focuses, and support number-key emotes (`1`-`4`).
+- Emote buttons now trigger immediate local player feedback and an active toolbar state while still sending the emote through the WS/HTTP multiplayer sync path.
+- Increased the Three.js emote sprite size and updated the page hint to `Click or 1-4 to emote`.
+- Local desktop proof on `http://127.0.0.1:3005/plaza`: keyboard `W` moved player Y by `-2.8256`, visible `W` button moved player Y by `-2.8192`, Wave click produced `lastTriggeredEmote: "wave"` and player `emote: "wave"`, scroll stayed `0`, horizontal overflow was `0`, and there were no failed requests. Artifacts: `output/plaza-controls-fixed-local.json`, `output/plaza-controls-fixed-local.png`.
+- Local mobile proof on `390x844`: visible `W` control moved player Y by `-2.6912`, Wave click produced `lastTriggeredEmote: "wave"` and player `emote: "wave"`, horizontal overflow was `0`, and the focused movement-scroll check stayed at `scrollY: 0` before/during/after holding `W`. Artifacts: `output/plaza-controls-fixed-local-mobile.json`, `output/plaza-controls-fixed-local-mobile.png`.
+- Web-game harness completed against `/plaza`; artifacts: `output/plaza-controls-web-game/`.
+- Verification passed: `npx tsc --noEmit --pretty false --incremental false`, `npm run lint -- --max-warnings=999` (warnings only), `npm test -- --pool forks --no-file-parallelism --maxWorkers 1` (60/60), and `npm run build`.
+
 ### Signal Plaza Three.js Rebuild Final Evidence (2026-06-21)
 
 - Imagegen concept mockup: `/Users/macbookpro/.codex/generated_images/019ee8f0-9393-7842-8e7a-014a0f274616/ig_0d8b4298941a631b016a37a25baf38819197f0fce4e1e8a3c3.png`.

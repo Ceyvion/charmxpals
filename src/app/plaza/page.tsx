@@ -40,7 +40,7 @@ export default function PlazaPage() {
             <kbd className="rounded border px-1.5 py-0.5 text-[0.6rem]" style={{ borderColor: 'rgba(255,255,255,0.15)' }}>D</kbd>
             <span className="ml-1">Move</span>
           </span>
-          <span>Click emotes to express</span>
+          <span>Click or 1-4 to emote</span>
           <span>Chat to connect</span>
         </div>
       </div>

@@ -164,3 +164,12 @@ Original prompt: you need to use all skills and research aavailbibe and make thi
 ### TODO / Next-agent suggestions
 
 - If further visual precision is needed, tune player coordinate projection against the bitmap art rather than adding more hand-built stage geometry.
+
+## 2026-06-21 - Signal Plaza controls + emotes fix
+
+- Fixed the visible WASD control pad: it is now real pointer/touch input with hold-to-move behavior, pointer capture, release on cancel/lost capture/window blur, and shared keyboard/pointer movement state.
+- Keyboard WASD/arrow movement now uses the same input path, prevents page scrolling, and clears safely when chat takes focus.
+- Emotes now trigger immediate local player feedback, active toolbar state, and number-key shortcuts (`1`-`4`) while preserving server sync.
+- Local desktop verification passed: keyboard `W`, visible `W`, and Wave click all changed `window.render_game_to_text()` as expected with no failed requests, no horizontal overflow, and `scrollY: 0`.
+- Local mobile verification passed: visible `W` moved the player, Wave clicked through, controls fit without horizontal overflow, and holding `W` did not change scroll position.
+- Validation passed: TypeScript, lint, Vitest, production build, and the web-game harness against `/plaza`.
