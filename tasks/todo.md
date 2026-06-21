@@ -38,8 +38,10 @@ Objective: make Signal Plaza stop failing with "Failed to mint plaza session" an
   - Local WS browser proof via `npm run dev:plaza`: `/plaza` showed Connected, `1 online`, chat sent, no failed mint text, no console errors, no failed requests. Screenshot: `output/plaza-ws-local.png`.
   - Hosted/no-WS dev browser proof on port 3001: two pages showed Connected, `2 online`, cross-page chat visible, no WS requests, no failed mint text. Screenshots: `output/plaza-http-local-page1.png`, `output/plaza-http-local-page2.png`.
   - Production-bundle hosted/no-WS browser proof on port 3002: two pages showed Connected, `2 online`, cross-page chat visible, no failed mint text, no console errors, no failed requests. Screenshots: `output/plaza-prod-http-page1.png`, `output/plaza-prod-http-page2.png`.
-- Production note:
-  - The current public site is still running the old deployment until these changes are deployed; the old live token endpoint was confirmed failing before this fix.
+- Live deployment proof:
+  - Commit `a6e819b3` deployed successfully on both Vercel projects: `charmxpals` and `charmxpals-wmf1`.
+  - `https://charmxpals.vercel.app/api/mmo/token` now returns HTTP `200` with `transport: "http"`, `wsBase: null`, and `/api/mmo/sync` instead of the old empty HTTP `500`.
+  - Public two-page browser proof on `https://charmxpals.vercel.app/plaza`: both pages showed Connected, `2 online`, cross-page chat visible, no "Failed to mint plaza session" text, no console errors, no failed requests, and no 4xx/5xx browser responses. Screenshots: `output/plaza-live-page1.png`, `output/plaza-live-page2.png`.
   - For stronger multi-instance production behavior, configure a working Redis or external realtime service. The code now degrades to memory for the plaza preview instead of showing the mint error when Redis/realtime is unavailable.
 
 ## Vercel Multi-Project Deployment Fix Plan (2026-06-21)
